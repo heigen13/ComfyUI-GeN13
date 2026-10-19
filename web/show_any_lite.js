@@ -214,14 +214,14 @@ function g13SwapShowAny(node, toType) {
     const l = g13GetLink(graph, inp.link);
     const src = l ? graph.getNodeById(l.origin_id) : null;
     const to = nn.inputs?.findIndex((s) => s.name === "any") ?? -1;
-    if (src && to >= 0) src.connect(l.origin_slot, nn, to);
+    if (src && to >= 0) src.connectSlots(src.outputs[l.origin_slot], nn, nn.inputs[to]);
   }
   // outputs: STRING (0) and any (1) are in the same order on both nodes
   (node.outputs ?? []).forEach((o, k) => {
     for (const id of [...(o.links ?? [])]) {
       const l = g13GetLink(graph, id);
       const dst = l ? graph.getNodeById(l.target_id) : null;
-      if (dst && k < (nn.outputs?.length ?? 0)) nn.connect(k, dst, l.target_slot);
+      if (dst && k < (nn.outputs?.length ?? 0)) nn.connectSlots(nn.outputs[k], dst, dst.inputs[l.target_slot]);
     }
   });
 
