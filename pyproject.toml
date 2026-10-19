@@ -11,4 +11,5 @@ Repository = "https://github.com/heigen13/ComfyUI-GeN13"
 [tool.comfy]
 PublisherId = "heigen13"
 DisplayName = "ComfyUI-GeN13"
-Icon = ""
+Icon = "https://raw.githubusercontent.com/heigen13/ComfyUI-GeN13/main/docs/icon.jpg"
+Banner = "https://raw.githubusercontent.com/heigen13/ComfyUI-GeN13/main/docs/banner.jpg"
