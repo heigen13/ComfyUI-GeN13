@@ -334,7 +334,10 @@ class Degrease:
     def run(self, images, enabled, smooth, deblemish, deshine, even_tone, decontour):
         if not enabled:                                    # BYPASS:原樣傳下去(經 API 送出的工作流也能用這個欄位停用)
             return (images,)
-        return (degrease(images, smooth, deblemish, deshine, even_tone, decontour),)
+        out = degrease(images, smooth, deblemish, deshine, even_tone, decontour)
+        if images.shape[-1] == 4:                          # 保留 alpha:ACTIVE 與 BYPASS 輸出的通道數一致
+            out = torch.cat([out, images[..., 3:].cpu().float()], dim=-1)
+        return (out,)
 
 
 NODE_CLASS_MAPPINGS = {"DegreaseGeN13": Degrease}
