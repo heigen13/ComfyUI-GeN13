@@ -1,0 +1,14 @@
+[project]
+name = "comfyui-gen13"
+description = "GeN13 custom nodes for ComfyUI: temporal video color match, portrait retouch, private image preview, text switch, remote controls and more."
+version = "1.0.0"
+license = { text = "GPL-3.0" }
+dependencies = []
+
+[project.urls]
+Repository = "https://github.com/heigen13/ComfyUI-GeN13"
+
+[tool.comfy]
+PublisherId = "heigen13"
+DisplayName = "ComfyUI-GeN13"
+Icon = ""
