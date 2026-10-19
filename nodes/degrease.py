@@ -326,5 +326,5 @@ class Degrease:
         return (degrease(images, smooth, deblemish, deshine, even_tone, decontour),)
 
 
-NODE_CLASS_MAPPINGS = {"Degrease": Degrease}
-NODE_DISPLAY_NAME_MAPPINGS = {"Degrease": "Degrease (GeN13)"}
+NODE_CLASS_MAPPINGS = {"DegreaseGeN13": Degrease}
+NODE_DISPLAY_NAME_MAPPINGS = {"DegreaseGeN13": "Degrease (GeN13)"}

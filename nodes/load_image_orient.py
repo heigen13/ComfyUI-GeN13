@@ -39,5 +39,5 @@ class LoadImageOrient:
         return True
 
 
-NODE_CLASS_MAPPINGS = {"LoadImageOrient": LoadImageOrient}
-NODE_DISPLAY_NAME_MAPPINGS = {"LoadImageOrient": "Load Image Orient (GeN13)"}
+NODE_CLASS_MAPPINGS = {"LoadImageOrientGeN13": LoadImageOrient}
+NODE_DISPLAY_NAME_MAPPINGS = {"LoadImageOrientGeN13": "Load Image Orient (GeN13)"}

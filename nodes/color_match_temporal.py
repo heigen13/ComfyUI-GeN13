@@ -725,5 +725,5 @@ class ColorMatchTemporal:
         return (out,)
 
 
-NODE_CLASS_MAPPINGS = {"ColorMatchTemporal": ColorMatchTemporal}
-NODE_DISPLAY_NAME_MAPPINGS = {"ColorMatchTemporal": "Color Match Temporal (GeN13)"}
+NODE_CLASS_MAPPINGS = {"ColorMatchTemporalGeN13": ColorMatchTemporal}
+NODE_DISPLAY_NAME_MAPPINGS = {"ColorMatchTemporalGeN13": "Color Match Temporal (GeN13)"}

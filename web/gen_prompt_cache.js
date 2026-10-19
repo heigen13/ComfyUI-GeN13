@@ -10,7 +10,7 @@
 import { app } from "../../scripts/app.js";
 import { api } from "../../scripts/api.js";
 
-const NODE_ID = "GenPromptCache";
+const NODE_ID = "GenPromptCacheGeN13";
 
 // ComfyUI toast (new frontend); falls back to the console so nothing blocks the canvas
 function notify(severity, detail) {

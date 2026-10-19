@@ -317,6 +317,6 @@ except Exception as err:  # noqa: BLE001
     print("[Prompt Cache] favorite endpoint unavailable:", err)
 
 
-NODE_CLASS_MAPPINGS = {"GenPromptCache": GenPromptCache}
-NODE_DISPLAY_NAME_MAPPINGS = {"GenPromptCache": "Prompt Cache (GeN13)"}
+NODE_CLASS_MAPPINGS = {"GenPromptCacheGeN13": GenPromptCache}
+NODE_DISPLAY_NAME_MAPPINGS = {"GenPromptCacheGeN13": "Prompt Cache (GeN13)"}
 __all__ = ["NODE_CLASS_MAPPINGS", "NODE_DISPLAY_NAME_MAPPINGS", "WEB_DIRECTORY"]

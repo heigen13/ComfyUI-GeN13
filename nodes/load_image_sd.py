@@ -262,5 +262,5 @@ class LoadImageSD:
         return True
 
 
-NODE_CLASS_MAPPINGS = {"LoadImageSD": LoadImageSD}
-NODE_DISPLAY_NAME_MAPPINGS = {"LoadImageSD": "Load Image SD (GeN13)"}
+NODE_CLASS_MAPPINGS = {"LoadImageSDGeN13": LoadImageSD}
+NODE_DISPLAY_NAME_MAPPINGS = {"LoadImageSDGeN13": "Load Image SD (GeN13)"}
