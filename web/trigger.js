@@ -101,7 +101,7 @@ app.registerExtension({
 
       const btn = document.createElement("button");
       btn.className = "g13tg-big";
-      setTip(btn, T("Trigger: adds 1 to pulse; the connected Counter resets on the next run.", "觸發:pulse 加 1,下一次執行時接著的 Counter 歸零。"));
+      setTip(btn, T("Trigger: adds 1 to pulse; the connected Counter resets on the next run.", "觸發:pulse 加 1,下次執行時,接著的 Counter 會歸零。"));
       btn.innerHTML = ICON + "<span>TRIGGER</span>";
       btn.addEventListener("click", (e) => {
         e.stopPropagation();

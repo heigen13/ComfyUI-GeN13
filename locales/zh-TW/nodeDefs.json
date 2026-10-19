@@ -1,9 +1,9 @@
 {
   "ColorMatchTemporalGeN13": {
-    "description": "影片色調對位參考圖:逐格計算並沿時間軸平滑,修正圖生影片的漸進色偏且不閃爍。預設 white balance 只修色偏,亮度照原片。換鏡頭後各鏡頭對自己的開頭,不影響鏡頭間的差異。",
+    "description": "影片色調對齊參考圖:逐格計算並沿時間軸平滑,修正圖生影片越跑越偏的顏色,不會閃爍。預設 white balance 只修色偏、亮度照原片;換鏡頭後各鏡頭對齊自己的開頭。",
     "inputs": {
       "images": {
-        "tooltip": "影格:要校正的影片影格,接 VAE Decode。"
+        "tooltip": "影格:要校正的影片影格,通常接 VAE Decode。"
       },
       "reference": {
         "tooltip": "參考圖:目標色調,通常接首幀圖。"
@@ -12,55 +12,55 @@
         "tooltip": "開關:BYPASS 時原樣輸出,不做任何處理。"
       },
       "method": {
-        "tooltip": "演算法:white balance 只修色偏、亮度照原片(建議),mkl、reinhard 連亮度一起對位。"
+        "tooltip": "演算法:white balance 只修色偏、保留原亮度(建議);mkl、reinhard 連亮度一起對齊。"
       },
       "mode": {
-        "tooltip": "模式:temporal 逐格校正並平滑(建議),global 整段共用一組。"
+        "tooltip": "模式:temporal 逐格校正再沿時間軸平滑(建議);global 整段共用同一組校正。"
       },
       "smooth_frames": {
-        "tooltip": "平滑半徑:前後各取幾格平均,越大越穩。0 為逐格獨立。"
+        "tooltip": "平滑半徑:前後各取幾格平均,數值越高越穩定;0 為逐格獨立計算。"
       },
       "strength": {
-        "tooltip": "強度:0 為原始影格,1 為完全對位參考圖。"
+        "tooltip": "強度:0 維持原影格,1 完全對齊參考圖。"
       },
       "cube_name": {
-        "tooltip": "LUT 檔名:留空不存。輸出 .cube 至 ComfyUI_LayerStyle\\lut,未安裝則存 output\\luts。"
+        "tooltip": "LUT 檔名:留空不輸出。.cube 存到 ComfyUI_LayerStyle\\lut,未安裝 LayerStyle 則存 output\\luts。"
       },
       "tone_curve": {
-        "tooltip": "色階曲線:mkl、reinhard 專用,gamma 保留最黑與最白(建議),linear 為舊版。"
+        "tooltip": "色階曲線:僅 mkl、reinhard 使用。gamma 保留最暗與最亮點(建議),linear 為舊版曲線。"
       },
       "after_cut": {
-        "tooltip": "換鏡頭後:新鏡頭對自己的開頭(建議)、全部對首幀、或停止校正。"
+        "tooltip": "換鏡頭後:新鏡頭對齊自己的開頭(建議)、全部對齊首幀,或停止校正。"
       }
     }
   },
   "GenPromptCacheGeN13": {
-    "description": "把上游文字(如 LLM 腳本)存檔,之後可不載入上游直接重用;保留一代自動備份與任意數量的收藏。",
+    "description": "把上游文字(如 LLM 腳本)存成檔案,之後不必載入上游節點就能重用;保留一代自動備份與不限數量的收藏。",
     "inputs": {
       "mode": {
-        "tooltip": "模式:auto 有上游就用並存檔,否則讀檔。1 一律跑上游,2 只讀檔不載入上游,3 輸出空字串。"
+        "tooltip": "模式:auto 有接上游就使用並存檔,否則讀檔。1 一律執行上游,2 只讀檔,3 輸出空字串。"
       },
       "save_as": {
-        "tooltip": "存檔名:寫入 output\\prompt_cache\\,省略 .txt 自動補上,留空為 last_prompt.txt。"
+        "tooltip": "存檔名:存到 output\\prompt_cache\\,可省略 .txt;留空存為 last_prompt.txt。"
       },
       "read_file": {
-        "tooltip": "讀檔:預設跟著 save_as。.prev 為自動備份,.fav 為收藏;清單每次執行後更新。"
+        "tooltip": "讀檔:預設跟著 save_as。.prev 為自動備份,.fav 為收藏;清單在每次執行後更新。"
       },
       "auto_backup": {
-        "tooltip": "自動備份:覆蓋前把舊檔存成 <名稱>.prev.txt,只留一代;內容相同不重存。"
+        "tooltip": "自動備份:覆蓋前把舊檔另存為 <名稱>.prev.txt,只留一代;內容沒變就不重存。"
       },
       "text": {
-        "tooltip": "文字:上游來源(通常接 LLM 輸出),只在需要的模式才會要求上游執行。"
+        "tooltip": "文字:上游來源,通常接 LLM 輸出;只有需要時才會執行上游。"
       }
     },
     "outputs": {
       "0": {
-        "tooltip": "文字:auto 與 1 為上游文字,2 為檔案內容,3 為空字串。"
+        "tooltip": "文字:auto 與 1 輸出上游文字,2 輸出檔案內容,3 輸出空字串。"
       }
     }
   },
   "LoadImageOrientGeN13": {
-    "description": "簡易載入圖片:只走 Pillow,iOS 截圖不會被轉向;與核心 Load Image 同欄位。",
+    "description": "簡易載入圖片:只用 Pillow 解碼,iOS 截圖不會被轉向;欄位與核心 Load Image 相同。",
     "inputs": {
       "image": {
         "tooltip": "圖片:input 資料夾內的檔案,可上傳或拖放加入。"
@@ -76,10 +76,10 @@
     }
   },
   "LoadImageSDGeN13": {
-    "description": "載入圖片並讀出 A1111 / Forge 生成參數,用於在 ComfyUI 重現舊圖。",
+    "description": "載入圖片並讀出 A1111 / Forge 的生成參數,用來在 ComfyUI 重現舊圖。",
     "inputs": {
       "image": {
-        "tooltip": "來源圖片:A1111 / Forge 生成的 PNG(或含參數的 JPG / WebP)。"
+        "tooltip": "來源圖片:A1111 / Forge 產生的 PNG,或帶有參數的 JPG / WebP。"
       }
     },
     "outputs": {
@@ -111,24 +111,24 @@
         "tooltip": "CFG:參數中的 CFG scale。"
       },
       "9": {
-        "tooltip": "取樣器:A1111 名稱換算成 ComfyUI 名稱。"
+        "tooltip": "取樣器:A1111 名稱對應成 ComfyUI 名稱。"
       },
       "10": {
-        "tooltip": "排程器:A1111 排程(Karras 等)換算成 ComfyUI 名稱。"
+        "tooltip": "排程器:A1111 排程(Karras 等)對應成 ComfyUI 名稱。"
       },
       "11": {
-        "tooltip": "Clip skip:換算成 CLIP Set Last Layer 用的負值(1 → -1, 2 → -2)。"
+        "tooltip": "Clip skip:換算成 CLIP Set Last Layer 使用的負值(1 → -1, 2 → -2)。"
       },
       "12": {
-        "tooltip": "參數全文:原始參數文字,另附換算備註。"
+        "tooltip": "參數全文:原始參數文字,附上對應說明。"
       }
     }
   },
   "DegreaseGeN13": {
-    "description": "人像去油膩與美顏:磨皮祛皺、祛斑祛痘、去油光、勻膚、減立體,眼睛等五官自動保護。各參數 0 為關閉,數值越高效果越強。",
+    "description": "人像去油膩與美顏:磨皮祛皺、祛斑祛痘、去油光、勻膚、減立體,眼睛等五官自動避開。各項 0 為關閉,數值越高效果越強。",
     "inputs": {
       "images": {
-        "tooltip": "影格:接在 Color Match Temporal 之後。"
+        "tooltip": "影格:建議接在 Color Match Temporal 之後。"
       },
       "enabled": {
         "tooltip": "開關:BYPASS 時原樣輸出,不做任何處理。"
@@ -146,30 +146,30 @@
         "tooltip": "勻膚:數值越高,泛紅偏橘的膚色越均勻。"
       },
       "decontour": {
-        "tooltip": "減立體:數值越高,臉部明暗起伏越平。"
+        "tooltip": "減立體:數值越高,臉部明暗起伏越平緩。"
       }
     }
   },
   "LoadLatestImagePrivateGeN13": {
-    "description": "從資料夾依排序取圖:可選最新、最舊或檔名排序,支援檔名篩選、子資料夾、連續載入多張;寫入中或損壞的檔自動略過。",
+    "description": "依排序從資料夾取圖:最新、最舊或依檔名,支援檔名篩選、子資料夾與連續多張;寫入中或損壞的檔案自動略過。",
     "inputs": {
       "folder_path": {
         "tooltip": "資料夾:要取圖的資料夾完整路徑。"
       },
       "sort_by": {
-        "tooltip": "排序:newest first 為最新存檔在前,name 依檔名自然排序。"
+        "tooltip": "排序:newest first 最新存的在前,name 依檔名自然排序。"
       },
       "index": {
-        "tooltip": "序號:0 為排序第一張,1 為第二張,依此類推。"
+        "tooltip": "序號:排序後的位置,0 為第一張,1 為第二張,以此類推。"
       },
       "count": {
-        "tooltip": "張數:從序號起連續載入幾張成批次。尺寸不同時縮放到第一張。"
+        "tooltip": "張數:從序號起連續載入幾張,合成一個批次;尺寸不同時縮放成第一張的大小。"
       },
       "filename_filter": {
-        "tooltip": "檔名篩選:萬用字元,例如 ComfyUI_*,多組以 ; 分隔。"
+        "tooltip": "檔名篩選:萬用字元,例如 ComfyUI_*;多組以 ; 分隔。"
       },
       "subfolders": {
-        "tooltip": "子資料夾:INCLUDE 時一併搜尋底下所有子資料夾。"
+        "tooltip": "子資料夾:INCLUDE 時連同底下所有子資料夾一起搜尋。"
       },
       "extensions": {
         "tooltip": "副檔名:以逗號分隔,不分大小寫。"
@@ -200,10 +200,10 @@
     }
   },
   "LoadImagePrivateGeN13": {
-    "description": "載入圖片,節點預覽可切換隱私遮罩(馬賽克、漸層、純色),按住預覽圖顯示原圖。",
+    "description": "載入圖片,節點預覽可蓋上隱私遮罩(馬賽克、漸層、純色),按住預覽圖顯示原圖。",
     "inputs": {
       "image": {
-        "tooltip": "圖片:input 資料夾內的檔案,以節點上的上傳鈕或拖放加入。"
+        "tooltip": "圖片:input 資料夾內的檔案,用節點上的上傳鈕或拖放加入。"
       }
     },
     "outputs": {
@@ -222,22 +222,22 @@
     }
   },
   "SaveImagePrivateGeN13": {
-    "description": "存檔為 PNG、JPG、BMP 或 PNG + JPG,節點預覽可切換隱私遮罩,按住預覽圖顯示原圖。",
+    "description": "存成 PNG、JPG、BMP 或 PNG + JPG,節點預覽可蓋上隱私遮罩,按住預覽圖顯示原圖。",
     "inputs": {
       "images": {
         "tooltip": "影像:要存檔的單張或批次。"
       },
       "save": {
-        "tooltip": "存檔:SAVE 存入 output,PREVIEW 只暫存預覽(同 Preview Image)。"
+        "tooltip": "存檔:SAVE 存進 output,PREVIEW 只產生暫存預覽(同 Preview Image)。"
       },
       "filename_prefix": {
         "tooltip": "檔名前綴:可含子資料夾,例如 PRIVATE/img。"
       },
       "format": {
-        "tooltip": "格式:PNG + JPG 同一流水號各存一張,PNG 含工作流,JPG 不含。"
+        "tooltip": "格式:PNG + JPG 用同一流水號各存一張;PNG 內含工作流,JPG 不含。"
       },
       "padding": {
-        "tooltip": "流水號位數:不足補零,4 為 0001。"
+        "tooltip": "流水號位數:檔名編號不足時前面補零,4 為 0001。"
       },
       "jpg_quality": {
         "tooltip": "JPG 品質:數值越高畫質越好、檔案越大。"
@@ -259,7 +259,7 @@
     }
   },
   "PreviewImagePrivateGeN13": {
-    "description": "預覽圖片(暫存,不存入 output),節點預覽可切換隱私遮罩,按住預覽圖顯示原圖。",
+    "description": "預覽圖片(暫存,不存進 output),節點預覽可蓋上隱私遮罩,按住預覽圖顯示原圖。",
     "inputs": {
       "images": {
         "tooltip": "影像:要預覽的單張或批次。"
@@ -278,31 +278,31 @@
     }
   },
   "ResizeGeN13": {
-    "description": "決定 latent 尺寸:空 latent、圖片 encode 或縮放既有 latent;圖片與遮罩一併縮放,可裁切、補邊或拉伸。",
+    "description": "一顆決定 latent 尺寸:建立空 latent、把圖片編碼成 latent,或縮放既有 latent;圖片與遮罩一併縮放,可裁切、補邊或拉伸。",
     "inputs": {
       "mode": {
-        "tooltip": "模式:I2I 圖生圖,依圖片縮放。T2I 文生圖,圖片送空值,尺寸依比例或 width 與 height。"
+        "tooltip": "模式:I2I 圖生圖,依輸入圖片縮放;T2I 文生圖,不輸出圖片,尺寸依比例或 width、height。"
       },
       "aspect_ratio": {
-        "tooltip": "比例:keep 維持原圖比例,custom 時用 width 與 height。T2I 時 keep 等同 custom。"
+        "tooltip": "比例:keep 維持原圖比例,custom 使用 width 與 height;T2I 時 keep 等同 custom。"
       },
       "megapixels": {
-        "tooltip": "像素量:總像素(MP),1.0 約為 1024×1024;輸入寬或高會自動更新。custom 時不作用。"
+        "tooltip": "像素量:總像素(MP),1.0 約為 1024×1024;輸入寬或高時自動更新,custom 時不作用。"
       },
       "width": {
-        "tooltip": "寬度:輸出寬度,選了比例時輸入一邊自動算另一邊,可接線。"
+        "tooltip": "寬度:輸出寬度;選了比例時,輸入一邊會自動算出另一邊,可接線。"
       },
       "height": {
-        "tooltip": "高度:輸出高度,選了比例時輸入一邊自動算另一邊,可接線。"
+        "tooltip": "高度:輸出高度;選了比例時,輸入一邊會自動算出另一邊,可接線。"
       },
       "multiple_of": {
         "tooltip": "對齊倍數:寬高取此倍數。Qwen Image 2.1 用 32,Flux 用 16,SD 可用 8。"
       },
       "batch_size": {
-        "tooltip": "張數:空 latent 或 encode 結果的數量。接 samples 時不作用。"
+        "tooltip": "張數:空 latent 或編碼結果的數量;接 samples 時不作用。"
       },
       "upscale_method": {
-        "tooltip": "演算法:lanczos 最銳利。nvidia_rtx_vsr 需 RTX 顯卡,latent 一律用 bicubic。"
+        "tooltip": "演算法:lanczos 最銳利;nvidia_rtx_vsr 需要 RTX 顯卡;latent 一律用 bicubic。"
       },
       "keep_proportion": {
         "tooltip": "比例不同時:crop 裁切、resize 縮進框內、pad 補色、pad_edge 延伸邊緣、stretch 拉伸。"
@@ -314,51 +314,51 @@
         "tooltip": "補邊色:pad 時使用,格式 R, G, B(0–255)或 #RRGGBB。"
       },
       "keep_size": {
-        "tooltip": "keep 尺寸:original 只裁到倍數不取樣,megapixels 依像素量,長邊、短邊等於 edge_length。"
+        "tooltip": "keep 尺寸:original 只裁到倍數、不重新取樣;megapixels 依像素量;long_edge、short_edge 依 edge_length。"
       },
       "edge_length": {
         "tooltip": "邊長:keep_size 為 long_edge 或 short_edge 時,該邊的像素長度。"
       },
       "image1": {
-        "tooltip": "主圖:決定 latent、遮罩與寬高;再接 vae 就 encode 成 latent。"
+        "tooltip": "主圖:決定 latent、遮罩與寬高;接了 vae 就編碼成 latent。"
       },
       "image2": {
-        "tooltip": "參考圖:套用同一組設定,依各自原圖比例縮放。"
+        "tooltip": "參考圖:套用同一組設定,各自維持原圖比例縮放。"
       },
       "image3": {
-        "tooltip": "參考圖:套用同一組設定,依各自原圖比例縮放。"
+        "tooltip": "參考圖:套用同一組設定,各自維持原圖比例縮放。"
       },
       "image4": {
-        "tooltip": "參考圖:套用同一組設定,依各自原圖比例縮放。"
+        "tooltip": "參考圖:套用同一組設定,各自維持原圖比例縮放。"
       },
       "mask": {
-        "tooltip": "遮罩:跟著 image1 一起縮放,補出的區域為 1。"
+        "tooltip": "遮罩:跟著 image1 一起縮放,補邊區域為 1。"
       },
       "samples": {
-        "tooltip": "Latent:要縮放的 latent,有 image1 與 vae 時改走 encode。Flux.2、HunyuanImage 2.1 須接 vae。"
+        "tooltip": "Latent:要縮放的既有 latent;同時接 image1 與 vae 時改為編碼圖片。Flux.2、HunyuanImage 2.1 必須接 vae。"
       },
       "vae": {
-        "tooltip": "VAE:接 image1 時用來 encode;沒接圖時用來建立正確格式的空 latent。"
+        "tooltip": "VAE:接 image1 時用來編碼;沒接圖片時用來建立格式正確的空 latent。"
       }
     },
     "outputs": {
       "0": {
-        "tooltip": "主圖:縮放後的 image1(實際送進 encode 的那張)。T2I 或沒有圖時送空值。"
+        "tooltip": "主圖:縮放後的 image1(即實際編碼的那張);T2I 或沒有圖片時不輸出。"
       },
       "1": {
-        "tooltip": "參考圖:縮放後的 image2。T2I 或沒接時送空值。"
+        "tooltip": "參考圖:縮放後的 image2;T2I 或沒接時不輸出。"
       },
       "2": {
-        "tooltip": "參考圖:縮放後的 image3。T2I 或沒接時送空值。"
+        "tooltip": "參考圖:縮放後的 image3;T2I 或沒接時不輸出。"
       },
       "3": {
-        "tooltip": "參考圖:縮放後的 image4。T2I 或沒接時送空值。"
+        "tooltip": "參考圖:縮放後的 image4;T2I 或沒接時不輸出。"
       },
       "4": {
-        "tooltip": "遮罩:縮放後的遮罩(依 image1),沒接 mask 時全 0,pad 補出的區域為 1。"
+        "tooltip": "遮罩:縮放後的遮罩(依 image1);沒接 mask 時全為 0,補邊區域為 1。"
       },
       "5": {
-        "tooltip": "Latent:接 image1 與 vae 為 encode 結果,接 samples 為縮放後的 latent,否則為空 latent。"
+        "tooltip": "Latent:接 image1 與 vae 時為編碼結果,接 samples 時為縮放後的 latent,否則為空 latent。"
       },
       "6": {
         "tooltip": "寬度:實際輸出的像素寬度(px)。"
@@ -369,136 +369,136 @@
     }
   },
   "TextConcatenateGeN13": {
-    "description": "直接在框內打字串接文字:可選框數、各框開關與獨奏,空框自動略過。",
+    "description": "直接在框內打字並串接:可設框數、各框開關與獨奏,空白框自動略過。",
     "inputs": {
       "count": {
-        "tooltip": "框數:顯示並串接的文字框數量,多的隱藏也不輸出。"
+        "tooltip": "框數:顯示並串接的文字框數量,隱藏的框不輸出。"
       },
       "solo": {
-        "tooltip": "獨奏:只輸出選定的框,不改動各框開關。OFF 時依各框開關。"
+        "tooltip": "獨奏:只輸出選定的一框,不改動各框開關;OFF 時依各框開關。"
       },
       "delimiter": {
-        "tooltip": "分隔:框與框之間插入的字串,\\n 為換行。"
+        "tooltip": "分隔字串:插在框與框之間的文字,\\n 為換行。"
       },
       "on_01": {
-        "tooltip": "開關:OFF 時此框不串接,文字保留。"
+        "tooltip": "開關:OFF 時此框不參與串接,文字保留。"
       },
       "text_01": {
-        "tooltip": "文字:直接輸入,或從上游接線。空白框自動略過。"
+        "tooltip": "文字:直接輸入或從上游接線,空白框自動略過。"
       },
       "on_02": {
-        "tooltip": "開關:OFF 時此框不串接,文字保留。"
+        "tooltip": "開關:OFF 時此框不參與串接,文字保留。"
       },
       "text_02": {
-        "tooltip": "文字:直接輸入,或從上游接線。空白框自動略過。"
+        "tooltip": "文字:直接輸入或從上游接線,空白框自動略過。"
       },
       "on_03": {
-        "tooltip": "開關:OFF 時此框不串接,文字保留。"
+        "tooltip": "開關:OFF 時此框不參與串接,文字保留。"
       },
       "text_03": {
-        "tooltip": "文字:直接輸入,或從上游接線。空白框自動略過。"
+        "tooltip": "文字:直接輸入或從上游接線,空白框自動略過。"
       },
       "on_04": {
-        "tooltip": "開關:OFF 時此框不串接,文字保留。"
+        "tooltip": "開關:OFF 時此框不參與串接,文字保留。"
       },
       "text_04": {
-        "tooltip": "文字:直接輸入,或從上游接線。空白框自動略過。"
+        "tooltip": "文字:直接輸入或從上游接線,空白框自動略過。"
       },
       "on_05": {
-        "tooltip": "開關:OFF 時此框不串接,文字保留。"
+        "tooltip": "開關:OFF 時此框不參與串接,文字保留。"
       },
       "text_05": {
-        "tooltip": "文字:直接輸入,或從上游接線。空白框自動略過。"
+        "tooltip": "文字:直接輸入或從上游接線,空白框自動略過。"
       },
       "on_06": {
-        "tooltip": "開關:OFF 時此框不串接,文字保留。"
+        "tooltip": "開關:OFF 時此框不參與串接,文字保留。"
       },
       "text_06": {
-        "tooltip": "文字:直接輸入,或從上游接線。空白框自動略過。"
+        "tooltip": "文字:直接輸入或從上游接線,空白框自動略過。"
       },
       "on_07": {
-        "tooltip": "開關:OFF 時此框不串接,文字保留。"
+        "tooltip": "開關:OFF 時此框不參與串接,文字保留。"
       },
       "text_07": {
-        "tooltip": "文字:直接輸入,或從上游接線。空白框自動略過。"
+        "tooltip": "文字:直接輸入或從上游接線,空白框自動略過。"
       },
       "on_08": {
-        "tooltip": "開關:OFF 時此框不串接,文字保留。"
+        "tooltip": "開關:OFF 時此框不參與串接,文字保留。"
       },
       "text_08": {
-        "tooltip": "文字:直接輸入,或從上游接線。空白框自動略過。"
+        "tooltip": "文字:直接輸入或從上游接線,空白框自動略過。"
       },
       "on_09": {
-        "tooltip": "開關:OFF 時此框不串接,文字保留。"
+        "tooltip": "開關:OFF 時此框不參與串接,文字保留。"
       },
       "text_09": {
-        "tooltip": "文字:直接輸入,或從上游接線。空白框自動略過。"
+        "tooltip": "文字:直接輸入或從上游接線,空白框自動略過。"
       },
       "on_10": {
-        "tooltip": "開關:OFF 時此框不串接,文字保留。"
+        "tooltip": "開關:OFF 時此框不參與串接,文字保留。"
       },
       "text_10": {
-        "tooltip": "文字:直接輸入,或從上游接線。空白框自動略過。"
+        "tooltip": "文字:直接輸入或從上游接線,空白框自動略過。"
       },
       "on_11": {
-        "tooltip": "開關:OFF 時此框不串接,文字保留。"
+        "tooltip": "開關:OFF 時此框不參與串接,文字保留。"
       },
       "text_11": {
-        "tooltip": "文字:直接輸入,或從上游接線。空白框自動略過。"
+        "tooltip": "文字:直接輸入或從上游接線,空白框自動略過。"
       },
       "on_12": {
-        "tooltip": "開關:OFF 時此框不串接,文字保留。"
+        "tooltip": "開關:OFF 時此框不參與串接,文字保留。"
       },
       "text_12": {
-        "tooltip": "文字:直接輸入,或從上游接線。空白框自動略過。"
+        "tooltip": "文字:直接輸入或從上游接線,空白框自動略過。"
       },
       "on_13": {
-        "tooltip": "開關:OFF 時此框不串接,文字保留。"
+        "tooltip": "開關:OFF 時此框不參與串接,文字保留。"
       },
       "text_13": {
-        "tooltip": "文字:直接輸入,或從上游接線。空白框自動略過。"
+        "tooltip": "文字:直接輸入或從上游接線,空白框自動略過。"
       },
       "on_14": {
-        "tooltip": "開關:OFF 時此框不串接,文字保留。"
+        "tooltip": "開關:OFF 時此框不參與串接,文字保留。"
       },
       "text_14": {
-        "tooltip": "文字:直接輸入,或從上游接線。空白框自動略過。"
+        "tooltip": "文字:直接輸入或從上游接線,空白框自動略過。"
       },
       "on_15": {
-        "tooltip": "開關:OFF 時此框不串接,文字保留。"
+        "tooltip": "開關:OFF 時此框不參與串接,文字保留。"
       },
       "text_15": {
-        "tooltip": "文字:直接輸入,或從上游接線。空白框自動略過。"
+        "tooltip": "文字:直接輸入或從上游接線,空白框自動略過。"
       },
       "on_16": {
-        "tooltip": "開關:OFF 時此框不串接,文字保留。"
+        "tooltip": "開關:OFF 時此框不參與串接,文字保留。"
       },
       "text_16": {
-        "tooltip": "文字:直接輸入,或從上游接線。空白框自動略過。"
+        "tooltip": "文字:直接輸入或從上游接線,空白框自動略過。"
       },
       "on_17": {
-        "tooltip": "開關:OFF 時此框不串接,文字保留。"
+        "tooltip": "開關:OFF 時此框不參與串接,文字保留。"
       },
       "text_17": {
-        "tooltip": "文字:直接輸入,或從上游接線。空白框自動略過。"
+        "tooltip": "文字:直接輸入或從上游接線,空白框自動略過。"
       },
       "on_18": {
-        "tooltip": "開關:OFF 時此框不串接,文字保留。"
+        "tooltip": "開關:OFF 時此框不參與串接,文字保留。"
       },
       "text_18": {
-        "tooltip": "文字:直接輸入,或從上游接線。空白框自動略過。"
+        "tooltip": "文字:直接輸入或從上游接線,空白框自動略過。"
       },
       "on_19": {
-        "tooltip": "開關:OFF 時此框不串接,文字保留。"
+        "tooltip": "開關:OFF 時此框不參與串接,文字保留。"
       },
       "text_19": {
-        "tooltip": "文字:直接輸入,或從上游接線。空白框自動略過。"
+        "tooltip": "文字:直接輸入或從上游接線,空白框自動略過。"
       },
       "on_20": {
-        "tooltip": "開關:OFF 時此框不串接,文字保留。"
+        "tooltip": "開關:OFF 時此框不參與串接,文字保留。"
       },
       "text_20": {
-        "tooltip": "文字:直接輸入,或從上游接線。空白框自動略過。"
+        "tooltip": "文字:直接輸入或從上游接線,空白框自動略過。"
       }
     },
     "outputs": {
@@ -580,18 +580,18 @@
         "tooltip": "轉整數:round 四捨五入,floor 無條件捨去,ceil 無條件進位。"
       },
       "number": {
-        "tooltip": "數值輸入:可接 INT、FLOAT 或 STRING,接上時取代 value;文字無法轉換時為 0。"
+        "tooltip": "數值輸入:可接 INT、FLOAT 或 STRING,接上後取代 value;無法轉換的文字視為 0。"
       },
       "format": {
-        "tooltip": "格式:STRING 輸出的樣式,{} 代入數值;沒寫 {} 時數值接在最後,空白只輸出數值。"
+        "tooltip": "格式:STRING 輸出的樣式,{} 代入數值;沒寫 {} 時數值接在最後,留空只輸出數值。"
       }
     },
     "outputs": {
       "0": {
-        "tooltip": "整數:依 to_int 方式轉換。"
+        "tooltip": "整數:依 to_int 的方式轉換。"
       },
       "1": {
-        "tooltip": "小數:原值,型別固定為 FLOAT。"
+        "tooltip": "小數:原始數值,型別為 FLOAT。"
       },
       "2": {
         "tooltip": "文字:去掉多餘的零,例如 7.50 → 7.5;有 format 時套用格式。"
@@ -599,102 +599,102 @@
     }
   },
   "TextSwitchGeN13": {
-    "description": "直接在框內打字,選一框輸出;多顆可用 chain 橋接水平排開,編號接續前一顆的框數,顆數不限,第一顆總控。",
+    "description": "直接在框內打字,選一框輸出。多顆可用 chain 水平串接、數量不限,編號接續前一顆,由第一顆統一控制。",
     "inputs": {
       "count": {
-        "tooltip": "框數:顯示的文字框數量,多的隱藏。"
+        "tooltip": "框數:顯示的文字框數量,其餘隱藏。"
       },
       "select": {
-        "tooltip": "選擇:輸出這一框;橋接時由第一顆總控,編號緊接上一顆的最後一框。"
+        "tooltip": "選擇:要輸出的框。串接時由第一顆統一控制,編號接續上一顆的最後一框。"
       },
       "text_01": {
-        "tooltip": "文字:直接輸入,或從上游接線。接線時只有選到才執行上游。"
+        "tooltip": "文字:直接輸入或從上游接線;接線時,只有選到這一框才會執行上游。"
       },
       "text_02": {
-        "tooltip": "文字:直接輸入,或從上游接線。接線時只有選到才執行上游。"
+        "tooltip": "文字:直接輸入或從上游接線;接線時,只有選到這一框才會執行上游。"
       },
       "text_03": {
-        "tooltip": "文字:直接輸入,或從上游接線。接線時只有選到才執行上游。"
+        "tooltip": "文字:直接輸入或從上游接線;接線時,只有選到這一框才會執行上游。"
       },
       "text_04": {
-        "tooltip": "文字:直接輸入,或從上游接線。接線時只有選到才執行上游。"
+        "tooltip": "文字:直接輸入或從上游接線;接線時,只有選到這一框才會執行上游。"
       },
       "text_05": {
-        "tooltip": "文字:直接輸入,或從上游接線。接線時只有選到才執行上游。"
+        "tooltip": "文字:直接輸入或從上游接線;接線時,只有選到這一框才會執行上游。"
       },
       "text_06": {
-        "tooltip": "文字:直接輸入,或從上游接線。接線時只有選到才執行上游。"
+        "tooltip": "文字:直接輸入或從上游接線;接線時,只有選到這一框才會執行上游。"
       },
       "text_07": {
-        "tooltip": "文字:直接輸入,或從上游接線。接線時只有選到才執行上游。"
+        "tooltip": "文字:直接輸入或從上游接線;接線時,只有選到這一框才會執行上游。"
       },
       "text_08": {
-        "tooltip": "文字:直接輸入,或從上游接線。接線時只有選到才執行上游。"
+        "tooltip": "文字:直接輸入或從上游接線;接線時,只有選到這一框才會執行上游。"
       },
       "text_09": {
-        "tooltip": "文字:直接輸入,或從上游接線。接線時只有選到才執行上游。"
+        "tooltip": "文字:直接輸入或從上游接線;接線時,只有選到這一框才會執行上游。"
       },
       "text_10": {
-        "tooltip": "文字:直接輸入,或從上游接線。接線時只有選到才執行上游。"
+        "tooltip": "文字:直接輸入或從上游接線;接線時,只有選到這一框才會執行上游。"
       },
       "text_11": {
-        "tooltip": "文字:直接輸入,或從上游接線。接線時只有選到才執行上游。"
+        "tooltip": "文字:直接輸入或從上游接線;接線時,只有選到這一框才會執行上游。"
       },
       "text_12": {
-        "tooltip": "文字:直接輸入,或從上游接線。接線時只有選到才執行上游。"
+        "tooltip": "文字:直接輸入或從上游接線;接線時,只有選到這一框才會執行上游。"
       },
       "text_13": {
-        "tooltip": "文字:直接輸入,或從上游接線。接線時只有選到才執行上游。"
+        "tooltip": "文字:直接輸入或從上游接線;接線時,只有選到這一框才會執行上游。"
       },
       "text_14": {
-        "tooltip": "文字:直接輸入,或從上游接線。接線時只有選到才執行上游。"
+        "tooltip": "文字:直接輸入或從上游接線;接線時,只有選到這一框才會執行上游。"
       },
       "text_15": {
-        "tooltip": "文字:直接輸入,或從上游接線。接線時只有選到才執行上游。"
+        "tooltip": "文字:直接輸入或從上游接線;接線時,只有選到這一框才會執行上游。"
       },
       "text_16": {
-        "tooltip": "文字:直接輸入,或從上游接線。接線時只有選到才執行上游。"
+        "tooltip": "文字:直接輸入或從上游接線;接線時,只有選到這一框才會執行上游。"
       },
       "text_17": {
-        "tooltip": "文字:直接輸入,或從上游接線。接線時只有選到才執行上游。"
+        "tooltip": "文字:直接輸入或從上游接線;接線時,只有選到這一框才會執行上游。"
       },
       "text_18": {
-        "tooltip": "文字:直接輸入,或從上游接線。接線時只有選到才執行上游。"
+        "tooltip": "文字:直接輸入或從上游接線;接線時,只有選到這一框才會執行上游。"
       },
       "text_19": {
-        "tooltip": "文字:直接輸入,或從上游接線。接線時只有選到才執行上游。"
+        "tooltip": "文字:直接輸入或從上游接線;接線時,只有選到這一框才會執行上游。"
       },
       "text_20": {
-        "tooltip": "文字:直接輸入,或從上游接線。接線時只有選到才執行上游。"
+        "tooltip": "文字:直接輸入或從上游接線;接線時,只有選到這一框才會執行上游。"
       },
       "text_21": {
-        "tooltip": "文字:直接輸入,或從上游接線。接線時只有選到才執行上游。"
+        "tooltip": "文字:直接輸入或從上游接線;接線時,只有選到這一框才會執行上游。"
       },
       "text_22": {
-        "tooltip": "文字:直接輸入,或從上游接線。接線時只有選到才執行上游。"
+        "tooltip": "文字:直接輸入或從上游接線;接線時,只有選到這一框才會執行上游。"
       },
       "text_23": {
-        "tooltip": "文字:直接輸入,或從上游接線。接線時只有選到才執行上游。"
+        "tooltip": "文字:直接輸入或從上游接線;接線時,只有選到這一框才會執行上游。"
       },
       "text_24": {
-        "tooltip": "文字:直接輸入,或從上游接線。接線時只有選到才執行上游。"
+        "tooltip": "文字:直接輸入或從上游接線;接線時,只有選到這一框才會執行上游。"
       },
       "text_25": {
-        "tooltip": "文字:直接輸入,或從上游接線。接線時只有選到才執行上游。"
+        "tooltip": "文字:直接輸入或從上游接線;接線時,只有選到這一框才會執行上游。"
       },
       "chain": {
-        "tooltip": "橋接:接上一顆 Text Switch 的 chain 輸出,本顆編號接續其最後一框。"
+        "tooltip": "串接:接上一顆 Text Switch 的 chain 輸出,本顆編號接續它的最後一框。"
       },
       "select_num": {
-        "tooltip": "選號輸入:接 INT(Counter、Trigger 等)直接指定選號,1 起算;接上後 select 不作用。"
+        "tooltip": "選號輸入:接 INT(如 Counter、Trigger)直接指定框號,從 1 起算;接上後 select 不作用。"
       }
     },
     "outputs": {
       "0": {
-        "tooltip": "橋接:接到下一顆 Text Switch 的 chain 輸入。"
+        "tooltip": "串接:接到下一顆 Text Switch 的 chain 輸入。"
       },
       "1": {
-        "tooltip": "文字:選到的那一框;選號在下游時為空字串。"
+        "tooltip": "文字:選中的那一框;選中的框位在串接後面的節點時,輸出空字串。"
       },
       "2": {
         "tooltip": "文字:此框的內容,不受 select 影響。"
@@ -774,18 +774,18 @@
     }
   },
   "ShowAnyGeN13": {
-    "description": "任何型別都能接:顯示內容並輸出 STRING 與原物件;可剪下、複製、貼上,內容隨工作流保存。",
+    "description": "任何型別都能接:顯示內容並輸出 STRING 與原物件;支援剪下、複製、貼上,內容隨工作流保存。",
     "inputs": {
       "content": {
-        "tooltip": "內容:沒接 any 時即為輸出;接上 any 時顯示上游內容。"
+        "tooltip": "內容:沒接 any 時作為輸出;接上 any 時顯示上游內容。"
       },
       "any": {
-        "tooltip": "輸入:任何型別;文字、數字、JSON 照顯示,IMAGE 等顯示尺寸摘要。"
+        "tooltip": "輸入:任何型別;文字、數字、JSON 直接顯示,IMAGE 等張量顯示尺寸摘要。"
       }
     },
     "outputs": {
       "0": {
-        "tooltip": "文字:與框內顯示相同,FLOAT 最多 6 位小數,清單與字典為 JSON。"
+        "tooltip": "文字:與框內顯示相同;FLOAT 最多 6 位小數,清單與字典轉為 JSON。"
       },
       "1": {
         "tooltip": "原物件:上游送來的內容不經轉換直接往下傳。"
@@ -793,13 +793,13 @@
     }
   },
   "ShowAnyLiteGeN13": {
-    "description": "Show Any 精簡版:預設一行,拖高即多行顯示;沒接線時可直接打字;輸出 STRING 與原物件。",
+    "description": "Show Any 精簡版:預設一行,拖高可多行顯示;沒接線時可直接打字;輸出 STRING 與原物件。",
     "inputs": {
       "any": {
-        "tooltip": "輸入:任何型別;文字、數字、JSON 照顯示,IMAGE 等顯示尺寸摘要。"
+        "tooltip": "輸入:任何型別;文字、數字、JSON 直接顯示,IMAGE 等張量顯示尺寸摘要。"
       },
       "content": {
-        "tooltip": "內容:沒接 any 時即為輸出,直接在框內打字。"
+        "tooltip": "內容:沒接 any 時作為輸出,可直接在框內打字。"
       }
     },
     "outputs": {
@@ -812,13 +812,13 @@
     }
   },
   "CounterGeN13": {
-    "description": "計數器:每次送出 run 加 1,依 mode 與範圍輸出數字;可用按鈕、上游改變或整點隔天歸零。",
+    "description": "計數器:每次送出前進一次,依模式與範圍輸出數字;可用按鈕、上游變化,或每小時、每天自動歸零。",
     "inputs": {
       "run": {
-        "tooltip": "次數:每次送出後加 1,bypass 時不加。RESET 歸 0 即回到 start。"
+        "tooltip": "次數:每次送出後加 1,bypass 時不加;按 RESET 歸 0,回到 start。"
       },
       "mode": {
-        "tooltip": "模式:往上或往下數;to_end 到 end 停住,reset_after_end 到 end 後從 start 重來。"
+        "tooltip": "模式:往上或往下數;to_end 數到 end 停住,reset_after_end 數到 end 後從 start 重來。"
       },
       "start": {
         "tooltip": "起點:第一個輸出的數字,也是歸零後回到的數字。"
@@ -830,21 +830,21 @@
         "tooltip": "間距:每次加減的量,只取大小,方向由 mode 決定。"
       },
       "hold": {
-        "tooltip": "維持:每個數字輸出幾次才換下一個,兩層迴圈時用。"
+        "tooltip": "維持:每個數字重複輸出幾次才換下一個,用於兩層迴圈。"
       },
       "auto_reset": {
         "tooltip": "自動歸零:every hour 每到整點、every day 每到隔天回到 start。"
       },
       "reset": {
-        "tooltip": "歸零觸發:上游的值一改變就回到 start;不變時照常往下數。"
+        "tooltip": "歸零觸發:上游數值一改變就回到 start,沒變則照常計數。"
       }
     },
     "outputs": {
       "0": {
-        "tooltip": "整數:四捨五入。"
+        "tooltip": "整數:四捨五入後的值。"
       },
       "1": {
-        "tooltip": "小數:計算值。"
+        "tooltip": "小數:實際計算值。"
       },
       "2": {
         "tooltip": "文字:去掉多餘的零。"
@@ -852,13 +852,13 @@
     }
   },
   "TriggerGeN13": {
-    "description": "觸發器:按鈕或上游改變時輸出新值,接 Counter (GeN13) 的 reset 讓它歸零;可一顆控制多顆。",
+    "description": "觸發器:按下按鈕或上游改變時輸出新值。接 Counter (GeN13) 的 reset 讓它歸零,一顆可同時控制多顆。",
     "inputs": {
       "pulse": {
         "tooltip": "觸發累計:TRIGGER 按鈕每按一下加 1,數值改變即觸發。"
       },
       "input": {
-        "tooltip": "觸發輸入:上游的值一改變即觸發一次,例如接 Boolean 開關。"
+        "tooltip": "觸發輸入:上游數值一改變就觸發一次,例如接 Boolean 開關。"
       }
     },
     "outputs": {
@@ -871,29 +871,29 @@
     "description": "遙控整數:channel 名稱相同的節點互為分身,任一顆改值或切 bypass,其餘同步。",
     "inputs": {
       "channel": {
-        "tooltip": "分身組:名稱相同的 Remote Int 同步數值、生成後動作與 bypass。"
+        "tooltip": "頻道:名稱相同的 Remote Int 互為分身,同步數值、生成後動作與 bypass。"
       },
       "value": {
-        "tooltip": "數值:任一顆分身改值,同組其餘分身當下跟著變。"
+        "tooltip": "數值:任一顆分身改值,同組其他分身立即跟著變。"
       },
       "control_after_generate": {
-        "tooltip": "生成後:整組每次送出只變一次,fixed 不變,increment 加 1,decrement 減 1,randomize 隨機。"
+        "tooltip": "生成後:每次送出整組只變一次;fixed 不變,increment 加 1,decrement 減 1,randomize 隨機。"
       }
     },
     "outputs": {
       "0": {
-        "tooltip": "整數:同組分身的共同數值。"
+        "tooltip": "整數:同組分身共用的數值。"
       }
     }
   },
   "RemoteTextSwitchGeN13": {
-    "description": "Text Switch 遙控器:顯示選中框的標題,◀ ▶ 切換;同名 channel 的分身互相同步。",
+    "description": "Text Switch 遙控器:顯示選中框的標題,用 ◀ ▶ 切換;channel 名稱相同的分身互相同步。",
     "inputs": {
       "channel": {
-        "tooltip": "分身組:名稱相同的 Remote Text Switch 同步選號、auto next 與 bypass。"
+        "tooltip": "頻道:名稱相同的 Remote Text Switch 互為分身,同步選號、auto next 與 bypass。"
       },
       "value": {
-        "tooltip": "選號:Text Switch 整條鏈的接續編號,接 select_num 使用。"
+        "tooltip": "選號:Text Switch 整條串接的連續編號,接到 select_num 使用。"
       },
       "auto_next": {
         "tooltip": "自動換框:NEXT 每次送出後跳到下一個有內容的框,空白框略過。"
@@ -901,7 +901,7 @@
     },
     "outputs": {
       "0": {
-        "tooltip": "選號:接 Text Switch (GeN13) 的 select_num,可經過 Set / Get。"
+        "tooltip": "選號:接 Text Switch (GeN13) 的 select_num,可經過 Set / Get 傳遞。"
       }
     }
   },
@@ -909,15 +909,15 @@
     "description": "遙控小數:channel 名稱相同的節點互為分身,任一顆改值或切 bypass,其餘同步。",
     "inputs": {
       "channel": {
-        "tooltip": "分身組:同型別、名稱相同的節點同步數值與 bypass。"
+        "tooltip": "頻道:同型別且名稱相同的節點互為分身,同步數值與 bypass。"
       },
       "value": {
-        "tooltip": "數值:小數,最多四位;任一顆分身改值,同組其餘分身當下跟著變。"
+        "tooltip": "數值:小數,最多四位;任一顆分身改值,同組其他分身立即跟著變。"
       }
     },
     "outputs": {
       "0": {
-        "tooltip": "小數:同組分身的共同數值。"
+        "tooltip": "小數:同組分身共用的數值。"
       }
     }
   },
@@ -925,7 +925,7 @@
     "description": "遙控文字:channel 名稱相同的節點互為分身,任一顆改字或切 bypass,其餘同步。",
     "inputs": {
       "channel": {
-        "tooltip": "分身組:同型別、名稱相同的節點同步數值與 bypass。"
+        "tooltip": "頻道:同型別且名稱相同的節點互為分身,同步數值與 bypass。"
       },
       "value": {
         "tooltip": "文字:框內打字或接線輸入,即時同步到同組所有分身。"
@@ -933,7 +933,7 @@
     },
     "outputs": {
       "0": {
-        "tooltip": "文字:同組分身的共同內容。"
+        "tooltip": "文字:同組分身共用的內容。"
       }
     }
   },
@@ -941,46 +941,46 @@
     "description": "遙控開關:channel 名稱相同的節點互為分身,任一顆切換或切 bypass,其餘同步。",
     "inputs": {
       "channel": {
-        "tooltip": "分身組:同型別、名稱相同的節點同步數值與 bypass。"
+        "tooltip": "頻道:同型別且名稱相同的節點互為分身,同步數值與 bypass。"
       },
       "value": {
-        "tooltip": "開關:任一顆分身切換,同組其餘分身當下跟著切。"
+        "tooltip": "開關:任一顆分身切換,同組其他分身立即跟著切。"
       }
     },
     "outputs": {
       "0": {
-        "tooltip": "開關:同組分身的共同狀態。"
+        "tooltip": "開關:同組分身共用的狀態。"
       }
     }
   },
   "RemoteVideoGeN13": {
-    "description": "影片遙控:首幀依比例與像素量縮放,輸出寬高與秒數;同名 channel 的分身互相同步。",
+    "description": "影片遙控:首幀依比例與像素量縮放,輸出寬高與秒數;channel 名稱相同的分身互相同步。",
     "inputs": {
       "channel": {
-        "tooltip": "分身組:名稱相同的 Remote Video 同步全部欄位與 bypass。"
+        "tooltip": "頻道:名稱相同的 Remote Video 互為分身,同步所有欄位與 bypass。"
       },
       "aspect_ratio": {
-        "tooltip": "比例:keep 照首幀圖比例(沒接圖時 9:16),其他比例置中裁切。"
+        "tooltip": "比例:keep 依首幀圖比例(沒接圖時為 9:16),其他比例從中央裁切。"
       },
       "megapixels": {
-        "tooltip": "像素量:百萬像素,◀ ▶ 每次 0.1,可打到小數兩位;寬高對齊 32。"
+        "tooltip": "像素量:百萬像素,◀ ▶ 每次 0.1,可輸入到小數兩位;寬高對齊 32。"
       },
       "seconds": {
-        "tooltip": "秒數:影片長度,◀ ▶ 每次 1 秒,可打到小數一位。"
+        "tooltip": "秒數:影片長度,◀ ▶ 每次 1 秒,可輸入到小數一位。"
       },
       "frame_rule": {
-        "tooltip": "幀數規則:模型與 FPS,length 往上補到 MiniMax H3、Wan 2.1 / 2.2、LTX 的合法幀數。"
+        "tooltip": "幀數規則:模型與 FPS;影片長度往上補到 MiniMax H3、Wan 2.1 / 2.2、LTX 的合法幀數。"
       },
       "steps": {
         "tooltip": "步數:取樣步數,接 KSampler 或 MiniMax H3 Dual Clock Sampler 的 steps。"
       },
       "image": {
-        "tooltip": "首幀圖:縮放到指定像素量後由 IMAGE 輸出。"
+        "tooltip": "首幀圖:縮放到指定像素量後從 IMAGE 輸出。"
       }
     },
     "outputs": {
       "0": {
-        "tooltip": "首幀:縮放後的圖;沒接圖時為空。"
+        "tooltip": "首幀:縮放後的圖片;沒接圖時為空。"
       },
       "1": {
         "tooltip": "寬:像素。"
@@ -995,10 +995,10 @@
         "tooltip": "秒數:INT,四捨五入。"
       },
       "5": {
-        "tooltip": "FPS:FLOAT,frame_rule 選定的幀率,接 Video Combine 的 frame_rate。"
+        "tooltip": "FPS:frame_rule 選定的幀率(FLOAT),接 Video Combine 的 frame_rate。"
       },
       "6": {
-        "tooltip": "幀數:依 frame_rule 補齊的影片長度。"
+        "tooltip": "幀數:依 frame_rule 補齊後的影片長度。"
       },
       "7": {
         "tooltip": "步數:取樣步數。"
