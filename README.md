@@ -1,3 +1,5 @@
+<p align="center"><img src="docs/banner.jpg" alt="ComfyUI-GeN13" width="100%"></p>
+
 # ComfyUI-GeN13
 
 Custom nodes for ComfyUI, built around an image-to-video and portrait workflow: temporal color matching for generated video, portrait retouching, image loaders that hide their preview, text switching with chainable boxes, and "remote" nodes that keep one value in sync across a large graph.
