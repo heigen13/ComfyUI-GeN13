@@ -14,17 +14,23 @@ ComfyUI 自訂節點包，圍繞圖生影片與人像工作流設計：在大型
 
 在每個需要同一個數值的地方，各放一顆 Remote Int / Float / String / Boolean。`channel` 名稱相同的節點互為分身，數值、步進與 bypass 全部同步；改任何一顆，其他分身立即跟著變，子圖裡也一樣。不用再從一個 Primitive 拉長線橫跨整個工作流，也不用捲回去找那一個設定。
 
+<p align="center"><img src="docs/remote.gif" alt="Remote 動畫示範" width="80%"></p>
+
 <p align="center"><img src="docs/remote.png" alt="Remote 節點與單一 Primitive 的比較" width="100%"></p>
 
 ### Text Switch：切換提示詞，串接不限數量
 
 直接在有標題的框裡打提示詞，選一框輸出。多顆並排用 chain 串接，框數不限；編號一路接續，由第一顆或畫布任何角落的 Remote Text Switch 選框。`auto next` 每次送出自動跳到下一個有內容的框，而且只有選中那一框的上游會執行。
 
+<p align="center"><img src="docs/textswitch.gif" alt="Text Switch 動畫示範" width="80%"></p>
+
 <p align="center"><img src="docs/textswitch.png" alt="Text Switch 串接與 Remote Text Switch" width="100%"></p>
 
 ### 隱私圖片節點：螢幕分享不怕露圖
 
 Load、Save、Preview Image Private 的節點預覽可以蓋上馬賽克、毛玻璃、漸層、色盤或純色，按住預覽圖才顯示原圖。圖片本身完全不會被改動，直播或分享螢幕都安心。
+
+<p align="center"><img src="docs/privacy.gif" alt="隱私遮罩動畫示範" width="80%"></p>
 
 <p align="center"><img src="docs/privacy.jpg" alt="隱私遮罩樣式" width="100%"></p>
 

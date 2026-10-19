@@ -14,17 +14,23 @@ Every node's display name ends with **(GeN13)**: double-click the canvas and typ
 
 Put a Remote Int / Float / String / Boolean next to every place that needs the same value. Clones that share a `channel` name stay in sync: value, step and bypass. Change any clone and every clone follows, even inside subgraphs. No more long wires across the whole graph, and no more scrolling back to one setting.
 
+<p align="center"><img src="docs/remote.gif" alt="Remote demo" width="80%"></p>
+
 <p align="center"><img src="docs/remote.png" alt="Remote nodes compared with a single Primitive" width="100%"></p>
 
 ### Text Switch: switch prompts, chain without limits
 
 Type prompts straight into named boxes and output the one you pick. Chain nodes side by side for as many boxes as you need; numbering continues across the chain and the first node, or a Remote Text Switch anywhere on the canvas, picks the box. `auto next` steps to the next filled box on every queue, and only the selected box's upstream runs.
 
+<p align="center"><img src="docs/textswitch.gif" alt="Text Switch demo" width="80%"></p>
+
 <p align="center"><img src="docs/textswitch.png" alt="Text Switch chain with Remote Text Switch" width="100%"></p>
 
 ### Private image nodes: screen-share without showing your images
 
 Load, Save and Preview Image Private cover the node preview with a mosaic, frosted glass, gradient, palette or solid color. Press and hold the preview to peek at the original. The image itself is never changed, so streaming or sharing your screen is safe.
+
+<p align="center"><img src="docs/privacy.gif" alt="Privacy demo" width="80%"></p>
 
 <p align="center"><img src="docs/privacy.jpg" alt="Privacy cover styles" width="100%"></p>
 

@@ -14,17 +14,23 @@
 
 同じ値が必要な場所それぞれに Remote Int / Float / String / Boolean を置きます。`channel` 名が同じノードは分身となり、値、ステップ、バイパスがすべて同期します。どれか 1 つを変えると、サブグラフの中でも残りがすぐに追従します。1 つの Primitive からワークフロー全体に長い線を引く必要も、設定を探してスクロールする必要もありません。
 
+<p align="center"><img src="docs/remote.gif" alt="Remote のアニメーション" width="80%"></p>
+
 <p align="center"><img src="docs/remote.png" alt="Remote ノードと単一の Primitive の比較" width="100%"></p>
 
 ### Text Switch:プロンプトを切り替え、いくつでも連結
 
 タイトル付きの枠に直接プロンプトを入力し、選んだ 1 枠を出力します。chain で横に連結すれば枠数は無制限。番号は連結全体で続き、先頭のノード、またはキャンバスのどこかに置いた Remote Text Switch で枠を選びます。`auto next` はキューに送るたびに内容のある次の枠へ進み、選ばれた枠の上流だけが実行されます。
 
+<p align="center"><img src="docs/textswitch.gif" alt="Text Switch のアニメーション" width="80%"></p>
+
 <p align="center"><img src="docs/textswitch.png" alt="Text Switch の連結と Remote Text Switch" width="100%"></p>
 
 ### プライベート画像ノード:画面共有でも画像を見せない
 
 Load、Save、Preview Image Private はノードのプレビューにモザイク、すりガラス、グラデーション、パレット、単色のカバーをかけられます。プレビューを長押しすると元画像が見えます。画像そのものは一切変更されないので、配信や画面共有も安心です。
+
+<p align="center"><img src="docs/privacy.gif" alt="プライバシーカバーのアニメーション" width="80%"></p>
 
 <p align="center"><img src="docs/privacy.jpg" alt="プライバシーカバーのスタイル" width="100%"></p>
 
