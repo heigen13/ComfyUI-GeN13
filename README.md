@@ -64,7 +64,7 @@ Optional: the `nvidia_rtx_vsr` upscale method in **Resize** needs the `nvidia-vf
 
 ## Notes
 
-- Tooltips and descriptions are in Traditional Chinese for now.
+- Tooltips and descriptions are in English, with a Traditional Chinese translation shown when the ComfyUI language is set to 繁體中文.
 - Built and tested on ComfyUI 0.40 with the classic canvas (Nodes 1.0). Nodes 2.0 is supported for the image previews.
 
 ## License
@@ -109,6 +109,10 @@ git clone https://github.com/heigen13/ComfyUI-GeN13
 - **Counter**：每次送出計數，可設範圍、每個數字維持幾次、按鈕歸零、上游歸零、每小時或每天自動歸零；bypass 時停住。
 - **Trigger**：按鈕或上游改變時輸出新值，接 Counter 的 reset。
 - **Number**：一個數字同時輸出 INT、FLOAT、STRING。
+
+### 備註
+
+- 節點說明以英文為主，附繁體中文翻譯：ComfyUI 語言設為「繁體中文」時自動顯示中文。
 
 ### 授權
 

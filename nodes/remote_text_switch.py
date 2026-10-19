@@ -22,22 +22,22 @@ class RemoteTextSwitch:
             "required": {
                 "channel": ("STRING", {
                     "default": "switch", "multiline": False,
-                    "tooltip": "分身組:名稱相同的 Remote Text Switch 同步選號、auto next 與 bypass。"}),
+                    "tooltip": "Channel: Remote Text Switch nodes with the same channel name share number, auto next and bypass."}),
                 "value": ("INT", {
                     "default": 1, "min": 1, "max": LIMIT, "step": 1,
-                    "tooltip": "選號:Text Switch 整條鏈的接續編號,接 select_num 使用。"}),
+                    "tooltip": "Box number: counts across the whole Text Switch chain; connect to select_num."}),
                 "auto_next": (AUTO, {
                     "default": "OFF",
-                    "tooltip": "自動換框:NEXT 每次送出後跳到下一個有內容的框,空白框略過。"}),
+                    "tooltip": "Auto next: NEXT moves to the next box with content after each queue, skipping empty boxes."}),
             },
         }
 
     RETURN_TYPES = ("INT",)
     RETURN_NAMES = ("INT",)
-    OUTPUT_TOOLTIPS = ("選號:接 Text Switch (GeN13) 的 select_num,可經過 Set / Get。",)
+    OUTPUT_TOOLTIPS = ("Box number: connect to select_num of Text Switch (GeN13); can pass through Set / Get.",)
     FUNCTION = "out"
     CATEGORY = "GeN13/text"
-    DESCRIPTION = "Text Switch 遙控器:顯示選中框的標題,◀ ▶ 切換;同名 channel 的分身互相同步。"
+    DESCRIPTION = "Remote for Text Switch: shows the selected box's title, ◀ ▶ step through the boxes; clones with the same channel name stay in sync."
 
     def out(self, channel, value, **kw):
         return (int(value),)

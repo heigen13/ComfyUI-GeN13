@@ -188,42 +188,42 @@ class LoadLatestImage:
             "required": {
                 "folder_path": ("STRING", {
                     "default": DEFAULT_FOLDER, "multiline": False,
-                    "tooltip": "資料夾:要取圖的資料夾完整路徑。"}),
+                    "tooltip": "Folder: full path of the folder to load from."}),
                 "sort_by": (SORT_MODES, {
                     "default": "newest first",
-                    "tooltip": "排序:newest first 為最新存檔在前,name 依檔名自然排序。"}),
+                    "tooltip": "Sort by: newest first puts the most recently saved file first; name sorts file names in natural order."}),
                 "index": ("INT", {
                     "default": 0, "min": 0, "max": 99999, "step": 1,
-                    "tooltip": "序號:0 為排序第一張,1 為第二張,依此類推。"}),
+                    "tooltip": "Index: position in the sort order; 0 is the first image, 1 the second, and so on."}),
                 "count": ("INT", {
                     "default": 1, "min": 1, "max": MAX_COUNT, "step": 1,
-                    "tooltip": "張數:從序號起連續載入幾張成批次。尺寸不同時縮放到第一張。"}),
+                    "tooltip": "Count: images loaded in a row from index, as one batch. Different sizes are scaled to the first image."}),
                 "filename_filter": ("STRING", {
                     "default": "*", "multiline": False,
-                    "tooltip": "檔名篩選:萬用字元,例如 ComfyUI_*,多組以 ; 分隔。"}),
+                    "tooltip": "Filename filter: wildcards such as ComfyUI_*; separate multiple patterns with ;."}),
                 "subfolders": ("BOOLEAN", {
                     "default": False, "label_on": "INCLUDE", "label_off": "EXCLUDE",
-                    "tooltip": "子資料夾:INCLUDE 時一併搜尋底下所有子資料夾。"}),
+                    "tooltip": "Subfolders: INCLUDE also searches every subfolder below."}),
                 "extensions": ("STRING", {
                     "default": DEFAULT_EXT, "multiline": False,
-                    "tooltip": "副檔名:以逗號分隔,不分大小寫。"}),
+                    "tooltip": "Extensions: comma-separated, not case-sensitive."}),
             }
         }
 
     RETURN_TYPES = ("IMAGE", "MASK", "INT", "INT", "STRING", "STRING", "INT")
     RETURN_NAMES = ("IMAGE", "MASK", "width", "height", "filename", "path", "total")
     OUTPUT_TOOLTIPS = (
-        "影像:單張或批次。",
-        "遮罩:透明區域為 1,無透明通道時全 0。",
-        "寬度:輸出影像寬度(px)。",
-        "高度:輸出影像高度(px)。",
-        "檔名:第一張的檔名(不含路徑)。",
-        "路徑:第一張的完整路徑。",
-        "總數:符合條件的檔案張數。",
+        "Image: a single image or a batch.",
+        "Mask: 1 in transparent areas; all 0 when the image has no alpha channel.",
+        "Width: output image width in px.",
+        "Height: output image height in px.",
+        "Filename: name of the first image, without path.",
+        "Path: full path of the first image.",
+        "Total: number of matching files.",
     )
     FUNCTION = "load"
     CATEGORY = "GeN13/image"
-    DESCRIPTION = "從資料夾依排序取圖:可選最新、最舊或檔名排序,支援檔名篩選、子資料夾、連續載入多張;寫入中或損壞的檔自動略過。"
+    DESCRIPTION = "Loads images from a folder in sort order (newest, oldest or by name), with filename filters, subfolders and batch loading; files still being written or damaged are skipped."
 
     def load(self, folder_path, sort_by, index, count, filename_filter, subfolders, extensions):
         folder, files = _list(folder_path, sort_by, filename_filter, subfolders, extensions)

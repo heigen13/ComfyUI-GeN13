@@ -19,6 +19,7 @@
 // This file registers no extension of its own; ComfyUI loading it directly is harmless.
 
 import { app } from "../../scripts/app.js";
+import { T, setTip, setWidgetTip } from "./g13_i18n.js";
 import { applyWireLock, wireSuffix } from "./remote_link.js";
 
 function w(node, name) {
@@ -270,7 +271,7 @@ export function registerRemote({ nodeId, extName, synced = ["value"], stepPicker
     ta.className = "g13rs-ta";
     ta.spellcheck = false;
     ta.placeholder = "value";
-    ta.title = "文字:打字時即時同步到同組所有分身。";
+    setTip(ta, T("Text: syncs to every clone in the group as you type.", "文字:打字時即時同步到同組所有分身。"));
     bar.append(cnt, tb);
     box.append(bar, ta);
     wrap.appendChild(box);
@@ -295,7 +296,7 @@ export function registerRemote({ nodeId, extName, synced = ["value"], stepPicker
     const mk = (k, tip, act) => {
       const b = document.createElement("button");
       b.className = "g13rs-b";
-      b.title = tip;
+      setTip(b, tip);
       b.innerHTML = CLIP_ICON[k];
       b.addEventListener("click", async (ev) => {
         ev.stopPropagation();
@@ -310,13 +311,13 @@ export function registerRemote({ nodeId, extName, synced = ["value"], stepPicker
       });
       return b;
     };
-    const cut = mk("cut", "剪下:複製全部內容後清空。", async () => {
+    const cut = mk("cut", T("Cut: copies all content, then clears the box.", "剪下:複製全部內容後清空。"), async () => {
       if (boxRO(node) || !(await clipWrite(String(node._g13v ?? "")))) return false;
       setText("");
       return true;
     });
-    const copy = mk("copy", "複製:複製全部內容。", () => clipWrite(String(node._g13v ?? "")));
-    const paste = mk("paste", "貼上:換行後接在最後。", async () => {
+    const copy = mk("copy", T("Copy: copies all content.", "複製:複製全部內容。"), () => clipWrite(String(node._g13v ?? "")));
+    const paste = mk("paste", T("Paste: adds to the end on a new line.", "貼上:換行後接在最後。"), async () => {
       if (boxRO(node)) return false;
       const t = await clipRead();
       if (t == null) {
@@ -399,7 +400,7 @@ export function registerRemote({ nodeId, extName, synced = ["value"], stepPicker
           sw.serialize = false;
           sw.options = sw.options || {};
           sw.options.serialize = false;
-          sw.tooltip = "步進:◀ ▶ 每按一次增減的量,顯示的小數位數跟著走(最少一位)。";
+          setWidgetTip(sw, T("Step: amount added or subtracted per ◀ ▶ press; the shown decimals follow it (at least one).", "步進:◀ ▶ 每按一次增減的量,顯示的小數位數跟著走(最少一位)。"));
           applyStep(node, stepDef, stepField);
         }
         setup?.(node);

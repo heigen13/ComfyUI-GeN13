@@ -45,8 +45,8 @@ FORMATS = ["PNG", "JPG", "BMP", "PNG + JPG"]
 SAVE_EXTS = ("png", "jpg", "jpeg", "bmp")
 THUMB_EXTS = {".png", ".jpg", ".jpeg", ".webp", ".bmp", ".tif", ".tiff", ".gif"}
 THUMB_PX = 512
-WIDTH_TIP = "寬度:影像寬度(px),批次以第一張為準。"
-HEIGHT_TIP = "高度:影像高度(px),批次以第一張為準。"
+WIDTH_TIP = "Width: image width in px; for a batch, the first image."
+HEIGHT_TIP = "Height: image height in px; for a batch, the first image."
 
 
 _input_files = list_input_images
@@ -60,17 +60,17 @@ class LoadImagePrivate:
         return {
             "required": {
                 "image": (_input_files(), {
-                    "tooltip": "圖片:input 資料夾內的檔案,以節點上的上傳鈕或拖放加入。"}),
+                    "tooltip": "Image: a file in the input folder; add one with the node's upload button or by drag and drop."}),
             }
         }
 
     RETURN_TYPES = ("IMAGE", "MASK", "INT", "INT")
     RETURN_NAMES = ("IMAGE", "MASK", "width", "height")
-    OUTPUT_TOOLTIPS = ("影像:多幀檔輸出為批次。", "遮罩:透明區域為 1,無透明通道時全 0。",
+    OUTPUT_TOOLTIPS = ("Image: multi-frame files are output as a batch.", "Mask: 1 in transparent areas; all 0 when the image has no alpha channel.",
                        WIDTH_TIP, HEIGHT_TIP)
     FUNCTION = "load"
     CATEGORY = "GeN13/image"
-    DESCRIPTION = "載入圖片,節點預覽可切換隱私遮罩(馬賽克、漸層、純色),按住預覽圖顯示原圖。"
+    DESCRIPTION = "Loads an image; the node preview can be hidden behind a privacy cover (mosaic, gradient or solid color). Press and hold the preview to see the original."
 
     def load(self, image):
         img, mask, w, h = load_image_file(folder_paths.get_annotated_filepath(image))
@@ -111,36 +111,36 @@ class SaveImagePrivate:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "images": ("IMAGE", {"tooltip": "影像:要存檔的單張或批次。"}),
+                "images": ("IMAGE", {"tooltip": "Images: a single image or a batch to save."}),
                 "save": ("BOOLEAN", {
                     "default": True, "label_on": "SAVE", "label_off": "PREVIEW",
-                    "tooltip": "存檔:SAVE 存入 output,PREVIEW 只暫存預覽(同 Preview Image)。"}),
+                    "tooltip": "Save: SAVE writes to output; PREVIEW only keeps a temporary preview, like Preview Image."}),
                 "filename_prefix": ("STRING", {
                     "default": "ComfyUI",
-                    "tooltip": "檔名前綴:可含子資料夾,例如 PRIVATE/img。"}),
+                    "tooltip": "Filename prefix: may include subfolders, such as PRIVATE/img."}),
                 "format": (FORMATS, {
                     "default": "PNG",
-                    "tooltip": "格式:PNG + JPG 同一流水號各存一張,PNG 含工作流,JPG 不含。"}),
+                    "tooltip": "Format: PNG + JPG saves both under the same number; the PNG embeds the workflow, the JPG does not."}),
                 "padding": ("INT", {
                     "default": 5, "min": 1, "max": 10, "step": 1,
-                    "tooltip": "流水號位數:不足補零,4 為 0001。"}),
+                    "tooltip": "Counter digits: the file number is zero-padded to this width; 4 gives 0001."}),
                 "jpg_quality": ("INT", {
                     "default": 95, "min": 1, "max": 100, "step": 1,
-                    "tooltip": "JPG 品質:數值越高畫質越好、檔案越大。"}),
+                    "tooltip": "JPG quality: higher values give better quality and larger files."}),
                 "png_compression": ("INT", {
                     "default": 4, "min": 0, "max": 9, "step": 1,
-                    "tooltip": "PNG 壓縮:無失真,數值越高檔案越小、存檔越慢。"}),
+                    "tooltip": "PNG compression: lossless; higher values give smaller files but slower saving."}),
             },
             "hidden": {"prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO"},
         }
 
     RETURN_TYPES = ("IMAGE", "INT", "INT")
     RETURN_NAMES = ("IMAGE", "width", "height")
-    OUTPUT_TOOLTIPS = ("影像:原樣傳出,可接後續節點。", WIDTH_TIP, HEIGHT_TIP)
+    OUTPUT_TOOLTIPS = ("Image: passed through unchanged for further nodes.", WIDTH_TIP, HEIGHT_TIP)
     FUNCTION = "save"
     OUTPUT_NODE = True
     CATEGORY = "GeN13/image"
-    DESCRIPTION = "存檔為 PNG、JPG、BMP 或 PNG + JPG,節點預覽可切換隱私遮罩,按住預覽圖顯示原圖。"
+    DESCRIPTION = "Saves as PNG, JPG, BMP or PNG + JPG; the node preview can be hidden behind a privacy cover. Press and hold the preview to see the original."
 
     def save(self, images, save, filename_prefix, format, padding, jpg_quality, png_compression,
              prompt=None, extra_pnginfo=None):
@@ -230,17 +230,17 @@ class PreviewImagePrivate:
     @classmethod
     def INPUT_TYPES(cls):
         return {
-            "required": {"images": ("IMAGE", {"tooltip": "影像:要預覽的單張或批次。"})},
+            "required": {"images": ("IMAGE", {"tooltip": "Images: a single image or a batch to preview."})},
             "hidden": {"prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO"},
         }
 
     RETURN_TYPES = ("IMAGE", "INT", "INT")
     RETURN_NAMES = ("IMAGE", "width", "height")
-    OUTPUT_TOOLTIPS = ("影像:原樣傳出,可接後續節點。", WIDTH_TIP, HEIGHT_TIP)
+    OUTPUT_TOOLTIPS = ("Image: passed through unchanged for further nodes.", WIDTH_TIP, HEIGHT_TIP)
     FUNCTION = "preview"
     OUTPUT_NODE = True
     CATEGORY = "GeN13/image"
-    DESCRIPTION = "預覽圖片(暫存,不存入 output),節點預覽可切換隱私遮罩,按住預覽圖顯示原圖。"
+    DESCRIPTION = "Previews images without saving them to output; the node preview can be hidden behind a privacy cover. Press and hold the preview to see the original."
 
     def preview(self, images, prompt=None, extra_pnginfo=None):
         results = _save_temp(images, prompt, extra_pnginfo)

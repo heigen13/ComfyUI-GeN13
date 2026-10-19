@@ -16,6 +16,7 @@
 //   - grey line at the bottom: channel · N mirrors · target count
 
 import { app } from "../../scripts/app.js";
+import { T, setTip, setWidgetTip } from "./g13_i18n.js";
 import { applyWireLock, wireSuffix, wiredMirrors } from "./remote_link.js";
 
 const NODE_ID = "RemoteTextSwitchGeN13";
@@ -231,7 +232,7 @@ function makeRow(node) {
   const mk = (dir, cls, tip) => {
     const b = document.createElement("button");
     b.className = cls;
-    b.title = tip;
+    setTip(b, tip);
     b.appendChild(svgChevron(dir));
     b.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -246,7 +247,7 @@ function makeRow(node) {
   const ttl = document.createElement("span");
   ttl.className = "g13tr-ttl";
   mid.append(num, ttl);
-  row.append(mk(-1, "g13tr-prev", "上一框:跳到前一個有內容的框。"), mid, mk(1, "g13tr-next", "下一框:跳到下一個有內容的框。"));
+  row.append(mk(-1, "g13tr-prev", T("Previous: goes to the previous box with content.", "上一框:跳到前一個有內容的框。")), mid, mk(1, "g13tr-next", T("Next: goes to the next box with content.", "下一框:跳到下一個有內容的框。")));
   row.addEventListener("pointerdown", (e) => e.stopPropagation());
   node._g13row = { row, num, ttl };
   return row;

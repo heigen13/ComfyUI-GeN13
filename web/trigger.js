@@ -6,6 +6,7 @@
 //     changed. The armed pulse is kept in node.properties.g13_armed so it survives F5.
 
 import { app } from "../../scripts/app.js";
+import { T, setTip, setWidgetTip } from "./g13_i18n.js";
 
 const NODE_ID = "TriggerGeN13";
 const BTN_H = 46; // margin 1 + pad 6 / 6 + 32px button
@@ -100,7 +101,7 @@ app.registerExtension({
 
       const btn = document.createElement("button");
       btn.className = "g13tg-big";
-      btn.title = "觸發:pulse 加 1,下一次執行時接著的 Counter 歸零。";
+      setTip(btn, T("Trigger: adds 1 to pulse; the connected Counter resets on the next run.", "觸發:pulse 加 1,下一次執行時接著的 Counter 歸零。"));
       btn.innerHTML = ICON + "<span>TRIGGER</span>";
       btn.addEventListener("click", (e) => {
         e.stopPropagation();

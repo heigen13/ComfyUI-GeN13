@@ -12,6 +12,7 @@
 //     number during hold still shows that a run happened.
 
 import { app } from "../../scripts/app.js";
+import { T, setTip, setWidgetTip } from "./g13_i18n.js";
 
 const NODE_ID = "CounterGeN13";
 const BAR_H = 32;
@@ -194,7 +195,7 @@ app.registerExtension({
       inf.className = "g13ct-inf";
       const btn = document.createElement("button");
       btn.className = "g13ct-bt";
-      btn.title = "歸零:run 回到 0,下一次輸出 start。";
+      setTip(btn, T("Reset: sets run to 0; the next output is start.", "歸零:run 回到 0,下一次輸出 start。"));
       setBtn(btn, false);
       btn.addEventListener("click", (e) => {
         e.stopPropagation();

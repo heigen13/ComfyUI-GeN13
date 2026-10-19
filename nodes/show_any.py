@@ -126,12 +126,12 @@ class ShowAny:
             "required": {
                 "content": ("STRING", {
                     "default": "", "multiline": True,
-                    "tooltip": "內容:沒接 any 時即為輸出;接上 any 時顯示上游內容。"}),
+                    "tooltip": "Content: used as the output when any is not connected; shows the upstream content when it is."}),
             },
             "optional": {
                 "any": (ANY, {
                     "forceInput": True,
-                    "tooltip": "輸入:任何型別;文字、數字、JSON 照顯示,IMAGE 等顯示尺寸摘要。"}),
+                    "tooltip": "Input: any type. Text, numbers and JSON are shown as is; IMAGE and other tensors show a size summary."}),
             },
         }
 
@@ -140,13 +140,13 @@ class ShowAny:
     RETURN_NAMES = ("STRING", "any")
     OUTPUT_IS_LIST = (True, True)
     OUTPUT_TOOLTIPS = (
-        "文字:與框內顯示相同,FLOAT 最多 6 位小數,清單與字典為 JSON。",
-        "原物件:上游送來的內容不經轉換直接往下傳。",
+        "Text: as shown in the box; FLOAT up to 6 decimal places, lists and dicts as JSON.",
+        "Passthrough: the upstream object, unchanged.",
     )
     OUTPUT_NODE = True
     FUNCTION = "show"
     CATEGORY = "GeN13/utils"
-    DESCRIPTION = "任何型別都能接:顯示內容並輸出 STRING 與原物件;可剪下、複製、貼上,內容隨工作流保存。"
+    DESCRIPTION = "Accepts any type: shows the content and outputs it as STRING plus the original object. Supports cut, copy and paste; the content is saved with the workflow."
 
     def show(self, content, any=None):
         c = content[0] if isinstance(content, (list, tuple)) and content else content

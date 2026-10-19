@@ -102,40 +102,40 @@ class Counter:
             "required": {
                 "run": ("INT", {
                     "default": 0, "min": 0, "max": LIMIT, "step": 1,
-                    "tooltip": "次數:每次送出後加 1,bypass 時不加。RESET 歸 0 即回到 start。"}),
+                    "tooltip": "Run count: adds 1 after each queue, not while bypassed. RESET sets it to 0, which returns to start."}),
                 "mode": (MODES, {
                     "default": "increment_reset_after_end",
-                    "tooltip": "模式:往上或往下數;to_end 到 end 停住,reset_after_end 到 end 後從 start 重來。"}),
+                    "tooltip": "Mode: count up or down; to_end stops at end, reset_after_end starts over from start after end."}),
                 "start": ("FLOAT", {
                     "default": 0.0, "min": -LIMIT, "max": LIMIT, "step": 0.001, "round": 0.000001,
-                    "tooltip": "起點:第一個輸出的數字,也是歸零後回到的數字。"}),
+                    "tooltip": "Start: the first number output, and the number a reset returns to."}),
                 "end": ("FLOAT", {
                     "default": 10.0, "min": -LIMIT, "max": LIMIT, "step": 0.001, "round": 0.000001,
-                    "tooltip": "終點:to_end 與 reset_after_end 模式的最後一個數字。"}),
+                    "tooltip": "End: the last number in the to_end and reset_after_end modes."}),
                 "step": ("FLOAT", {
                     "default": 1.0, "min": 0.000001, "max": LIMIT, "step": 0.001, "round": 0.000001,
-                    "tooltip": "間距:每次加減的量,只取大小,方向由 mode 決定。"}),
+                    "tooltip": "Step: amount added or subtracted each time; only the size counts, mode sets the direction."}),
                 "hold": ("INT", {
                     "default": 1, "min": 1, "max": 100000, "step": 1,
-                    "tooltip": "維持:每個數字輸出幾次才換下一個,兩層迴圈時用。"}),
+                    "tooltip": "Hold: times each number is output before moving on; for nested loops."}),
                 "auto_reset": (AUTO, {
                     "default": "off",
-                    "tooltip": "自動歸零:every hour 每到整點、every day 每到隔天回到 start。"}),
+                    "tooltip": "Auto reset: every hour returns to start on the hour, every day at the start of each day."}),
             },
             "optional": {
                 "reset": (ANY, {
                     "forceInput": True,
-                    "tooltip": "歸零觸發:上游的值一改變就回到 start;不變時照常往下數。"}),
+                    "tooltip": "Reset: returns to start whenever the upstream value changes; otherwise counting continues."}),
             },
             "hidden": {"unique_id": "UNIQUE_ID"},
         }
 
     RETURN_TYPES = ("INT", "FLOAT", "STRING")
     RETURN_NAMES = ("INT", "FLOAT", "STRING")
-    OUTPUT_TOOLTIPS = ("整數:四捨五入。", "小數:計算值。", "文字:去掉多餘的零。")
+    OUTPUT_TOOLTIPS = ("Integer: the value rounded.", "Decimal: the exact value.", "Text: trailing zeros removed.")
     FUNCTION = "count"
     CATEGORY = "GeN13/utils"
-    DESCRIPTION = "計數器:每次送出 run 加 1,依 mode 與範圍輸出數字;可用按鈕、上游改變或整點隔天歸零。"
+    DESCRIPTION = "Counter: advances once per queue and outputs a number within the set range. Resets by button, by an upstream change, or every hour or day."
 
     @classmethod
     def IS_CHANGED(cls, auto_reset="off", **kw):

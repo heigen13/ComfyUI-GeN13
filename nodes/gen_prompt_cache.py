@@ -184,22 +184,22 @@ class GenPromptCache:
             "required": {
                 "mode": (MODES, {
                     "default": MODE_AUTO,
-                    "tooltip": "模式:auto 有上游就用並存檔,否則讀檔。1 一律跑上游,2 只讀檔不載入上游,3 輸出空字串。",
+                    "tooltip": "Mode: auto uses and saves upstream text if connected, else reads the file. 1 always runs upstream, 2 reads the file only, 3 outputs nothing.",
                 }),
                 "save_as": ("STRING", {
                     "default": "last_prompt.txt",
                     "multiline": False,
-                    "tooltip": "存檔名:寫入 output\\prompt_cache\\,省略 .txt 自動補上,留空為 last_prompt.txt。",
+                    "tooltip": "Save as: file name in output\\prompt_cache\\; .txt is added if omitted. Empty saves to last_prompt.txt.",
                 }),
                 "read_file": (_list_files(), {
                     "default": SAME_AS_SAVE,
-                    "tooltip": "讀檔:預設跟著 save_as。.prev 為自動備份,.fav 為收藏;清單每次執行後更新。",
+                    "tooltip": "Read file: follows save_as by default. .prev files are automatic backups, .fav files are favorites; the list refreshes after each run.",
                 }),
                 "auto_backup": ("BOOLEAN", {
                     "default": True,
                     "label_on": "keep previous",
                     "label_off": "off",
-                    "tooltip": "自動備份:覆蓋前把舊檔存成 <名稱>.prev.txt,只留一代;內容相同不重存。",
+                    "tooltip": "Auto backup: before overwriting, the old file is kept as <name>.prev.txt (one generation); unchanged text is not saved again.",
                 }),
             },
             "hidden": {
@@ -210,17 +210,17 @@ class GenPromptCache:
                 "text": ("STRING", {
                     "forceInput": True,
                     "lazy": True,
-                    "tooltip": "文字:上游來源(通常接 LLM 輸出),只在需要的模式才會要求上游執行。",
+                    "tooltip": "Text: the upstream source, usually an LLM output; upstream runs only in the modes that need it.",
                 }),
             },
         }
 
     RETURN_TYPES = ("STRING",)
     RETURN_NAMES = ("text",)
-    OUTPUT_TOOLTIPS = ("文字:auto 與 1 為上游文字,2 為檔案內容,3 為空字串。",)
+    OUTPUT_TOOLTIPS = ("Text: upstream text in auto and 1, file content in 2, empty in 3.",)
     FUNCTION = "run"
     CATEGORY = "GeN13/text"
-    DESCRIPTION = "把上游文字(如 LLM 腳本)存檔,之後可不載入上游直接重用;保留一代自動備份與任意數量的收藏。"
+    DESCRIPTION = "Saves upstream text, such as an LLM script, to a file so it can be reused later without loading the upstream nodes; keeps one automatic backup and any number of favorites."
 
     def check_lazy_status(self, mode, save_as, read_file, auto_backup, text=None,
                           prompt=None, unique_id=None, **kwargs):

@@ -24,22 +24,22 @@ class Trigger:
             "required": {
                 "pulse": ("INT", {
                     "default": 0, "min": 0, "max": 2_000_000_000, "step": 1,
-                    "tooltip": "觸發累計:TRIGGER 按鈕每按一下加 1,數值改變即觸發。"}),
+                    "tooltip": "Pulse: the TRIGGER button adds 1 per press; each change fires the trigger."}),
             },
             "optional": {
                 "input": (ANY, {
                     "forceInput": True,
-                    "tooltip": "觸發輸入:上游的值一改變即觸發一次,例如接 Boolean 開關。"}),
+                    "tooltip": "Input: fires once whenever the upstream value changes, such as a Boolean switch."}),
             },
             "hidden": {"unique_id": "UNIQUE_ID"},
         }
 
     RETURN_TYPES = ("INT",)
     RETURN_NAMES = ("INT",)
-    OUTPUT_TOOLTIPS = ("觸發值:每次觸發換新值,接 Counter (GeN13) 的 reset。",)
+    OUTPUT_TOOLTIPS = ("Trigger value: a new value on each trigger; connect to the reset of Counter (GeN13).",)
     FUNCTION = "fire"
     CATEGORY = "GeN13/utils"
-    DESCRIPTION = "觸發器:按鈕或上游改變時輸出新值,接 Counter (GeN13) 的 reset 讓它歸零;可一顆控制多顆。"
+    DESCRIPTION = "Trigger: outputs a new value when its button is pressed or its input changes. Connect it to the reset of Counter (GeN13); one trigger can reset many."
 
     def fire(self, pulse, input=None, unique_id=None):
         st = _STATE.setdefault(str(unique_id), {"last": _MISSING, "changes": 0})

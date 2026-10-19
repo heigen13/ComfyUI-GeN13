@@ -292,25 +292,25 @@ class Degrease:
         return {
             "required": {
                 "images": ("IMAGE", {
-                    "tooltip": "影格:接在 Color Match Temporal 之後。"}),
+                    "tooltip": "Frames: connect after Color Match Temporal."}),
                 "enabled": ("BOOLEAN", {
                     "default": True, "label_on": "ACTIVE", "label_off": "BYPASS",
-                    "tooltip": "開關:BYPASS 時原樣輸出,不做任何處理。"}),
+                    "tooltip": "Enabled: BYPASS outputs the frames unchanged."}),
                 "smooth": ("FLOAT", {
                     "default": 30.0, "min": 0.0, "max": 100.0, "step": 1.0,
-                    "tooltip": "磨皮祛皺:數值越高,毛孔、細紋、法令紋越淡。"}),
+                    "tooltip": "Skin smoothing: higher values soften pores, fine lines and smile lines more."}),
                 "deblemish": ("FLOAT", {
                     "default": 80.0, "min": 0.0, "max": 100.0, "step": 1.0,
-                    "tooltip": "祛斑祛痘:數值越高,痣、斑、痘越淡。"}),
+                    "tooltip": "Blemish removal: higher values fade moles, spots and acne more."}),
                 "deshine": ("FLOAT", {
                     "default": 15.0, "min": 0.0, "max": 100.0, "step": 1.0,
-                    "tooltip": "去油光:數值越高,皮膚反光越少。"}),
+                    "tooltip": "Shine removal: higher values reduce oily highlights on skin more."}),
                 "even_tone": ("FLOAT", {
                     "default": 10.0, "min": 0.0, "max": 100.0, "step": 1.0,
-                    "tooltip": "勻膚:數值越高,泛紅偏橘的膚色越均勻。"}),
+                    "tooltip": "Tone evening: higher values even out reddish-orange skin more."}),
                 "decontour": ("FLOAT", {
                     "default": 10.0, "min": 0.0, "max": 100.0, "step": 1.0,
-                    "tooltip": "減立體:數值越高,臉部明暗起伏越平。"}),
+                    "tooltip": "Contour flattening: higher values soften light and shadow across the face more."}),
             }
         }
 
@@ -318,7 +318,7 @@ class Degrease:
     RETURN_NAMES = ("images",)
     FUNCTION = "run"
     CATEGORY = "GeN13/color"
-    DESCRIPTION = "人像去油膩與美顏:磨皮祛皺、祛斑祛痘、去油光、勻膚、減立體,眼睛等五官自動保護。各參數 0 為關閉,數值越高效果越強。"
+    DESCRIPTION = "Portrait retouching that removes the greasy look: skin smoothing, blemish removal, shine removal, tone evening and contour flattening, with eyes and other features protected. 0 turns each effect off; higher values are stronger."
 
     def run(self, images, enabled, smooth, deblemish, deshine, even_tone, decontour):
         if not enabled:                                    # BYPASS:原樣傳下去(經 API 送出的工作流也能用這個欄位停用)

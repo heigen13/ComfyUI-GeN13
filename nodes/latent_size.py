@@ -41,8 +41,8 @@ KEEP_SIZES = ["original", "megapixels", "long_edge", "short_edge"]
 UPSCALE_METHODS = ["nearest-exact", "bilinear", "area", "bicubic", "bislerp"]
 MAX_RES = 16384
 
-WIDTH_TIP = "寬度:實際輸出的像素寬度(px)。"
-HEIGHT_TIP = "高度:實際輸出的像素高度(px)。"
+WIDTH_TIP = "Width: actual output width in px."
+HEIGHT_TIP = "Height: actual output height in px."
 
 
 def _snap(v, m):
@@ -237,69 +237,69 @@ class Resize:
             "required": {
                 "mode": ("BOOLEAN", {
                     "default": True, "label_on": "I2I", "label_off": "T2I",
-                    "tooltip": "模式:I2I 圖生圖,依圖片縮放。T2I 文生圖,圖片送空值,尺寸依比例或 width 與 height。"}),
+                    "tooltip": "Mode: I2I (image to image) scales from the input image. T2I (text to image) outputs no image; size comes from the ratio or width and height."}),
                 "aspect_ratio": (RESIZE_RATIOS, {
                     "default": "keep",
-                    "tooltip": "比例:keep 維持原圖比例,custom 時用 width 與 height。T2I 時 keep 等同 custom。"}),
+                    "tooltip": "Aspect ratio: keep follows the source image; custom uses width and height. In T2I, keep acts as custom."}),
                 "megapixels": ("FLOAT", {
                     "default": 1.0, "min": 0.1, "max": 16.0, "step": 0.05,
-                    "tooltip": "像素量:總像素(MP),1.0 約為 1024×1024;輸入寬或高會自動更新。custom 時不作用。"}),
+                    "tooltip": "Megapixels: total pixel count; 1.0 is about 1024×1024. Updates when width or height is typed. Not used with custom."}),
                 "width": ("INT", {
                     "default": 2048, "min": 16, "max": MAX_RES, "step": 8,
-                    "tooltip": "寬度:輸出寬度,選了比例時輸入一邊自動算另一邊,可接線。"}),
+                    "tooltip": "Width: output width; with a ratio selected, typing one side sets the other. Can be connected."}),
                 "height": ("INT", {
                     "default": 1152, "min": 16, "max": MAX_RES, "step": 8,
-                    "tooltip": "高度:輸出高度,選了比例時輸入一邊自動算另一邊,可接線。"}),
+                    "tooltip": "Height: output height; with a ratio selected, typing one side sets the other. Can be connected."}),
                 "multiple_of": (MULTIPLES, {
                     "default": "32",
-                    "tooltip": "對齊倍數:寬高取此倍數。Qwen Image 2.1 用 32,Flux 用 16,SD 可用 8。"}),
+                    "tooltip": "Multiple of: width and height are rounded down to this. Qwen Image 2.1 uses 32, Flux 16, SD 8."}),
                 "batch_size": ("INT", {
                     "default": 1, "min": 1, "max": 64,
-                    "tooltip": "張數:空 latent 或 encode 結果的數量。接 samples 時不作用。"}),
+                    "tooltip": "Batch size: number of empty latents or encoded images. Not used when samples is connected."}),
                 "upscale_method": (IMAGE_METHODS, {
                     "default": "lanczos",
-                    "tooltip": "演算法:lanczos 最銳利。nvidia_rtx_vsr 需 RTX 顯卡,latent 一律用 bicubic。"}),
+                    "tooltip": "Scaling method: lanczos is the sharpest; nvidia_rtx_vsr needs an RTX GPU. Latents always use bicubic."}),
                 "keep_proportion": (FIT_MODES, {
                     "default": "crop",
-                    "tooltip": "比例不同時:crop 裁切、resize 縮進框內、pad 補色、pad_edge 延伸邊緣、stretch 拉伸。"}),
+                    "tooltip": "When ratios differ: crop trims, resize fits inside, pad fills with color, pad_edge extends the edges, stretch distorts."}),
                 "crop_position": (POSITIONS, {
                     "default": "center",
-                    "tooltip": "位置:crop 時保留的區域,pad 時圖片靠齊的位置。"}),
+                    "tooltip": "Position: the area kept when cropping, or where the image sits when padding."}),
                 "pad_color": ("STRING", {
                     "default": "0, 0, 0",
-                    "tooltip": "補邊色:pad 時使用,格式 R, G, B(0–255)或 #RRGGBB。"}),
+                    "tooltip": "Pad color: used by pad, as R, G, B (0–255) or #RRGGBB."}),
                 "keep_size": (KEEP_SIZES, {
                     "default": "original",
-                    "tooltip": "keep 尺寸:original 只裁到倍數不取樣,megapixels 依像素量,長邊、短邊等於 edge_length。"}),
+                    "tooltip": "Keep size: original crops to the multiple without resampling; megapixels targets a pixel count; long_edge / short_edge use edge_length."}),
                 "edge_length": ("INT", {
                     "default": 1024, "min": 16, "max": MAX_RES, "step": 8,
-                    "tooltip": "邊長:keep_size 為 long_edge 或 short_edge 時,該邊的像素長度。"}),
+                    "tooltip": "Edge length: length in px of the long or short edge, when keep_size is long_edge or short_edge."}),
             },
             "optional": {
-                "image1": ("IMAGE", {"tooltip": "主圖:決定 latent、遮罩與寬高;再接 vae 就 encode 成 latent。"}),
-                "image2": ("IMAGE", {"tooltip": "參考圖:套用同一組設定,依各自原圖比例縮放。"}),
-                "image3": ("IMAGE", {"tooltip": "參考圖:套用同一組設定,依各自原圖比例縮放。"}),
-                "image4": ("IMAGE", {"tooltip": "參考圖:套用同一組設定,依各自原圖比例縮放。"}),
-                "mask": ("MASK", {"tooltip": "遮罩:跟著 image1 一起縮放,補出的區域為 1。"}),
-                "samples": ("LATENT", {"tooltip": "Latent:要縮放的 latent,有 image1 與 vae 時改走 encode。Flux.2、HunyuanImage 2.1 須接 vae。"}),
-                "vae": ("VAE", {"tooltip": "VAE:接 image1 時用來 encode;沒接圖時用來建立正確格式的空 latent。"}),
+                "image1": ("IMAGE", {"tooltip": "Main image: sets the latent, mask, width and height; with vae connected, it is encoded into the latent."}),
+                "image2": ("IMAGE", {"tooltip": "Reference image: scaled with the same settings, keeping its own aspect ratio."}),
+                "image3": ("IMAGE", {"tooltip": "Reference image: scaled with the same settings, keeping its own aspect ratio."}),
+                "image4": ("IMAGE", {"tooltip": "Reference image: scaled with the same settings, keeping its own aspect ratio."}),
+                "mask": ("MASK", {"tooltip": "Mask: scaled together with image1; padded areas are 1."}),
+                "samples": ("LATENT", {"tooltip": "Latent: an existing latent to resize; with image1 and vae connected, the image is encoded instead. Flux.2 and HunyuanImage 2.1 need vae."}),
+                "vae": ("VAE", {"tooltip": "VAE: encodes image1 when connected; without an image, it builds an empty latent in the model's format."}),
             },
         }
 
     RETURN_TYPES = ("IMAGE", "IMAGE", "IMAGE", "IMAGE", "MASK", "LATENT", "INT", "INT")
     RETURN_NAMES = ("IMAGE1", "IMAGE2", "IMAGE3", "IMAGE4", "MASK", "LATENT", "width", "height")
     OUTPUT_TOOLTIPS = (
-        "主圖:縮放後的 image1(實際送進 encode 的那張)。T2I 或沒有圖時送空值。",
-        "參考圖:縮放後的 image2。T2I 或沒接時送空值。",
-        "參考圖:縮放後的 image3。T2I 或沒接時送空值。",
-        "參考圖:縮放後的 image4。T2I 或沒接時送空值。",
-        "遮罩:縮放後的遮罩(依 image1),沒接 mask 時全 0,pad 補出的區域為 1。",
-        "Latent:接 image1 與 vae 為 encode 結果,接 samples 為縮放後的 latent,否則為空 latent。",
+        "Main image: the scaled image1, exactly what was encoded. Empty in T2I or without an image.",
+        "Reference image: the scaled image2. Empty in T2I or when not connected.",
+        "Reference image: the scaled image3. Empty in T2I or when not connected.",
+        "Reference image: the scaled image4. Empty in T2I or when not connected.",
+        "Mask: the scaled mask, following image1; all 0 without a mask, padded areas are 1.",
+        "Latent: the encoded image1 with vae, the resized samples, or otherwise an empty latent.",
         WIDTH_TIP, HEIGHT_TIP,
     )
     FUNCTION = "make"
     CATEGORY = "GeN13/latent"
-    DESCRIPTION = "決定 latent 尺寸:空 latent、圖片 encode 或縮放既有 latent;圖片與遮罩一併縮放,可裁切、補邊或拉伸。"
+    DESCRIPTION = "Sets the latent size in one node: an empty latent, an encoded image, or a resized existing latent. Images and masks are scaled along, with crop, pad or stretch."
 
     def make(self, mode, aspect_ratio, megapixels, width, height, multiple_of, batch_size,
              upscale_method, keep_proportion, crop_position, pad_color, keep_size, edge_length,
@@ -317,8 +317,8 @@ class Resize:
             except Exception:  # noqa: BLE001
                 pass
         if samples is not None and ratio is None:
-            print("[ComfyUI-GeN13] Resize: samples 沒有倍率資訊且沒接 vae,以 8 倍計算;"
-                  "Flux.2、HunyuanImage 2.1 等非 8 倍 VAE 的模型請一併接 vae")
+            print("[ComfyUI-GeN13] Resize: samples carries no scale factor and vae is not connected, assuming 8x; "
+                  "connect vae for models whose VAE is not 8x, such as Flux.2 and HunyuanImage 2.1")
         ratio = int(ratio or 8)
         if samples is not None:
             m = max(m, ratio)

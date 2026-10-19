@@ -13,7 +13,7 @@ Remote String 的 value 為 forceInput(左上角固定接點),文字框由前端
 
 LIMIT = 1_000_000_000
 
-_CHANNEL_TIP = "分身組:同型別、名稱相同的節點同步數值與 bypass。"
+_CHANNEL_TIP = "Channel: nodes of the same type with the same channel name are clones and share value and bypass."
 
 
 class RemoteFloat:
@@ -23,15 +23,15 @@ class RemoteFloat:
             "channel": ("STRING", {"default": "remote", "multiline": False, "tooltip": _CHANNEL_TIP}),
             "value": ("FLOAT", {
                 "default": 0.0, "min": -LIMIT, "max": LIMIT, "step": 0.01, "round": 0.0001,
-                "tooltip": "數值:小數,最多四位;任一顆分身改值,同組其餘分身當下跟著變。"}),
+                "tooltip": "Value: a decimal, up to four places; change it on any clone and the rest of the group follows at once."}),
         }}
 
     RETURN_TYPES = ("FLOAT",)
     RETURN_NAMES = ("FLOAT",)
-    OUTPUT_TOOLTIPS = ("小數:同組分身的共同數值。",)
+    OUTPUT_TOOLTIPS = ("Decimal: the value shared by the group.",)
     FUNCTION = "out"
     CATEGORY = "GeN13/utils"
-    DESCRIPTION = "遙控小數:channel 名稱相同的節點互為分身,任一顆改值或切 bypass,其餘同步。"
+    DESCRIPTION = "Remote decimal: nodes with the same channel name are clones; changing the value or bypass on one updates them all."
 
     def out(self, channel, value, **kw):
         return (float(value),)
@@ -47,16 +47,16 @@ class RemoteString:
             "optional": {
                 "value": ("STRING", {
                     "forceInput": True, "default": "",
-                    "tooltip": "文字:框內打字或接線輸入,即時同步到同組所有分身。"}),
+                    "tooltip": "Text: typed in the box or connected; syncs live to every clone in the group."}),
             },
         }
 
     RETURN_TYPES = ("STRING",)
     RETURN_NAMES = ("STRING",)
-    OUTPUT_TOOLTIPS = ("文字:同組分身的共同內容。",)
+    OUTPUT_TOOLTIPS = ("Text: the content shared by the group.",)
     FUNCTION = "out"
     CATEGORY = "GeN13/utils"
-    DESCRIPTION = "遙控文字:channel 名稱相同的節點互為分身,任一顆改字或切 bypass,其餘同步。"
+    DESCRIPTION = "Remote text: nodes with the same channel name are clones; editing the text or bypass on one updates them all."
 
     def out(self, channel, value="", **kw):
         return ("" if value is None else str(value),)
@@ -69,15 +69,15 @@ class RemoteBoolean:
             "channel": ("STRING", {"default": "remote", "multiline": False, "tooltip": _CHANNEL_TIP}),
             "value": ("BOOLEAN", {
                 "default": False, "label_on": "ON", "label_off": "OFF",
-                "tooltip": "開關:任一顆分身切換,同組其餘分身當下跟著切。"}),
+                "tooltip": "Switch: toggle it on any clone and the rest of the group follows at once."}),
         }}
 
     RETURN_TYPES = ("BOOLEAN",)
     RETURN_NAMES = ("BOOLEAN",)
-    OUTPUT_TOOLTIPS = ("開關:同組分身的共同狀態。",)
+    OUTPUT_TOOLTIPS = ("Switch: the state shared by the group.",)
     FUNCTION = "out"
     CATEGORY = "GeN13/utils"
-    DESCRIPTION = "遙控開關:channel 名稱相同的節點互為分身,任一顆切換或切 bypass,其餘同步。"
+    DESCRIPTION = "Remote switch: nodes with the same channel name are clones; toggling or bypassing one updates them all."
 
     def out(self, channel, value, **kw):
         return (bool(value),)

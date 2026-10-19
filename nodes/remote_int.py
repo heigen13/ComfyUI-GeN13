@@ -21,22 +21,22 @@ class RemoteInt:
             "required": {
                 "channel": ("STRING", {
                     "default": "remote", "multiline": False,
-                    "tooltip": "分身組:名稱相同的 Remote Int 同步數值、生成後動作與 bypass。"}),
+                    "tooltip": "Channel: Remote Int nodes with the same channel name share value, after-generate action and bypass."}),
                 "value": ("INT", {
                     "default": 0, "min": -LIMIT, "max": LIMIT, "step": 1,
-                    "tooltip": "數值:任一顆分身改值,同組其餘分身當下跟著變。"}),
+                    "tooltip": "Value: change it on any clone and the rest of the group follows at once."}),
                 "control_after_generate": (CONTROL, {
                     "default": "fixed",
-                    "tooltip": "生成後:整組每次送出只變一次,fixed 不變,increment 加 1,decrement 減 1,randomize 隨機。"}),
+                    "tooltip": "After generate: the group changes once per queue. fixed keeps the value, increment adds 1, decrement subtracts 1, randomize picks a random value."}),
             },
         }
 
     RETURN_TYPES = ("INT",)
     RETURN_NAMES = ("INT",)
-    OUTPUT_TOOLTIPS = ("整數:同組分身的共同數值。",)
+    OUTPUT_TOOLTIPS = ("Integer: the value shared by the group.",)
     FUNCTION = "out"
     CATEGORY = "GeN13/utils"
-    DESCRIPTION = "遙控整數:channel 名稱相同的節點互為分身,任一顆改值或切 bypass,其餘同步。"
+    DESCRIPTION = "Remote integer: nodes with the same channel name are clones; changing the value or bypass on one updates them all."
 
     def out(self, channel, value, **kw):
         return (int(value),)

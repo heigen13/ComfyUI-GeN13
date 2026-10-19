@@ -66,35 +66,35 @@ class Number:
             "required": {
                 "value": ("FLOAT", {
                     "default": 0.0, "min": -LIMIT, "max": LIMIT, "step": 0.001, "round": 0.000001,
-                    "tooltip": "數值:整數或小數皆可,最多六位小數。接上 number 時不作用。"}),
+                    "tooltip": "Value: an integer or decimal, up to six decimal places. Not used when number is connected."}),
                 "control_after_generate": (CONTROL, {
                     "default": "fixed",
-                    "tooltip": "生成後:fixed 不變,increment 加 1,decrement 減 1,randomize 隨機整數。"}),
+                    "tooltip": "After generate: fixed keeps the value, increment adds 1, decrement subtracts 1, randomize picks a random integer."}),
                 "to_int": (TO_INT, {
                     "default": "round",
-                    "tooltip": "轉整數:round 四捨五入,floor 無條件捨去,ceil 無條件進位。"}),
+                    "tooltip": "Rounding: round to nearest, floor rounds down, ceil rounds up."}),
             },
             "optional": {
                 "number": ("INT,FLOAT,STRING", {
                     "forceInput": True,
-                    "tooltip": "數值輸入:可接 INT、FLOAT 或 STRING,接上時取代 value;文字無法轉換時為 0。"}),
+                    "tooltip": "Number input: accepts INT, FLOAT or STRING and replaces value; text that cannot be converted gives 0."}),
                 "format": ("STRING", {
                     "default": "", "multiline": False,
-                    "tooltip": "格式:STRING 輸出的樣式,{} 代入數值;沒寫 {} 時數值接在最後,空白只輸出數值。"}),
+                    "tooltip": "Format: template for the STRING output; {} is replaced by the value. Without {}, the value is appended; empty outputs the value only."}),
             },
         }
 
     RETURN_TYPES = ("INT", "FLOAT", "STRING")
     RETURN_NAMES = ("INT", "FLOAT", "STRING")
     OUTPUT_TOOLTIPS = (
-        "整數:依 to_int 方式轉換。",
-        "小數:原值,型別固定為 FLOAT。",
-        "文字:去掉多餘的零,例如 7.50 → 7.5;有 format 時套用格式。",
+        "Integer: rounded as set in to_int.",
+        "Decimal: the original value as FLOAT.",
+        "Text: trailing zeros removed, such as 7.50 → 7.5; format applied if set.",
     )
     FUNCTION = "convert"
     CATEGORY = "GeN13/utils"
-    DESCRIPTION = ("輸入整數或小數,同時輸出 INT、FLOAT 與 STRING;可選小數轉整數的方式。"
-                   "format 可套用 STRING 樣式:duration: → duration:11,{}秒 → 11秒。")
+    DESCRIPTION = ("Takes an integer or decimal and outputs it as INT, FLOAT and STRING, with a choice of rounding. "
+                   "format styles the STRING: duration: → duration:11, {} sec → 11 sec.")
 
     def convert(self, value, to_int, number=None, format="", **kw):
         n = _parse(number) if number is not None else value

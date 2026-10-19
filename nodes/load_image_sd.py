@@ -182,7 +182,7 @@ class LoadImageSD:
     def INPUT_TYPES(s):
         return {"required": {
             "image": (list_input_images(), {"image_upload": True,
-                                      "tooltip": "來源圖片:A1111 / Forge 生成的 PNG(或含參數的 JPG / WebP)。"}),
+                                      "tooltip": "Source image: a PNG made with A1111 / Forge, or a JPG / WebP that carries the parameters."}),
         }}
 
     CATEGORY = "GeN13/image"
@@ -191,22 +191,22 @@ class LoadImageSD:
     RETURN_NAMES = ("IMAGE", "MASK", "width", "height", "positive", "negative", "seed", "steps",
                     "cfg", "sampler_name", "scheduler", "clip_skip", "info")
     OUTPUT_TOOLTIPS = (
-        "影像:載入的圖片,多幀檔輸出為批次。",
-        "遮罩:透明區域為 1,無透明通道時全 0。",
-        "寬度:參數中的 Size,缺少時取圖片寬度。",
-        "高度:參數中的 Size,缺少時取圖片高度。",
-        "正面提示詞:參數中的提示詞原文。",
-        "負面提示詞:參數中 Negative prompt 的原文。",
-        "種子:參數中的 Seed。",
-        "步數:參數中的 Steps。",
-        "CFG:參數中的 CFG scale。",
-        "取樣器:A1111 名稱換算成 ComfyUI 名稱。",
-        "排程器:A1111 排程(Karras 等)換算成 ComfyUI 名稱。",
-        "Clip skip:換算成 CLIP Set Last Layer 用的負值(1 → -1, 2 → -2)。",
-        "參數全文:原始參數文字,另附換算備註。",
+        "Image: the loaded image; multi-frame files are output as a batch.",
+        "Mask: 1 in transparent areas; all 0 when the image has no alpha channel.",
+        "Width: Size from the parameters, or the image width if missing.",
+        "Height: Size from the parameters, or the image height if missing.",
+        "Positive prompt: the prompt text from the parameters.",
+        "Negative prompt: the Negative prompt text from the parameters.",
+        "Seed: Seed from the parameters.",
+        "Steps: Steps from the parameters.",
+        "CFG: CFG scale from the parameters.",
+        "Sampler: the A1111 sampler mapped to its ComfyUI name.",
+        "Scheduler: the A1111 schedule type (Karras etc.) mapped to its ComfyUI name.",
+        "Clip skip: converted to the negative value used by CLIP Set Last Layer (1 → -1, 2 → -2).",
+        "Parameters: the original parameter text, with mapping notes appended.",
     )
     FUNCTION = "load"
-    DESCRIPTION = "載入圖片並讀出 A1111 / Forge 生成參數,用於在 ComfyUI 重現舊圖。"
+    DESCRIPTION = "Loads an image and reads its A1111 / Forge generation parameters, for recreating older images in ComfyUI."
 
     def load(self, image):
         image_path = folder_paths.get_annotated_filepath(image)

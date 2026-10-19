@@ -14,14 +14,14 @@ class LoadImageOrient:
     def INPUT_TYPES(s):
         return {"required": {"image": (list_input_images(), {
             "image_upload": True,
-            "tooltip": "圖片:input 資料夾內的檔案,可上傳或拖放加入。"})}}
+            "tooltip": "Image: a file in the input folder; upload or drag and drop to add one."})}}
 
     CATEGORY = "GeN13/image"
     RETURN_TYPES = ("IMAGE", "MASK")
     RETURN_NAMES = ("IMAGE", "MASK")
-    OUTPUT_TOOLTIPS = ("影像:多幀檔輸出為批次。", "遮罩:透明區域為 1,無透明通道時全 0。")
+    OUTPUT_TOOLTIPS = ("Image: multi-frame files are output as a batch.", "Mask: 1 in transparent areas; all 0 when the image has no alpha channel.")
     FUNCTION = "load_image"
-    DESCRIPTION = "簡易載入圖片:只走 Pillow,iOS 截圖不會被轉向;與核心 Load Image 同欄位。"
+    DESCRIPTION = "Basic image loader that decodes with Pillow only, so iOS screenshots keep their orientation; same fields as the core Load Image."
 
     def load_image(self, image):
         path = folder_paths.get_annotated_filepath(image)

@@ -59,6 +59,7 @@
 //     core control_after_generate. Chained nodes show the head's setting, dimmed.
 
 import { app } from "../../scripts/app.js";
+import { T, setTip, setWidgetTip } from "./g13_i18n.js";
 
 const NODE_ID = "TextSwitchGeN13";
 const MAX = 25;
@@ -620,7 +621,7 @@ function makeHeader(node, i) {
   h.className = "g13sw-h";
   const ar = document.createElement("button");
   ar.className = "g13sw-ar";
-  ar.title = "收合 / 展開";
+  setTip(ar, T("Collapse / expand", "收合 / 展開"));
   ar.appendChild(svgArrow());
   ar.addEventListener("click", (e) => {
     e.stopPropagation();
@@ -632,7 +633,7 @@ function makeHeader(node, i) {
   const no = document.createElement("button");
   no.className = "g13sw-no";
   no.textContent = `#${nn(i)}`;
-  no.title = "選擇此框輸出";
+  setTip(no, T("Output this box", "選擇此框輸出"));
   no.addEventListener("click", (e) => {
     e.stopPropagation();
     selectBox(node, i);
@@ -665,7 +666,7 @@ function makeAdvance(node) {
   const mk = (label, val, tip) => {
     const b = document.createElement("button");
     b.textContent = label;
-    b.title = tip;
+    setTip(b, tip);
     b.addEventListener("click", (e) => {
       e.stopPropagation();
       const head = chainNodes(node)[0];
@@ -678,8 +679,8 @@ function makeAdvance(node) {
     return b;
   };
   seg.append(
-    mk("OFF", false, "自動換框:關閉,select 維持不變。"),
-    mk("NEXT", true, "自動換框:每次送出後跳到下一個有內容的框,空白框略過,到底回第一框。")
+    mk("OFF", false, T("Auto next: off; select stays as set.", "自動換框:關閉,select 維持不變。")),
+    mk("NEXT", true, T("Auto next: moves to the next box with content after each queue, skipping empty boxes and wrapping to the first.", "自動換框:每次送出後跳到下一個有內容的框,空白框略過,到底回第一框。"))
   );
   row.addEventListener("pointerdown", (e) => e.stopPropagation());
   row.append(lb, seg);

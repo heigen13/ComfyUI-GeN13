@@ -15,6 +15,7 @@
 //     any linked: read-only display of the upstream content, as before.
 
 import { app } from "../../scripts/app.js";
+import { T, setTip, setWidgetTip } from "./g13_i18n.js";
 
 const NODE_ID = "ShowAnyLiteGeN13";
 const ROW = 32; // DOM margin 1 + wrap pad 3 / 3 + 24px box
@@ -260,7 +261,7 @@ app.registerExtension({
       ta.className = "g13sl-ta";
       ta.rows = 1;
       ta.spellcheck = false;
-      ta.placeholder = "輸入文字";
+      ta.placeholder = String(T("Enter text", "輸入文字"));
       ta.addEventListener("input", () => {
         node._g13in = ta.value;
         const c = node._g13sl?.cnt;
@@ -271,7 +272,7 @@ app.registerExtension({
       const mk = (k, tip, act) => {
         const b = document.createElement("button");
         b.className = "g13sl-cp";
-        b.title = tip;
+        setTip(b, tip);
         setBtn(b, false, k);
         b.addEventListener("click", async (e) => {
           e.stopPropagation();
@@ -280,14 +281,14 @@ app.registerExtension({
         });
         return b;
       };
-      const cut = mk("cut", "剪下:複製全部內容後清空。", async () => {
+      const cut = mk("cut", T("Cut: copies all content, then clears the box.", "剪下:複製全部內容後清空。"), async () => {
         if (anyLinked(node)) return false;
         if (!(await writeClip(String(node._g13in ?? "")))) return false;
         setTyped(node, "");
         return true;
       });
-      const cp = mk("copy", "複製:複製全部內容。", () => writeClip(liteText(node)));
-      const paste = mk("paste", "貼上:換行後接在最後。", async () => {
+      const cp = mk("copy", T("Copy: copies all content.", "複製:複製全部內容。"), () => writeClip(liteText(node)));
+      const paste = mk("paste", T("Paste: adds to the end on a new line.", "貼上:換行後接在最後。"), async () => {
         if (anyLinked(node)) return false;
         const t = await readClip();
         if (t == null) {

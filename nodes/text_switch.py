@@ -95,32 +95,32 @@ class TextSwitch:
         req = {
             "count": ("INT", {
                 "default": 2, "min": 1, "max": MAX_BOXES, "step": 1,
-                "tooltip": "框數:顯示的文字框數量,多的隱藏。"}),
+                "tooltip": "Box count: number of text boxes shown; the rest are hidden."}),
             "select": (SELECT, {
                 "default": "#01",
-                "tooltip": "選擇:輸出這一框;橋接時由第一顆總控,編號緊接上一顆的最後一框。"}),
+                "tooltip": "Select: the box to output. In a chain, the first node controls it, and numbering continues from the previous node's last box."}),
         }
         for i in range(1, MAX_BOXES + 1):
             req["text_%02d" % i] = ("STRING", {
                 "default": "", "multiline": True, "lazy": True,
-                "tooltip": "文字:直接輸入,或從上游接線。接線時只有選到才執行上游。"})
+                "tooltip": "Text: type here or connect an upstream string. A connected upstream runs only when this box is selected."})
         return {"required": req,
                 "optional": {
                     "chain": (CHAIN_TYPE, {
-                        "tooltip": "橋接:接上一顆 Text Switch 的 chain 輸出,本顆編號接續其最後一框。"}),
+                        "tooltip": "Chain: connect the chain output of the previous Text Switch; numbering continues from its last box."}),
                     "select_num": ("INT", {
                         "forceInput": True, "min": 1, "max": 9999,
-                        "tooltip": "選號輸入:接 INT(Counter、Trigger 等)直接指定選號,1 起算;接上後 select 不作用。"})},
+                        "tooltip": "Select input: an INT, such as from Counter or Trigger, sets the box number directly, starting at 1; overrides select."})},
                 "hidden": {"prompt": "PROMPT", "unique_id": "UNIQUE_ID"}}
 
     RETURN_TYPES = (CHAIN_TYPE, "STRING") + ("STRING",) * MAX_BOXES
     RETURN_NAMES = ("chain", "STRING") + tuple("#%02d" % i for i in range(1, MAX_BOXES + 1))
-    OUTPUT_TOOLTIPS = ("橋接:接到下一顆 Text Switch 的 chain 輸入。",
-                       "文字:選到的那一框;選號在下游時為空字串。") + \
-                      ("文字:此框的內容,不受 select 影響。",) * MAX_BOXES
+    OUTPUT_TOOLTIPS = ("Chain: connect to the chain input of the next Text Switch.",
+                       "Text: the selected box; empty when the selected box is in a later node of the chain.") + \
+                      ("Text: this box's content, regardless of select.",) * MAX_BOXES
     FUNCTION = "switch"
     CATEGORY = "GeN13/text"
-    DESCRIPTION = "直接在框內打字,選一框輸出;多顆可用 chain 橋接水平排開,編號接續前一顆的框數,顆數不限,第一顆總控。"
+    DESCRIPTION = "Type text directly into the boxes and output the selected one. Chain any number of nodes side by side: numbering continues from the previous node, and the first node controls the chain."
 
     def check_lazy_status(self, count, select, chain=None, select_num=None, prompt=None, unique_id=None, **kw):
         _, _, local = _local_pick(chain, select, count, select_num)

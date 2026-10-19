@@ -29,30 +29,30 @@ class TextConcatenate:
         req = {
             "count": ("INT", {
                 "default": 2, "min": 1, "max": MAX_BOXES, "step": 1,
-                "tooltip": "框數:顯示並串接的文字框數量,多的隱藏也不輸出。"}),
+                "tooltip": "Box count: number of text boxes shown and joined; hidden boxes are not output."}),
             "solo": (SOLO, {
                 "default": "OFF",
-                "tooltip": "獨奏:只輸出選定的框,不改動各框開關。OFF 時依各框開關。"}),
+                "tooltip": "Solo: outputs only the chosen box without changing the box switches. OFF follows each box's switch."}),
             "delimiter": ("STRING", {
                 "default": ", ", "multiline": False,
-                "tooltip": "分隔:框與框之間插入的字串,\\n 為換行。"}),
+                "tooltip": "Delimiter: text inserted between boxes; \\n is a line break."}),
         }
         for i in range(1, MAX_BOXES + 1):
             req["on_%02d" % i] = ("BOOLEAN", {
                 "default": True, "label_on": "ON", "label_off": "OFF",
-                "tooltip": "開關:OFF 時此框不串接,文字保留。"})
+                "tooltip": "Include: OFF leaves this box out of the joined text; its content is kept."})
             req["text_%02d" % i] = ("STRING", {
                 "default": "", "multiline": True,
-                "tooltip": "文字:直接輸入,或從上游接線。空白框自動略過。"})
+                "tooltip": "Text: type here or connect an upstream string. Empty boxes are skipped."})
         return {"required": req}
 
     RETURN_TYPES = ("STRING",) * (1 + MAX_BOXES)
     RETURN_NAMES = ("STRING",) + tuple("#%02d" % i for i in range(1, MAX_BOXES + 1))
-    OUTPUT_TOOLTIPS = ("文字:啟用的框依序以分隔字串串接。",) + \
-                      ("文字:此框的內容,不受開關與獨奏影響。",) * MAX_BOXES
+    OUTPUT_TOOLTIPS = ("Text: the enabled boxes joined in order with the delimiter.",) + \
+                      ("Text: this box's content, regardless of its switch and solo.",) * MAX_BOXES
     FUNCTION = "join"
     CATEGORY = "GeN13/text"
-    DESCRIPTION = "直接在框內打字串接文字:可選框數、各框開關與獨奏,空框自動略過。"
+    DESCRIPTION = "Joins text typed directly into the boxes, with a box count, a switch per box and solo; empty boxes are skipped."
 
     def join(self, count, solo, delimiter, **kw):
         count = max(1, min(MAX_BOXES, int(count)))

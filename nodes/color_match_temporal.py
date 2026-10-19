@@ -677,35 +677,35 @@ class ColorMatchTemporal:
         return {
             "required": {
                 "images": ("IMAGE", {
-                    "tooltip": "影格:要校正的影片影格,接 VAE Decode。"}),
+                    "tooltip": "Frames: the video frames to correct, usually from VAE Decode."}),
                 "reference": ("IMAGE", {
-                    "tooltip": "參考圖:目標色調,通常接首幀圖。"}),
+                    "tooltip": "Reference: the target color, usually the first-frame image."}),
                 "enabled": ("BOOLEAN", {                       # 開關固定放最上面,之後新增欄位一律加在最下面
                     "default": True, "label_on": "ACTIVE", "label_off": "BYPASS",
-                    "tooltip": "開關:BYPASS 時原樣輸出,不做任何處理。"}),
+                    "tooltip": "Enabled: BYPASS outputs the frames unchanged."}),
                 "method": (["white balance", "mkl", "reinhard"], {
                     "default": "white balance",
-                    "tooltip": "演算法:white balance 只修色偏、亮度照原片(建議),mkl、reinhard 連亮度一起對位。"}),
+                    "tooltip": "Method: white balance corrects color cast only and keeps the original brightness (recommended); mkl and reinhard also match brightness."}),
                 "mode": (["temporal", "global"], {
                     "default": "temporal",
-                    "tooltip": "模式:temporal 逐格校正並平滑(建議),global 整段共用一組。"}),
+                    "tooltip": "Mode: temporal corrects each frame and smooths over time (recommended); global applies one correction to the whole clip."}),
                 "smooth_frames": ("INT", {
                     "default": 8, "min": 0, "max": 120, "step": 1,
-                    "tooltip": "平滑半徑:前後各取幾格平均,越大越穩。0 為逐格獨立。"}),
+                    "tooltip": "Smoothing radius: frames averaged on each side; higher values are steadier. 0 corrects each frame on its own."}),
                 "strength": ("FLOAT", {
                     "default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01,
-                    "tooltip": "強度:0 為原始影格,1 為完全對位參考圖。"}),
+                    "tooltip": "Strength: 0 keeps the original frames, 1 matches the reference fully."}),
                 "cube_name": ("STRING", {
                     "default": "",
-                    "tooltip": "LUT 檔名:留空不存。輸出 .cube 至 ComfyUI_LayerStyle\\lut,未安裝則存 output\\luts。"}),
+                    "tooltip": "LUT name: leave empty to skip. Saves a .cube to ComfyUI_LayerStyle\\lut, or to output\\luts if LayerStyle is not installed."}),
             },
             "optional": {
                 "tone_curve": (["gamma", "linear"], {
                     "default": "gamma",
-                    "tooltip": "色階曲線:mkl、reinhard 專用,gamma 保留最黑與最白(建議),linear 為舊版。"}),
+                    "tooltip": "Tone curve: for mkl and reinhard only. gamma preserves the black and white points (recommended); linear is the legacy curve."}),
                 "after_cut": (["match new shot start", "always match first frame", "stop when new shot"], {
                     "default": "match new shot start",
-                    "tooltip": "換鏡頭後:新鏡頭對自己的開頭(建議)、全部對首幀、或停止校正。"}),
+                    "tooltip": "After a cut: match each new shot to its own start (recommended), match every shot to the first frame, or stop correcting."}),
             }
         }
 
@@ -713,7 +713,7 @@ class ColorMatchTemporal:
     RETURN_NAMES = ("images",)
     FUNCTION = "run"
     CATEGORY = "GeN13/color"
-    DESCRIPTION = "影片色調對位參考圖:逐格計算並沿時間軸平滑,修正圖生影片的漸進色偏且不閃爍。預設 white balance 只修色偏,亮度照原片。換鏡頭後各鏡頭對自己的開頭,不影響鏡頭間的差異。"
+    DESCRIPTION = "Matches video color to a reference image frame by frame, smoothed over time, to remove the gradual color drift of image-to-video without flicker. Default white balance corrects color cast only and keeps brightness. After a cut, each shot is matched to its own start."
 
     def run(self, images, reference, enabled, method, mode, smooth_frames, strength, cube_name,
             tone_curve="gamma", after_cut="match new shot start"):

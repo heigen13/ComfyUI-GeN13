@@ -23,6 +23,7 @@
 //     execCommand and PASTE focuses the box so Ctrl+V works.
 
 import { app } from "../../scripts/app.js";
+import { T, setTip, setWidgetTip } from "./g13_i18n.js";
 
 const NODE_ID = "ShowAnyGeN13";
 const LINE = 18; // 12px font, line-height 1.5
@@ -204,7 +205,7 @@ function makeBar(node) {
   const mk = (key, tip, fn) => {
     const b = document.createElement("button");
     b.className = "g13st-bt";
-    b.title = tip;
+    setTip(b, tip);
     setBtn(b, key, false);
     b.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -216,7 +217,7 @@ function makeBar(node) {
   const ta = () => el(w(node, "content"));
   bar.append(
     inf,
-    mk("sync", "同步:以上游最新內容取代框內文字。", () => {
+    mk("sync", T("Sync: replaces the box text with the latest upstream content.", "同步:以上游最新內容取代框內文字。"), () => {
       const p = node.properties || (node.properties = {});
       if (p.g13_up == null) return;
       setContent(node, String(p.g13_up));
@@ -224,7 +225,7 @@ function makeBar(node) {
       update(node);
       flash(node, "sync");
     }),
-    mk("cut", "剪下:複製全部內容後清空。", async () => {
+    mk("cut", T("Cut: copies all content, then clears the box.", "剪下:複製全部內容後清空。"), async () => {
       if (locked(node)) return;
       const v = textOf(node);
       if (!v) return;
@@ -233,10 +234,10 @@ function makeBar(node) {
         flash(node, "cut");
       }
     }),
-    mk("copy", "複製:複製全部內容。", async () => {
+    mk("copy", T("Copy: copies all content.", "複製:複製全部內容。"), async () => {
       if (await writeClip(textOf(node), ta())) flash(node, "copy");
     }),
-    mk("paste", "貼上:換行後接在最後。", async () => {
+    mk("paste", T("Paste: adds to the end on a new line.", "貼上:換行後接在最後。"), async () => {
       if (locked(node)) return;
       let add = "";
       try {
@@ -268,7 +269,7 @@ function makeEdit(node) {
   const mk = (label, mode, tip) => {
     const b = document.createElement("button");
     b.textContent = label;
-    b.title = tip;
+    setTip(b, tip);
     b.addEventListener("click", (e) => {
       e.stopPropagation();
       const p = node.properties || (node.properties = {});
@@ -284,8 +285,8 @@ function makeEdit(node) {
     });
     return b;
   };
-  const segA = mk("AUTO", "AUTO", "編輯:AUTO,框跟著上游、唯讀,輸出上游內容。");
-  const segM = mk("MANUAL", "MANUAL", "編輯:MANUAL,框可自由修改,輸出框內文字。");
+  const segA = mk("AUTO", "AUTO", T("Edit: AUTO, the box follows upstream and is read-only; outputs the upstream content.", "編輯:AUTO,框跟著上游、唯讀,輸出上游內容。"));
+  const segM = mk("MANUAL", "MANUAL", T("Edit: MANUAL, the box can be edited freely; outputs the box text.", "編輯:MANUAL,框可自由修改,輸出框內文字。"));
   seg.append(segA, segM);
   row.append(lb, seg);
   row.addEventListener("pointerdown", (e) => e.stopPropagation());

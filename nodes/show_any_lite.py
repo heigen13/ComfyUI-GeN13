@@ -21,10 +21,10 @@ class ShowAnyLite:
             "required": {},
             "optional": {
                 "any": (ANY, {
-                    "tooltip": "輸入:任何型別;文字、數字、JSON 照顯示,IMAGE 等顯示尺寸摘要。"}),
+                    "tooltip": "Input: any type. Text, numbers and JSON are shown as is; IMAGE and other tensors show a size summary."}),
                 "content": ("STRING", {
                     "forceInput": True, "default": "",
-                    "tooltip": "內容:沒接 any 時即為輸出,直接在框內打字。"}),
+                    "tooltip": "Content: used as the output when any is not connected; type directly in the box."}),
             },
         }
 
@@ -33,13 +33,13 @@ class ShowAnyLite:
     RETURN_NAMES = ("STRING", "any")
     OUTPUT_IS_LIST = (True, True)
     OUTPUT_TOOLTIPS = (
-        "文字:與顯示內容相同。",
-        "原物件:上游送來的內容不經轉換直接往下傳。",
+        "Text: as shown in the box.",
+        "Passthrough: the upstream object, unchanged.",
     )
     OUTPUT_NODE = True
     FUNCTION = "show"
     CATEGORY = "GeN13/utils"
-    DESCRIPTION = "Show Any 精簡版:預設一行,拖高即多行顯示;沒接線時可直接打字;輸出 STRING 與原物件。"
+    DESCRIPTION = "Compact Show Any: one line by default, drag it taller for more lines; type directly when nothing is connected. Outputs STRING plus the original object."
 
     def show(self, any=None, content=None):
         if any is None:

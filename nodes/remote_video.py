@@ -50,38 +50,38 @@ class RemoteVideo:
         return {
             "required": {
                 "channel": ("STRING", {"default": "video", "multiline": False,
-                                       "tooltip": "分身組:名稱相同的 Remote Video 同步全部欄位與 bypass。"}),
+                                       "tooltip": "Channel: Remote Video nodes with the same channel name share every field and bypass."}),
                 "aspect_ratio": (RATIOS, {"default": "keep",
-                                          "tooltip": "比例:keep 照首幀圖比例(沒接圖時 9:16),其他比例置中裁切。"}),
+                                          "tooltip": "Aspect ratio: keep follows the first-frame image (9:16 without an image); other ratios crop from the center."}),
                 "megapixels": ("FLOAT", {"default": 0.40, "min": 0.01, "max": 16.0, "step": 0.1, "round": 0.01,
-                                         "tooltip": "像素量:百萬像素,◀ ▶ 每次 0.1,可打到小數兩位;寬高對齊 32。"}),
+                                         "tooltip": "Megapixels: ◀ ▶ step by 0.1, or type up to two decimals; width and height align to 32."}),
                 "seconds": ("FLOAT", {"default": 15.0, "min": 0.0, "max": 3600.0, "step": 1.0, "round": 0.1,
-                                      "tooltip": "秒數:影片長度,◀ ▶ 每次 1 秒,可打到小數一位。"}),
+                                      "tooltip": "Seconds: video length; ◀ ▶ step by 1 second, or type up to one decimal."}),
                 "frame_rule": (RULE_NAMES, {"default": RULE_NAMES[0],
-                                            "tooltip": "幀數規則:模型與 FPS,length 往上補到 MiniMax H3、Wan 2.1 / 2.2、LTX 的合法幀數。"}),
+                                            "tooltip": "Frame rule: model and FPS; the length rounds up to a valid frame count for MiniMax H3, Wan 2.1 / 2.2 or LTX."}),
                 "steps": ("INT", {"default": 8, "min": 1, "max": 10000, "step": 1,
-                                  "tooltip": "步數:取樣步數,接 KSampler 或 MiniMax H3 Dual Clock Sampler 的 steps。"}),
+                                  "tooltip": "Steps: sampling steps; connect to steps of KSampler or MiniMax H3 Dual Clock Sampler."}),
             },
             "optional": {
-                "image": ("IMAGE", {"tooltip": "首幀圖:縮放到指定像素量後由 IMAGE 輸出。"}),
+                "image": ("IMAGE", {"tooltip": "First frame: scaled to the set megapixels and output as IMAGE."}),
             },
         }
 
     RETURN_TYPES = ("IMAGE", "INT", "INT", "FLOAT", "INT", "FLOAT", "INT", "INT")
     RETURN_NAMES = ("IMAGE", "width", "height", "seconds", "seconds_int", "fps", "length", "steps")
     OUTPUT_TOOLTIPS = (
-        "首幀:縮放後的圖;沒接圖時為空。",
-        "寬:像素。",
-        "高:像素。",
-        "秒數:FLOAT。",
-        "秒數:INT,四捨五入。",
-        "FPS:FLOAT,frame_rule 選定的幀率,接 Video Combine 的 frame_rate。",
-        "幀數:依 frame_rule 補齊的影片長度。",
-        "步數:取樣步數。",
+        "First frame: the scaled image; empty without an image.",
+        "Width: in px.",
+        "Height: in px.",
+        "Seconds: as FLOAT.",
+        "Seconds: as INT, rounded.",
+        "FPS: the frame rate from frame_rule, as FLOAT; connect to frame_rate of Video Combine.",
+        "Frames: the video length rounded up by frame_rule.",
+        "Steps: sampling steps.",
     )
     FUNCTION = "out"
     CATEGORY = "GeN13/video"
-    DESCRIPTION = "影片遙控:首幀依比例與像素量縮放,輸出寬高與秒數;同名 channel 的分身互相同步。"
+    DESCRIPTION = "Video remote: scales the first frame by aspect ratio and megapixels and outputs width, height and length; clones with the same channel name stay in sync."
 
     def out(self, channel, aspect_ratio, megapixels, seconds, frame_rule=RULE_NAMES[0], steps=8, image=None, **kw):
         src = None if image is None else (int(image.shape[2]), int(image.shape[1]))
