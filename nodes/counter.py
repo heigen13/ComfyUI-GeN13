@@ -39,7 +39,18 @@ MODES = ["increment", "decrement", "increment_to_end", "decrement_to_end",
 AUTO = ["off", "every hour", "every day"]
 LIMIT = 1_000_000_000
 _MISSING = object()
-_STATE = {}  # unique_id -> {"base", "last_run", "reset", "period"}
+_STATE = {}  # state key -> {"base", "last_run", "reset", "period"}
+
+
+def state_key(unique_id, extra_pnginfo=None):
+    """workflow id + node id, so two workflows that both have a node #5 do not share a count.
+    Prompts sent through the API carry no workflow: fall back to the node id alone."""
+    wid = None
+    try:
+        wid = (extra_pnginfo or {}).get("workflow", {}).get("id")
+    except Exception:  # noqa: BLE001
+        wid = None
+    return f"{wid}:{unique_id}" if wid else str(unique_id)
 
 
 def _fmt(v):
@@ -127,7 +138,7 @@ class Counter:
                     "forceInput": True,
                     "tooltip": "Reset: returns to start whenever the upstream value changes; otherwise counting continues."}),
             },
-            "hidden": {"unique_id": "UNIQUE_ID"},
+            "hidden": {"unique_id": "UNIQUE_ID", "extra_pnginfo": "EXTRA_PNGINFO"},
         }
 
     RETURN_TYPES = ("INT", "FLOAT", "STRING")
@@ -142,8 +153,8 @@ class Counter:
         # a new hour / day must run again even when nothing else changed
         return _period(auto_reset) or ""
 
-    def count(self, run, mode, start, end, step, hold, auto_reset, reset=None, unique_id=None):
-        st = _STATE.setdefault(str(unique_id), {"base": 0, "last_run": None, "reset": _MISSING, "period": None})
+    def count(self, run, mode, start, end, step, hold, auto_reset, reset=None, unique_id=None, extra_pnginfo=None):
+        st = _STATE.setdefault(state_key(unique_id, extra_pnginfo), {"base": 0, "last_run": None, "reset": _MISSING, "period": None})
         run = int(run)
         if st["last_run"] is not None and run < st["last_run"]:
             st["base"] = 0  # RESET pressed or run edited down: count from run again

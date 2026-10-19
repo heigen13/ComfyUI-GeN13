@@ -11,9 +11,9 @@ Trigger (GeN13)
 前端(web/trigger.js):TRIGGER 大按鈕,狀態列 READY / ARMED(已按、等下一次執行)/ TRIGGERED BY INPUT。
 """
 
-from .counter import ANY, _key
+from .counter import ANY, _key, state_key
 
-_STATE = {}  # unique_id -> {"last": key, "changes": int}
+_STATE = {}  # state key -> {"last": key, "changes": int}
 _MISSING = object()
 
 
@@ -31,7 +31,7 @@ class Trigger:
                     "forceInput": True,
                     "tooltip": "Input: fires once whenever the upstream value changes, such as a Boolean switch."}),
             },
-            "hidden": {"unique_id": "UNIQUE_ID"},
+            "hidden": {"unique_id": "UNIQUE_ID", "extra_pnginfo": "EXTRA_PNGINFO"},
         }
 
     RETURN_TYPES = ("INT",)
@@ -41,8 +41,8 @@ class Trigger:
     CATEGORY = "GeN13/utils"
     DESCRIPTION = "Trigger: outputs a new value when its button is pressed or its input changes. Connect it to the reset of Counter (GeN13); one trigger can reset many."
 
-    def fire(self, pulse, input=None, unique_id=None):
-        st = _STATE.setdefault(str(unique_id), {"last": _MISSING, "changes": 0})
+    def fire(self, pulse, input=None, unique_id=None, extra_pnginfo=None):
+        st = _STATE.setdefault(state_key(unique_id, extra_pnginfo), {"last": _MISSING, "changes": 0})
         by_input = False
         if input is not None:
             k = _key(input)
