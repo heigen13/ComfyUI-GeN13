@@ -64,7 +64,7 @@ Optional: the `nvidia_rtx_vsr` upscale method in **Resize** needs the `nvidia-vf
 
 ## Notes
 
-- Tooltips and descriptions are in English, with a Traditional Chinese translation shown when the ComfyUI language is set to 繁體中文.
+- Tooltips and descriptions are in English, with translations in Traditional Chinese (繁體中文), Simplified Chinese (中文) and Japanese (日本語), shown when the ComfyUI language is set to one of them.
 - Built and tested on ComfyUI 0.40 with the classic canvas (Nodes 1.0). Nodes 2.0 is supported for the image previews.
 
 ## License
@@ -112,7 +112,7 @@ git clone https://github.com/heigen13/ComfyUI-GeN13
 
 ### 備註
 
-- 節點說明以英文為主，附繁體中文翻譯：ComfyUI 語言設為「繁體中文」時自動顯示中文。
+- 節點說明以英文為主，附繁體中文、簡體中文與日文翻譯：ComfyUI 語言設為其中一種時自動切換。
 
 ### 授權
 
