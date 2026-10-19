@@ -14,10 +14,11 @@ Degrease
               髮絲、睫毛、皺紋在自己的走向上夠長,不會被當成暗點。
   deshine   : 去油光。只把膚色區域內「比周圍亮」的部分往下收(鼻樑、額頭、臉頰的反光),不是整體壓暗。
               區域以色相判定後取區域平均,所以反光本身(偏白、飽和度低)也算在皮膚內;白牆、白衣不受影響。
-  even_tone : 勻膚。只降紅橘色相帶(HSV 色相中心 25°,兩側軟衰減)的飽和度,
-              並依飽和度加權——越飽和扣越多,淡的膚色幾乎不動;明度不變。
+  even_tone : 勻膚。紅橘色相帶(HSV 色相中心 25°,兩側軟衰減)的色度朝全臉平均膚色收斂:
+              泛紅斑塊變勻、血色保留,不往灰色收;只作用在皮膚區域,明度不變。
   decontour : 減立體。壓平中低頻的明暗起伏(過重的立體感)。底層用保邊的 guided filter 取得,
-              輪廓不會像高斯模糊那樣發光起霧;最細一層紋理(約 1 px)原樣保留;只改明度不改色彩。
+              輪廓不會像高斯模糊那樣發光起霧;最細一層紋理(約 1 px)原樣保留;只改明度不改色彩;
+              只作用在皮膚區域(背景、頭髮、衣服不動)。
 
 五官保護:smooth、deblemish、decontour 都避開「小而暗、但不是暗點」的特徵(眼睛、睫毛、眉毛、鼻孔、髮絲)
   及其周圍一圈。偵測用形態學黑帽(閉運算減原圖),先把暗點補平再偵測,所以痣不會被當成五官保護起來。
@@ -72,6 +73,8 @@ FEAT_GROW = 0.8            # 保護範圍往外擴的距離(短邊 %),把眼白�
 FEAT_GROW_SPOT = 0.3       # 祛斑用的保護範圍只擴一點點:眼角、眉尾旁邊的痣才抹得到
 FEAT_LO, FEAT_HI = 0.08, 0.20          # 比周圍暗不到 LO 不算五官(淡紋),超過 HI 完全保護
 
+TONE_RADIUS = 20.0         # 勻膚取平均膚色的範圍(短邊 %):約整張臉,兩頰泛紅往全臉平均收
+TONE_BOOST = 2.0           # 勻膚的膚色權重放大倍數(上限 1),淡的膚色也收得動
 SKIN_HUE = 25.0            # 膚色色相帶中心(HSV 度)
 SKIN_FULL = 13.0           # 中心 ± 此角度內完全作用
 SKIN_ZERO = 35.0           # 中心 ± 此角度外完全不作用
@@ -208,7 +211,7 @@ def feature_protect(feat, r_grow):
 
 def _retouch(x, smooth, deblemish, deshine, decontour, r, r_smooth, r_shine, r_feat, r_grow, r_grow_spot, r_spot):
     """x: [B,H,W,3] 0..1;四個量皆 0..1。先祛斑(動到色彩),其餘三項只改明度、合併成一次明度替換。"""
-    region = skin_region(x, r_shine) if (smooth > 0 or deblemish > 0 or deshine > 0) else None
+    region = skin_region(x, r_shine) if (smooth > 0 or deblemish > 0 or deshine > 0 or decontour > 0) else None
     protect = None
     if smooth > 0 or deblemish > 0 or decontour > 0:
         xc = x.permute(0, 3, 1, 2)
@@ -233,7 +236,7 @@ def _retouch(x, smooth, deblemish, deshine, decontour, r, r_smooth, r_shine, r_f
         base = _guided(i, r, EDGE_EPS)
         fine = _guided(i, FINE_PX, EDGE_EPS) if FINE_PX < r else i
         mid = (fine - base).squeeze(1)                     # 中低頻局部對比(最細一層除外)
-        y_new = y_new - decontour * _smoothstep(base.squeeze(1), SHADOW_LO, SHADOW_HI) * protect * mid
+        y_new = y_new - decontour * region * _smoothstep(base.squeeze(1), SHADOW_LO, SHADOW_HI) * protect * mid
     if deshine > 0:
         # 周圍底層先做閉運算:暗五官才不會把底層往下拉、害旁邊的皮膚被誤判成「比周圍亮」
         base = _guided(_closing(i, max(1, r_shine // 2)), r_shine, SHINE_EPS).squeeze(1)
@@ -244,10 +247,18 @@ def _retouch(x, smooth, deblemish, deshine, decontour, r, r_smooth, r_shine, r_f
 
 
 def _even_tone(x, amount):
-    """x: [B,H,W,3] 0..1;amount: 0..1。朝同明度的灰收斂,明度不變。"""
-    k = (1.0 - amount * skin_weight(x)).unsqueeze(-1)
+    """x: [B,H,W,3] 0..1;amount: 0..1。膚色色度朝周圍皮膚的平均色度收斂:泛紅斑塊變勻、血色保留(不往灰色收),
+    明度不變,只作用在皮膚區域。"""
+    h, w = x.shape[1], x.shape[2]
+    wt = (skin_weight(x) * TONE_BOOST).clamp(max=1.0)
+    region = skin_region(x, radius_px(h, w, SHINE_RADIUS))
     y = _luma(x).unsqueeze(-1)
-    return y + (x - y) * k
+    c = x - y                                              # 色度(去掉明度)
+    r = radius_px(h, w, TONE_RADIUS)
+    cw = (c * region.unsqueeze(-1)).permute(0, 3, 1, 2)
+    target = (_box(cw, r) / _box(region.unsqueeze(1), r).clamp(min=1e-4)).permute(0, 2, 3, 1)   # 周圍皮膚的平均色度
+    k = (amount * wt * region).unsqueeze(-1)
+    return y + c + k * (target - c)
 
 
 def radius_px(h, w, radius):
