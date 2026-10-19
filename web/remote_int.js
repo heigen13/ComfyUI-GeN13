@@ -13,6 +13,7 @@
 //   - grey line at the bottom: channel · N mirrors
 
 import { app } from "../../scripts/app.js";
+import { isOff } from "./g13_mode.js";
 import { applyWireLock, wireSuffix, wiredMirrors } from "./remote_link.js";
 
 const NODE_ID = "RemoteIntGeN13";
@@ -142,7 +143,7 @@ function step(node) {
   const c = chan(node);
   if (stepped.has(c)) return;
   markPass(c);
-  if (node.mode === 2 || node.mode === 4) return; // muted / bypassed: the number stays
+  if (isOff(node)) return; // muted / bypassed, itself or its subgraph: the number stays
   if (wiredMirrors(group(node)).length) return; // group driven by a wire: the number is not ours to step
   const mode = w(node, "control_after_generate")?.value;
   const val = w(node, "value");

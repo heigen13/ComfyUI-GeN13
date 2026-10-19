@@ -16,6 +16,7 @@
 //   - grey line at the bottom: channel · N mirrors · target count
 
 import { app } from "../../scripts/app.js";
+import { isOff } from "./g13_mode.js";
 import { T, setTip, setWidgetTip } from "./g13_i18n.js";
 import { applyWireLock, wireSuffix, wiredMirrors } from "./remote_link.js";
 
@@ -200,7 +201,7 @@ function setValue(node, v) {
 
 // prev / next: boxes with content of the first target; plain +-1 without one
 function stepValue(node, dir) {
-  if (node.mode === 2 || node.mode === 4) return; // bypassed / muted: not in use
+  if (isOff(node)) return; // bypassed / muted, itself or its subgraph: not in use
   if (wiredMirrors(group(node)).length) return; // group driven by a wire: the pick is not ours
   const g = Math.round(Number(w(node, "value")?.value) || 1);
   const head = targets(node)[0];
@@ -304,7 +305,7 @@ function render(node) {
   }
   const grp = group(node);
   const ws = applyWireLock(node, grp);
-  if (r) r.row.classList.toggle("g13tr-lock", node.mode === 2 || node.mode === 4 || ws.wired > 0);
+  if (r) r.row.classList.toggle("g13tr-lock", isOff(node) || ws.wired > 0);
   const k = grp.length;
   const c = chan(node) || "(no channel)";
   const extra = heads.length > 1 ? `  ·  ${heads.length} switches` : "";
@@ -330,7 +331,7 @@ function autoStep(node) {
   const c = chan(node);
   if (stepped.has(c)) return;
   markPass(c);
-  if (node.mode === 2 || node.mode === 4) return;
+  if (isOff(node)) return;
   if (w(node, "auto_next")?.value !== "NEXT") return;
   stepValue(node, 1);
 }

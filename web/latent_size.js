@@ -22,6 +22,7 @@
 //   - button widgets render in both the classic canvas (Nodes 1.0) and Vue nodes (2.0)
 
 import { app } from "../../scripts/app.js";
+import { isOff } from "./g13_mode.js";
 
 const IDS = ["ResizeGeN13"];
 const IMAGES = ["image1", "image2", "image3", "image4"];
@@ -185,7 +186,7 @@ function active(node, name) {
   if (!slot || slot.link == null) return false;
   const link = node.graph?.links?.[slot.link] ?? node.graph?.links?.get?.(slot.link);
   const up = link ? node.graph?.getNodeById?.(link.origin_id) : null;
-  return !(up && (up.mode === 2 || up.mode === 4));
+  return !(up && isOff(up));
 }
 
 function upstreamSig(node) {

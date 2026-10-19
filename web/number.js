@@ -10,6 +10,7 @@
 //     increment / decrement step by 1, randomize picks an integer in 0..RANDOM_MAX.
 
 import { app } from "../../scripts/app.js";
+import { isOff } from "./g13_mode.js";
 
 const NODE_ID = "NumberGeN13";
 const LIMIT = 1_000_000_000;
@@ -27,7 +28,7 @@ function applyControl(node) {
   const mode = w(node, "control_after_generate")?.value;
   const val = w(node, "value");
   if (!val || !mode || mode === "fixed" || linked(node, "number")) return;
-  if (node.mode === 2 || node.mode === 4) return; // muted / bypassed: keep the number
+  if (isOff(node)) return; // muted / bypassed, itself or its subgraph: keep the number
   let v = Number(val.value) || 0;
   if (mode === "increment") v += 1;
   else if (mode === "decrement") v -= 1;

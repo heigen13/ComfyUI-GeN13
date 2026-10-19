@@ -59,6 +59,7 @@
 //     core control_after_generate. Chained nodes show the head's setting, dimmed.
 
 import { app } from "../../scripts/app.js";
+import { isOff } from "./g13_mode.js";
 import { T, setTip, setWidgetTip } from "./g13_i18n.js";
 
 const NODE_ID = "TextSwitchGeN13";
@@ -221,13 +222,13 @@ function sourceOf(node) {
   for (let hop = 0; l && hop < 16; hop++) {
     const up = g?.getNodeById?.(l.origin_id);
     if (!up) return null;
-    if (up.mode === 2 || up.mode === 4) return null;
+    if (isOff(up)) return null;
     if (!up.isVirtualNode) return up;
     // Get node: its setter's input link; Set node / reroute: its own first input link
     const next = typeof up.getInputLink === "function" ? up.getInputLink(l.origin_slot ?? 0) : null;
     if (next) {
       const setter = up.findSetter?.(up.graph);
-      if (setter && (setter.mode === 2 || setter.mode === 4)) return null;
+      if (setter && isOff(setter)) return null;
       g = setter?.graph ?? up.graph ?? g;
       l = next;
     } else {
@@ -835,7 +836,7 @@ app.registerExtension({
       const step = () => {
         if (chainNodes(node)[0] !== node || !props(node).adv) return;
         if (extLinked(node)) return; // an INT link owns the pick
-        if (node.mode === 2 || node.mode === 4) return; // muted / bypassed: the box was not used
+        if (isOff(node)) return; // muted / bypassed, itself or its subgraph: the box was not used
         advanceNext(node);
       };
       adv.beforeQueued = () => {

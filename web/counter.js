@@ -12,6 +12,7 @@
 //     number during hold still shows that a run happened.
 
 import { app } from "../../scripts/app.js";
+import { isOff } from "./g13_mode.js";
 import { T, setTip, setWidgetTip } from "./g13_i18n.js";
 
 const NODE_ID = "CounterGeN13";
@@ -155,7 +156,7 @@ function setBtn(b, on) {
 }
 
 function stepRun(node) {
-  if (node.mode === 2 || node.mode === 4) return; // muted / bypassed: keep the count
+  if (isOff(node)) return; // muted / bypassed, itself or its subgraph: keep the count
   const rw = w(node, "run");
   if (!rw) return;
   const v = Math.max(0, Math.round(Number(rw.value) || 0)) + 1;
