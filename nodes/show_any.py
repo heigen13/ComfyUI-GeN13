@@ -30,7 +30,7 @@ except Exception:  # pragma: no cover
 
 
 class AnyType(str):
-    """matches every socket type"""
+    """matches every slot type"""
 
     def __ne__(self, other):
         return False

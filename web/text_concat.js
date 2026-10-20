@@ -109,10 +109,10 @@ function vueMode() {
 
 const OUT_BASE = 1; // outputs: 0 STRING, 1.. boxes
 
-// Nodes 1.0: a linked box's input dot shares its row with the on_NN widget socket, which comes first
+// Nodes 1.0: a linked box's input dot shares its row with the on_NN widget slot, which comes first
 // in the input list and takes the mouse-down. The canvas then starts a new link from on_NN; here that
 // start is turned into "pick up the box's existing link" (what the stock behaviour is for a linked
-// socket). Patched on the canvas's LinkConnector, so it works on frontends where the slot hit test is
+// slot). Patched on the canvas's LinkConnector, so it works on frontends where the slot hit test is
 // no longer a canvas method.
 let _canvasPatched = false;
 function patchCanvas() {
@@ -123,7 +123,7 @@ function patchCanvas() {
   const orig = lc.dragNewFromInput;
   lc.dragNewFromInput = function (network, node, input, ...rest) {
     if (node?.type === NODE_ID && !vueMode()) {
-      const m = /^on_(\d\d)$/.exec(input?.name ?? "");
+      const m = (input?.name ?? "").match(/^on_(\d\d)$/);
       const tx = m ? node.inputs?.find((s) => s.name === `text_${m[1]}`) : null;
       if (tx && inLinked(node, tx)) return this.moveInputLink(network, node, tx);
     }
@@ -225,7 +225,7 @@ app.registerExtension({
           update(node);
           return out;
         };
-        const m = /^(on|text)_(\d\d)$/.exec(x.name);
+        const m = String(x.name ?? "").match(/^(on|text)_(\d\d)$/);
         if (m) x.label = `#${m[2]}`; // Nodes 2.0 shows the raw name (text_01) without a label
         const e = el(x);
         if (e && e.tagName === "TEXTAREA") {

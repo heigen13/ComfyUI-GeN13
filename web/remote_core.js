@@ -9,11 +9,11 @@
 //   - a mirror that joins a channel (channel edited, pasted, added) takes the group's values and
 //     mode; loading a workflow never rewrites values
 //   - grey line at the bottom: channel · N mirrors
-//   - textBox (Remote String): the backend's `value` is a forceInput socket (no core text widget), and
+//   - textBox (Remote String): the backend's `value` is a forceInput slot (no core text widget), and
 //     the text box is a GeN13 DOM widget named `value` (same look as Show Any Lite, drawn the same in
 //     Nodes 1.0 and 2.0): a 22px bar on top (chars · lines, then cut / copy / paste icons) and the text
 //     below it. The box sits right after channel (same widgets_values order as before) and sends the
-//     typed text; a wire into the value socket overrides it, as for any widget.
+//     typed text; a wire into the value slot overrides it, as for any widget.
 //     cut = copy all, then clear; paste = one line break, then append at the end (same as Show Any).
 //     The box is read-only (dimmed, cut / paste off) while value is wired here or on a mirror.
 // This file registers no extension of its own; ComfyUI loading it directly is harmless.
@@ -453,7 +453,7 @@ export function registerRemote({ nodeId, extName, synced = ["value"], stepPicker
         if (textBox) {
           const saved = this.properties?.g13_text;
           if (typeof saved === "string") this._g13v = saved;
-          // saved before value became a socket: its input still claims a widget; make it a plain socket
+          // saved before value became a slot: its input still claims a widget; make it a plain slot
           const vi = this.inputs?.find((i) => i.name === "value");
           if (vi && vi.widget) {
             try {

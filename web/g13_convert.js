@@ -15,8 +15,11 @@
 // Link release:
 //   - dragging a Text Switch chain output onto empty canvas adds the next Text Switch there, linked
 //     (hold Shift for the normal search box)
-//   - the search box opened by a released link lists the matching GeN13 nodes first when nothing is
-//     typed yet (IMAGE, STRING, INT, FLOAT)
+//   - the search box and the context menu opened by a released link list the matching GeN13 nodes
+//     first (by type; by slot for Trigger / Counter and for common inputs such as seed, steps, cfg)
+//   - a link dropped on a GeN13 node body, or added through the search box / menu, goes to the slot it
+//     is meant for (Trigger -> Counter.reset, STRING -> Remote String.value ...), and a GeN13 node
+//     feeding an input of the same name uses that output (seed -> Load Image SD.seed)
 
 import { app } from "../../scripts/app.js";
 import { convertLabel } from "./g13_i18n.js";
@@ -247,12 +250,21 @@ function patchLinkConnector(canvas) {
   const lc = canvas?.linkConnector;
   if (!lc || lc._g13patched) return;
   lc._g13patched = true;
-  const orig = lc.dropOnNothing.bind(lc);
+  const orig = lc.dropOnNothing;
   lc.dropOnNothing = function (event) {
     try {
       boostSearch();
       const links = this.renderLinks ?? [];
       const first = links[0];
+      released = first
+        ? {
+            key: `${first.node?.type}.${first.fromSlot?.name}`,
+            name: String(first.fromSlot?.name ?? ""),
+            type: String(first.fromSlot?.type ?? ""),
+            at: Date.now(),
+          }
+        : null;
+      if (released && links.length === 1) menuFirst(this.state?.connectingTo === "input" ? "input" : "output", released.type);
       if (
         !event?.shiftKey &&
         links.length === 1 &&
@@ -273,23 +285,177 @@ function patchLinkConnector(canvas) {
     } catch (e) {
       console.warn("[GeN13] link release", e);
     }
-    return orig(event);
+    return orig.apply(lc, [event]);
   };
 }
 
 // GeN13 nodes first in the search box opened by a released link (empty query + one type filter)
+// input.X  = chip "Input: X",  dragged from an output: nodes taking X (widget inputs count too)
+// output.X = chip "Output: X", dragged from an input: nodes giving X; "*" is an ANY slot
 const PREFER = {
   input: {
-    IMAGE: ["SaveImagePrivateGeN13", "PreviewImagePrivateGeN13", "DegreaseGeN13", "ColorMatchTemporalGeN13"],
-    STRING: ["ShowAnyGeN13", "ShowAnyLiteGeN13", "TextSwitchGeN13", "GenPromptCacheGeN13"],
+    IMAGE: ["SaveImagePrivateGeN13", "PreviewImagePrivateGeN13", "ResizeGeN13", "DegreaseGeN13", "ColorMatchTemporalGeN13", "RemoteVideoGeN13"],
+    MASK: ["ResizeGeN13"],
+    LATENT: ["ResizeGeN13"],
+    STRING: ["ShowAnyGeN13", "ShowAnyLiteGeN13", "TextSwitchGeN13", "TextConcatenateGeN13", "GenPromptCacheGeN13", "RemoteStringGeN13", "NumberGeN13"],
+    INT: ["NumberGeN13", "ShowAnyGeN13", "ShowAnyLiteGeN13", "TextSwitchGeN13", "TriggerGeN13"],
+    FLOAT: ["NumberGeN13", "ShowAnyGeN13", "ShowAnyLiteGeN13"],
+    BOOLEAN: ["TriggerGeN13", "ShowAnyGeN13", "ShowAnyLiteGeN13"],
+    "*": ["ShowAnyGeN13", "ShowAnyLiteGeN13", "TriggerGeN13", "CounterGeN13"],
   },
   output: {
-    INT: ["RemoteIntGeN13", "CounterGeN13", "NumberGeN13"],
+    IMAGE: ["LoadImagePrivateGeN13", "LoadLatestImagePrivateGeN13", "LoadImageOrientGeN13", "LoadImageSDGeN13", "ResizeGeN13", "RemoteVideoGeN13"],
+    MASK: ["LoadImagePrivateGeN13", "LoadLatestImagePrivateGeN13", "LoadImageOrientGeN13", "LoadImageSDGeN13", "ResizeGeN13"],
+    LATENT: ["ResizeGeN13"],
+    INT: ["RemoteIntGeN13", "CounterGeN13", "NumberGeN13", "RemoteTextSwitchGeN13", "TriggerGeN13"],
     FLOAT: ["RemoteFloatGeN13", "NumberGeN13", "CounterGeN13"],
-    STRING: ["RemoteStringGeN13", "TextSwitchGeN13", "ShowAnyGeN13"],
+    STRING: ["RemoteStringGeN13", "TextSwitchGeN13", "TextConcatenateGeN13", "GenPromptCacheGeN13", "ShowAnyGeN13"],
     BOOLEAN: ["RemoteBooleanGeN13"],
+    "INT,FLOAT,STRING": ["CounterGeN13", "NumberGeN13", "RemoteIntGeN13", "RemoteFloatGeN13", "RemoteStringGeN13"],
+    "*": ["RemoteBooleanGeN13", "RemoteIntGeN13", "RemoteStringGeN13", "CounterGeN13", "NumberGeN13"],
   },
 };
+// one slot's own list, ahead of the type lists: Trigger -> Counter.reset and Remote Text Switch ->
+// Text Switch.select_num are the pairs they are made for
+const PREFER_SLOT = {
+  input: {
+    "TriggerGeN13.INT": ["CounterGeN13", "ShowAnyGeN13", "ShowAnyLiteGeN13"],
+    "RemoteTextSwitchGeN13.INT": ["TextSwitchGeN13", "ShowAnyGeN13", "ShowAnyLiteGeN13"],
+  },
+  output: {
+    "TextSwitchGeN13.select_num": ["RemoteTextSwitchGeN13", "CounterGeN13", "TriggerGeN13", "RemoteIntGeN13", "NumberGeN13"],
+    "CounterGeN13.reset": ["TriggerGeN13", "RemoteBooleanGeN13", "RemoteIntGeN13", "RemoteStringGeN13", "NumberGeN13"],
+    // "*.name": an input of that name on any node (built-in KSampler, EmptyLatentImage, CLIPTextEncode ...)
+    "*.seed": ["RemoteIntGeN13", "CounterGeN13", "NumberGeN13", "LoadImageSDGeN13"],
+    "*.noise_seed": ["RemoteIntGeN13", "CounterGeN13", "NumberGeN13", "LoadImageSDGeN13"],
+    "*.steps": ["RemoteIntGeN13", "LoadImageSDGeN13", "RemoteVideoGeN13", "CounterGeN13"],
+    "*.cfg": ["RemoteFloatGeN13", "LoadImageSDGeN13", "NumberGeN13", "CounterGeN13"],
+    "*.denoise": ["RemoteFloatGeN13", "NumberGeN13", "CounterGeN13"],
+    "*.sampler_name": ["LoadImageSDGeN13"],
+    "*.scheduler": ["LoadImageSDGeN13"],
+    "*.width": ["RemoteIntGeN13", "ResizeGeN13", "RemoteVideoGeN13", "LoadImagePrivateGeN13", "LoadLatestImagePrivateGeN13", "LoadImageSDGeN13"],
+    "*.height": ["RemoteIntGeN13", "ResizeGeN13", "RemoteVideoGeN13", "LoadImagePrivateGeN13", "LoadLatestImagePrivateGeN13", "LoadImageSDGeN13"],
+    "*.length": ["RemoteVideoGeN13", "RemoteIntGeN13", "CounterGeN13"],
+    "*.batch_size": ["RemoteIntGeN13", "CounterGeN13"],
+    "*.fps": ["RemoteVideoGeN13", "RemoteFloatGeN13"],
+    "*.frame_rate": ["RemoteVideoGeN13", "RemoteFloatGeN13"],
+    "*.text": ["RemoteStringGeN13", "TextSwitchGeN13", "TextConcatenateGeN13", "GenPromptCacheGeN13", "LoadImageSDGeN13"],
+  },
+};
+let released = null; // the slot of the last link dropped on empty canvas
+function slotPrefer(id, value) {
+  const r = released;
+  if (!r || Date.now() - r.at > 10000 || r.type !== String(value ?? "")) return null;
+  return PREFER_SLOT[id]?.[r.key] ?? PREFER_SLOT[id]?.[`*.${r.name}`] ?? null;
+}
+
+// the link-release context menu lists LiteGraph.slot_types_default_out / _in[type]: put the same GeN13
+// list in front for this release (the menu's own entries follow; rebuilt from its base every time)
+const menuBase = { input: {}, output: {} };
+const menuSet = { input: {}, output: {} };
+function menuFirst(id, type) {
+  try {
+    const pref = slotPrefer(id, type) ?? preferFor(id, type);
+    const table = LG()?.[id === "input" ? "slot_types_default_out" : "slot_types_default_in"];
+    if (!table) return;
+    const cur = table[type];
+    if (cur !== menuSet[id][type]) menuBase[id][type] = cur; // first time, or rebuilt by ComfyUI since
+    const base = menuBase[id][type] == null ? [] : [].concat(menuBase[id][type]);
+    const names = (pref ?? []).filter((n) => LG()?.registered_node_types?.[n]);
+    const next = [...names, ...base.filter((e) => !names.includes(typeof e === "string" ? e : e?.node))];
+    if (!next.length) return;
+    table[type] = next;
+    menuSet[id][type] = next;
+  } catch (e) {
+    console.warn("[GeN13] link menu", e);
+  }
+}
+// a multi-type slot ("INT,FLOAT,STRING") uses its own list if there is one, else the lists of its types merged
+function preferFor(id, value) {
+  const table = PREFER[id];
+  if (!table) return null;
+  const key = String(value ?? "").replace(/\s+/g, "");
+  if (table[key]) return table[key];
+  const merged = [];
+  for (const t of key.split(",")) for (const name of table[t] ?? []) if (!merged.includes(name)) merged.push(name);
+  return merged.length ? merged : null;
+}
+// which slot a link takes on a GeN13 node: the frontend picks the first free slot of the type, widgets
+// included, so INT into Counter landed on run, STRING into Remote String on channel ...
+const TYPES = (t) => String(t ?? "").toLowerCase().split(",").map((x) => x.trim());
+const fits = (a, b) => {
+  const x = TYPES(a);
+  const y = TYPES(b);
+  return x.includes("*") || y.includes("*") || x.some((t) => y.includes(t));
+};
+const TARGET_IN = {
+  CounterGeN13: () => "reset",
+  TriggerGeN13: () => "input",
+  ShowAnyGeN13: () => "any",
+  ShowAnyLiteGeN13: () => "any",
+  NumberGeN13: (t) => (["INT", "FLOAT", "STRING"].includes(t) ? "number" : null),
+  TextSwitchGeN13: (t) => (t === "INT" ? "select_num" : null),
+  RemoteStringGeN13: (t) => (t === "STRING" ? "value" : null),
+  GenPromptCacheGeN13: (t) => (t === "STRING" ? "text" : null),
+  TextConcatenateGeN13: (t) => (t === "STRING" ? /^text_\d+$/ : null),
+};
+function targetInput(node, type) {
+  const rule = TARGET_IN[node?.comfyClass ?? node?.type];
+  const want = rule?.(String(type ?? ""));
+  if (!want) return -1;
+  const ins = node.inputs ?? [];
+  for (let i = 0; i < ins.length; i++) {
+    const s = ins[i];
+    const hit = typeof want === "string" ? s.name === want : want.test(s.name);
+    if (hit && !s.hidden && fits(type, s.type) && !inLinked(node, i)) return i;
+  }
+  return -1;
+}
+// a GeN13 node feeding an input uses the output of the same name (seed, steps, width ...)
+const OUT_ALIAS = { noise_seed: "seed", text: "positive", frame_rate: "fps" };
+function draggedName() {
+  const first = app.canvas?.linkConnector?.renderLinks?.[0];
+  if (first) return String(first.fromSlot?.name ?? "");
+  const r = released; // context menu: the link is gone by now
+  return r && Date.now() - r.at < 10000 ? r.name : "";
+}
+function targetOutput(node, type) {
+  const name = draggedName().toLowerCase();
+  if (!name) return -1;
+  const want = [name, OUT_ALIAS[name]].filter(Boolean);
+  const outs = node.outputs ?? [];
+  for (const w of want) {
+    const i = outs.findIndex((s) => String(s.name).toLowerCase() === w && fits(type, s.type));
+    if (i >= 0) return i;
+  }
+  return -1;
+}
+function targetSlots(nodeType) {
+  const P = nodeType.prototype;
+  const byType = P.findInputByType;
+  if (typeof byType === "function") {
+    P.findInputByType = function (type) {
+      const i = targetInput(this, type);
+      return i >= 0 ? { index: i, slot: this.inputs[i] } : byType.apply(this, arguments);
+    };
+  }
+  const outByType = P.findOutputByType;
+  if (typeof outByType === "function") {
+    P.findOutputByType = function (type) {
+      const i = targetOutput(this, type);
+      return i >= 0 ? { index: i, slot: this.outputs[i] } : outByType.apply(this, arguments);
+    };
+  }
+  const bySlot = P.findSlotByType;
+  if (typeof bySlot === "function") {
+    P.findSlotByType = function (input, type, returnObj) {
+      const i = input ? targetInput(this, type) : targetOutput(this, type);
+      if (i >= 0) return returnObj ? (input ? this.inputs : this.outputs)[i] : i;
+      return bySlot.apply(this, arguments);
+    };
+  }
+}
+
 function boostSearch() {
   let store;
   try {
@@ -299,13 +465,13 @@ function boostSearch() {
   const svc = store?.nodeSearchService;
   if (!svc || svc._g13boost) return;
   svc._g13boost = true;
-  const orig = svc.searchNode.bind(svc);
+  const orig = svc.searchNode;
   svc.searchNode = function (query, filters, ...rest) {
-    const res = orig(query, filters, ...rest);
+    const res = orig.apply(svc, [query, filters, ...rest]);
     try {
       if (query || !filters || filters.length !== 1) return res;
       const f = filters[0];
-      const pref = PREFER[f?.filterDef?.id]?.[String(f?.value)];
+      const pref = slotPrefer(f?.filterDef?.id, f?.value) ?? preferFor(f?.filterDef?.id, f?.value);
       if (!pref) return res;
       const rank = (n) => {
         const i = pref.indexOf(n.name);
@@ -319,7 +485,8 @@ function boostSearch() {
         .map((name) => byName[name])
         .filter((def) => {
           try {
-            return f.filterDef.matches(def, f.value);
+            // same two passes as the search itself: the type, then the ANY ("*") wildcard
+            return f.filterDef.matches(def, f.value) || f.filterDef.matches(def, f.value, { wildcard: "*" });
           } catch {
             return false;
           }
@@ -350,6 +517,7 @@ app.registerExtension({
   async beforeRegisterNodeDef(nodeType, nodeData) {
     if (MENU_TYPES.has(nodeData.name)) addMenu(nodeType);
     if (Object.values(REMOTE_FOR).includes(nodeData.name)) autoChannel(nodeType, nodeData.name);
+    if (nodeData.name?.endsWith("GeN13")) targetSlots(nodeType);
   },
 });
 

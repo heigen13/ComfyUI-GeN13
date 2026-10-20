@@ -11,7 +11,7 @@
 //   - the last shown text is kept in node.properties.g13_text, so it survives F5 / restart.
 //   - any not linked: the box is a text field (textarea, one line until the node is dragged taller).
 //     The box itself is the "content" widget (DOM widget, serialized), so what is typed is sent and
-//     saved; the backend's forceInput "content" socket is removed (nothing to link there).
+//     saved; the backend's forceInput "content" slot is removed (nothing to link there).
 //     any linked: read-only display of the upstream content, as before.
 
 import { app } from "../../scripts/app.js";
@@ -335,7 +335,7 @@ app.registerExtension({
         if (box.classList.contains("g13sl-multi")) e.stopPropagation(); // scroll the text, not the canvas
       });
 
-      // the backend's "content" is forceInput (no auto widget): drop its socket, the box sends it
+      // the backend's "content" is forceInput (no auto widget): drop its slot, the box sends it
       const ci = node.inputs?.findIndex((s) => s.name === "content") ?? -1;
       if (ci >= 0) node.removeInput(ci);
       node._g13in = "";

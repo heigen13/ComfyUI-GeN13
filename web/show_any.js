@@ -369,9 +369,9 @@ function rerouteContent(node) {
   if (src && src.outputs?.[l.origin_slot]) src.connectSlots(src.outputs[l.origin_slot], node, node.inputs[ai]);
 }
 
-// the box takes no link at all (same as Show Any Lite): drop its input socket, so a link released
+// the box takes no link at all (same as Show Any Lite): drop its input slot, so a link released
 // anywhere on the node goes to "any"; an older save with a link on the box is moved to "any" first
-function dropContentSocket(node) {
+function dropContentSlot(node) {
   rerouteContent(node);
   const ci = node.inputs?.findIndex((s) => s.name === "content") ?? -1;
   if (ci >= 0 && !inLinked(node, ci)) node.removeInput(ci);
@@ -430,7 +430,7 @@ app.registerExtension({
       const cin = node.inputs?.find((s) => s.name === "content");
       if (cin) cin.type = "*";
 
-      requestAnimationFrame(() => dropContentSocket(node));
+      requestAnimationFrame(() => dropContentSlot(node));
 
       const { bar, inf, btn } = makeBar(node);
       const wrap = document.createElement("div");
@@ -479,7 +479,7 @@ app.registerExtension({
     nodeType.prototype.onConfigure = function () {
       const r = onConfigure?.apply(this, arguments);
       this._g13loaded = true;
-      setTimeout(() => dropContentSocket(this), 0); // older saves keep the box socket (and maybe a link)
+      setTimeout(() => dropContentSlot(this), 0); // older saves keep the box slot (and maybe a link)
       requestAnimationFrame(() => update(this));
       return r;
     };

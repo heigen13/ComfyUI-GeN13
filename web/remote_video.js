@@ -2,11 +2,12 @@
 //   - mirrors, bypass sync and wires driving the whole group: web/remote_core.js + web/remote_link.js
 //     (a wire into one mirror's image input feeds every mirror of the group)
 //   - seconds: arrows move 1 s, typed values keep one decimal (no step picker)
-//   - two grey lines: picture (size · ratio · megapixels; keep + image shows the real size after a run)
+//   - two grey lines: picture (size · ratio · megapixels; keep + image reads the loader's picture size
+//     right away, other sources show the real size after a run until the source changes)
 //     and time (seconds × fps = frames)
 import { app } from "../../scripts/app.js";
 import { registerRemote } from "./remote_core.js";
-import { inLinked } from "./g13_mode.js";
+import { inLink, inLinked } from "./g13_mode.js";
 
 const NODE_ID = "RemoteVideoGeN13";
 const SYNCED = ["aspect_ratio", "megapixels", "seconds", "frame_rule", "steps"];
@@ -36,8 +37,14 @@ function val(node, name) {
   return w(node, name)?.value;
 }
 
+// Python round(): halves go to the even number (10.5 -> 10), so live sizes match the backend
+function roundEven(x) {
+  const r = Math.round(x);
+  return x % 1 === 0.5 && r % 2 !== 0 ? r - 1 : r;
+}
+
 function snap(v) {
-  return Math.max(MULTIPLE, Math.round(v / MULTIPLE) * MULTIPLE);
+  return Math.max(MULTIPLE, roundEven(v / MULTIPLE) * MULTIPLE);
 }
 
 // same as nodes/latent_size.py target_size() for a ratio
@@ -50,6 +57,35 @@ function sizeOf(ratio, mp) {
 
 function imageLinked(node) {
   return inLinked(node, node.inputs?.findIndex((x) => x.name === "image") ?? -1);
+}
+
+// the node feeding the image input, through legacy Reroute nodes (null: none or a subgraph input)
+function imageSource(node) {
+  let n = node;
+  let s = node.inputs?.findIndex((x) => x.name === "image") ?? -1;
+  for (let i = 0; i < 16; i++) {
+    const l = inLink(n, s);
+    if (!l) return null;
+    const o = n.graph?.getNodeById?.(l.origin_id);
+    if (!o || o.type !== "Reroute") return o ?? null;
+    n = o;
+    s = 0;
+  }
+  return null;
+}
+
+// a loader's picture size in px before any run: Private preview size, or the stock Load Image preview
+function sourceSize(o) {
+  if (!o) return null;
+  if (o._pvSize?.[0] > 0 && o._pvSize?.[1] > 0) return o._pvSize;
+  if (!o.widgets?.some((x) => x.name === "image")) return null;
+  const im = o.imgs?.[0];
+  return im?.naturalWidth > 0 && im?.naturalHeight > 0 ? [im.naturalWidth, im.naturalHeight] : null;
+}
+
+// identity of the source: a new node or any changed field drops the size from the last run
+function sourceKey(o) {
+  return o ? `${o.id}|${(o.widgets || []).map((x) => x.value).join("|")}` : "";
 }
 
 function setup(node) {
@@ -93,7 +129,13 @@ function onDraw(node) {
   const sec = Number(val(node, "seconds")) || 0;
   const fps = (RULES[val(node, "frame_rule")] || RULES["H3 · 24 fps (17n+5)"])[0];
   let line1;
-  if (r === "keep" && imageLinked(node)) line1 = node._g13ran ? [node._g13ran, "keep", mp].join(S) : ["keep · image", mp].join(S);
+  if (r === "keep" && imageLinked(node)) {
+    const o = imageSource(node);
+    const px = sourceSize(o);
+    if (px) line1 = [sizeOf(`${px[0]}:${px[1]}`, mp.split(" ")[0]).join(" × "), "keep", mp].join(S);
+    else if (node._g13ran && node._g13src === sourceKey(o)) line1 = [node._g13ran, "keep", mp].join(S);
+    else line1 = ["keep · image", mp].join(S);
+  }
   else if (r === "keep") line1 = [sizeOf(NO_IMAGE_RATIO, mp.split(" ")[0]).join(" × "), `keep → ${NO_IMAGE_RATIO}`, mp].join(S);
   else line1 = [sizeOf(r, mp.split(" ")[0]).join(" × "), r, mp].join(S);
   const line2 = `${sec.toFixed(1)} s  \u00D7  ${fps} fps  =  ${lengthOf(sec, val(node, "frame_rule"))} frames${S}${val(node, "steps")} steps`;
@@ -114,6 +156,7 @@ app.registerExtension({
       const s = msg?.g13_size?.[0];
       if (s) this._g13ran = s.split(" · ")[0];
       this._g13key = `${val(this, "aspect_ratio")}|${val(this, "megapixels")}`;
+      this._g13src = sourceKey(imageSource(this));
       return r;
     };
     const onDrawFg = nodeType.prototype.onDrawForeground;

@@ -5,8 +5,9 @@
 //   - linked widgets (width / height / edge_length / megapixels fed by a link) show the value of the
 //     last run, or "\u2190 input" before the first run
 //   - status line (grey): the current settings, live (I2I · keep · long edge 2048, T2I · 1920 × 1088)
-//   - size lines below it: one per linked image (IMAGE1..IMAGE4), the real size from the last run;
-//     changing a widget never wipes them. No image1 / samples: the first line is LATENT, computed live
+//   - size lines below it: one per linked image (IMAGE1..IMAGE4). Fed by a loader (Load Image, the
+//     Private / Orient / SD loaders), the size is computed live from the picture, no run needed;
+//     otherwise the real size from the last run, wiped when the source node or its fields change. No image1 / samples: the first line is LATENT, computed live
 //     (width x height); samples only: the first line is LATENT from the last run.
 //   - I2I without image1 but with image2..4 linked: the size widgets stay live (they still apply to
 //     the reference images) and their size lines stay visible
@@ -28,6 +29,7 @@ import { pick } from "./g13_i18n.js";
 const IDS = ["ResizeGeN13"];
 const IMAGES = ["image1", "image2", "image3", "image4"];
 const P_SIZES = "g13_sizes";
+const P_SRCS = "g13_srcs"; // source identity of each size line at the last run
 
 function w(node, name) {
   return node.widgets?.find((x) => x.name === name);
@@ -47,8 +49,14 @@ function floor(v, m) {
   return Math.max(m, Math.floor(v / m) * m);
 }
 
+// Python round(): halves go to the even number (10.5 -> 10), so live sizes match the backend
+function roundEven(x) {
+  const r = Math.round(x);
+  return x % 1 === 0.5 && r % 2 !== 0 ? r - 1 : r;
+}
+
 function snap(v, m) {
-  return Math.max(m, Math.round(v / m) * m);
+  return Math.max(m, roundEven(v / m) * m);
 }
 
 function calc(node) {
@@ -163,6 +171,69 @@ function sizeText(node, mode) {
   return mp == null ? `${inp} MP` : `${mp.toFixed(2)} MP`;
 }
 
+// the node feeding input `name`, through legacy Reroute nodes (null: none or a subgraph input)
+function sourceOf(node, name) {
+  let n = node;
+  let s = node.inputs?.findIndex((x) => x.name === name) ?? -1;
+  for (let i = 0; i < 16; i++) {
+    const l = inLink(n, s);
+    if (!l) return null;
+    const o = n.graph?.getNodeById?.(l.origin_id);
+    if (!o || o.type !== "Reroute") return o ?? null;
+    n = o;
+    s = 0;
+  }
+  return null;
+}
+
+// a loader's picture size in px before any run: Private preview size, or the stock Load Image preview
+function sourcePx(o) {
+  if (!o) return null;
+  if (o._pvSize?.[0] > 0 && o._pvSize?.[1] > 0) return o._pvSize;
+  if (!o.widgets?.some((x) => x.name === "image")) return null;
+  const im = o.imgs?.[0];
+  return im?.naturalWidth > 0 && im?.naturalHeight > 0 ? [im.naturalWidth, im.naturalHeight] : null;
+}
+
+// identity of a source: a new node or any changed field means the last-run size no longer applies
+function sourceKey(o) {
+  return o ? `${o.id}|${(o.widgets || []).map((x) => x.value).join("|")}` : "";
+}
+
+// I2I output size for a source of sw x sh, same rules as nodes/latent_size.py plan();
+// null when it cannot be known before a run (linked fields without a value, or a vae / samples
+// that may raise the multiple: Flux.2 16, HunyuanImage 2.1 32)
+function liveSize(node, px) {
+  if (!px || w(node, "mode")?.value === false) return null;
+  const m = Number(w(node, "multiple_of")?.value) || 32;
+  if (m < 32 && (linked(node, "vae") || linked(node, "samples"))) return null;
+  const [sw, sh] = px;
+  const ratio = w(node, "aspect_ratio")?.value;
+  if (ratio === "keep") {
+    const mode = w(node, "keep_size")?.value ?? "original";
+    if (mode === "megapixels" && val(node, "megapixels", 1) == null) return null;
+    if ((mode === "long_edge" || mode === "short_edge") && val(node, "edge_length", 1024) == null) return null;
+    return keepSize(node, sw, sh);
+  }
+  if (ratio === "custom"
+    ? val(node, "width", 2048) == null || val(node, "height", 1152) == null
+    : val(node, "megapixels", 1) == null) return null;
+  const t = calc(node);
+  if (!t) return null;
+  let [tw, th] = t;
+  if (w(node, "keep_proportion")?.value === "resize") { // fit inside, then down to the multiple
+    const k = Math.min(tw / sw, th / sh);
+    tw = Math.max(m, Math.floor(Math.floor(sw * k) / m) * m);
+    th = Math.max(m, Math.floor(Math.floor(sh * k) / m) * m);
+  }
+  return [tw, th];
+}
+
+// the input a size line follows: IMAGE1 falls back to samples when image1 is not running
+function rowInput(node, i) {
+  return i === 0 && !active(node, "image1") ? "samples" : IMAGES[i];
+}
+
 // keep with a known source size (nothing linked: width x height)
 function keepSize(node, sw, sh) {
   const m = Number(w(node, "multiple_of")?.value) || 32;
@@ -190,7 +261,12 @@ function active(node, name) {
 }
 
 function upstreamSig(node) {
-  return ["image1", "image2", "image3", "image4", "samples"].map((n) => (active(node, n) ? 1 : 0)).join("");
+  // also the source node / fields / picture size, so a new picture in a loader redraws the size lines
+  return ["image1", "image2", "image3", "image4", "samples"].map((n) => {
+    if (!active(node, n)) return "0";
+    const o = sourceOf(node, n);
+    return `1${sourceKey(o)}${sourcePx(o)?.join("x") ?? ""}`;
+  }).join(";");
 }
 
 function t2iSize(node) {
@@ -289,7 +365,12 @@ function update(node) {
       show = false;
     } else {
       show = active(node, name) || (i === 0 && lat);
-      text = Array.isArray(last[i]) ? mpText(last[i]) : "\u2014";
+      const input = rowInput(node, i);
+      const o = active(node, input) ? sourceOf(node, input) : null;
+      const live = input === "samples" ? null : liveSize(node, sourcePx(o));
+      const keys = node.properties?.[P_SRCS];
+      const same = !Array.isArray(keys) || keys[i] == null || keys[i] === sourceKey(o);
+      text = live ? mpText(live) : Array.isArray(last[i]) && same ? mpText(last[i]) : "\u2014";
     }
     setText(row, `${i === 0 && !img ? "LATENT" : `IMAGE${i + 1}`}  ${text ?? ""}`);
     if (!!row.hidden !== !show) {
@@ -391,6 +472,10 @@ app.registerExtension({
       if (Array.isArray(v)) {
         this.properties = this.properties || {};
         this.properties[P_SIZES] = v.slice(0, 4).map((x) => (Array.isArray(x) && x.length === 2 ? x : null));
+        this.properties[P_SRCS] = IMAGES.map((n, i) => {
+          const input = rowInput(this, i);
+          return active(this, input) ? sourceKey(sourceOf(this, input)) : null;
+        });
         const pr = output?.gen13_params;
         if (Array.isArray(pr) && pr[0] && typeof pr[0] === "object") this.properties.g13_params = pr[0];
         update(this);

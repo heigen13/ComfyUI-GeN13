@@ -853,7 +853,7 @@ app.registerExtension({
           update(node, true);
           return out;
         };
-        const m = /^text_(\d\d)$/.exec(x.name);
+        const m = String(x.name ?? "").match(/^text_(\d\d)$/);
         const e = el(x);
         if (e && e.tagName === "TEXTAREA") {
           if (m) e.placeholder = `#${m[1]}`;

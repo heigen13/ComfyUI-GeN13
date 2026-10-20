@@ -24,15 +24,15 @@ Widgets:
 
 Modes:
 
-  "1: upstream" : always evaluate the upstream branch, pass its text through and
+  "1: upstream" : always run the upstream branch, pass its text through and
                   write it to save_as.
-  "2: cache"    : never evaluate the upstream branch (the lazy input keeps it
+  "2: cache"    : never run the upstream branch (the lazy input keeps it
                   pruned from the execution graph), just read the target file.
-  "auto"        : evaluate the upstream branch and use its text if there is any;
+  "auto"        : run the upstream branch and use its text if there is any;
                   if it comes back None (node muted, or bypassed with no
                   passthrough) or empty, fall back to the target file. Never
                   falls through to off.
-  "3: off"      : never evaluate the upstream branch, read nothing, output an
+  "3: off"      : never run the upstream branch, read nothing, output an
                   empty string (source ["OFF"]). For running on your own
                   prompt text only.
 
@@ -237,7 +237,7 @@ class GenPromptCache:
 
     def check_lazy_status(self, mode, save_as, read_file, auto_backup, text=None,
                           prompt=None, unique_id=None, **kwargs):
-        # Returning [] leaves the lazy input unevaluated, which prunes the whole
+        # Returning [] leaves the lazy input unrun, which prunes the whole
         # upstream branch. Only cache mode can do that.
         if _mode(mode) in (MODE_CACHE, MODE_OFF) or text is not None:
             self._asked = None
