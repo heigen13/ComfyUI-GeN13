@@ -345,6 +345,20 @@ function g13SwapShowAny(node, toType) {
   graph.setDirtyCanvas?.(true, true);
 }
 
+// a link dropped on the text box lands on the "content" widget input: move it to "any", the same as
+// other text nodes where a linked box shows the upstream text
+function rerouteContent(node) {
+  const ci = node.inputs?.findIndex((s) => s.name === "content") ?? -1;
+  const ai = node.inputs?.findIndex((s) => s.name === "any") ?? -1;
+  if (ci < 0 || ai < 0 || node.inputs[ci].link == null) return;
+  const g = node.graph;
+  const id = node.inputs[ci].link;
+  const l = g?.links?.[id] ?? g?.links?.get?.(id);
+  const src = l ? g.getNodeById?.(l.origin_id) : null;
+  node.disconnectInput(ci);
+  if (src && src.outputs?.[l.origin_slot]) src.connectSlots(src.outputs[l.origin_slot], node, node.inputs[ai]);
+}
+
 app.registerExtension({
   name: "gen13.show_any",
 
@@ -440,6 +454,7 @@ app.registerExtension({
     nodeType.prototype.onConfigure = function () {
       const r = onConfigure?.apply(this, arguments);
       this._g13loaded = true;
+      setTimeout(() => rerouteContent(this), 0); // older saves may have a link on the box
       requestAnimationFrame(() => update(this));
       return r;
     };
@@ -467,6 +482,7 @@ app.registerExtension({
     const onConn = nodeType.prototype.onConnectionsChange;
     nodeType.prototype.onConnectionsChange = function () {
       const r = onConn?.apply(this, arguments);
+      if (this.inputs?.find((x) => x.name === "content")?.link != null) setTimeout(() => rerouteContent(this), 0);
       update(this);
       return r;
     };
