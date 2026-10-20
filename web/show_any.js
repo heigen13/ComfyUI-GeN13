@@ -359,6 +359,14 @@ function rerouteContent(node) {
   if (src && src.outputs?.[l.origin_slot]) src.connectSlots(src.outputs[l.origin_slot], node, node.inputs[ai]);
 }
 
+// the box takes no link at all (same as Show Any Lite): drop its input socket, so a link released
+// anywhere on the node goes to "any"; an older save with a link on the box is moved to "any" first
+function dropContentSocket(node) {
+  rerouteContent(node);
+  const ci = node.inputs?.findIndex((s) => s.name === "content") ?? -1;
+  if (ci >= 0 && node.inputs[ci].link == null) node.removeInput(ci);
+}
+
 app.registerExtension({
   name: "gen13.show_any",
 
@@ -407,6 +415,13 @@ app.registerExtension({
         };
       }
 
+      // the box accepts any type when a link is dropped on it (INT, FLOAT, IMAGE ...); the link is then
+      // moved to "any" by rerouteContent, so content itself never stays linked
+      const cin = node.inputs?.find((s) => s.name === "content");
+      if (cin) cin.type = "*";
+
+      requestAnimationFrame(() => dropContentSocket(node));
+
       const { bar, inf, btn } = makeBar(node);
       const wrap = document.createElement("div");
       wrap.className = "g13st-wrap";
@@ -454,7 +469,7 @@ app.registerExtension({
     nodeType.prototype.onConfigure = function () {
       const r = onConfigure?.apply(this, arguments);
       this._g13loaded = true;
-      setTimeout(() => rerouteContent(this), 0); // older saves may have a link on the box
+      setTimeout(() => dropContentSocket(this), 0); // older saves keep the box socket (and maybe a link)
       requestAnimationFrame(() => update(this));
       return r;
     };
