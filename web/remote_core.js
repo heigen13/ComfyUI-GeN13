@@ -20,7 +20,7 @@
 
 import { app } from "../../scripts/app.js";
 import { T, setTip, setWidgetTip, pick, countText, cloneText } from "./g13_i18n.js";
-import { onModeChange } from "./g13_mode.js";
+import { onModeChange, inLinked } from "./g13_mode.js";
 import { applyWireLock, wireSuffix } from "./remote_link.js";
 
 function w(node, name) {
@@ -245,7 +245,7 @@ export function registerRemote({ nodeId, extName, synced = ["value"], stepPicker
 
   // textBox: the box is read-only while the group has `value` wired (own wire: upstream decides;
   // another mirror's wire: applyWireLock sets widget.disabled, caught by the accessor below)
-  const boxRO = (node) => !!(node._g13box?.lock || node.inputs?.find((i) => i.name === "value")?.link != null);
+  const boxRO = (node) => !!(node._g13box?.lock || inLinked(node, node.inputs?.findIndex((i) => i.name === "value") ?? -1));
 
   const renderBox = (node) => {
     const c = node._g13box;

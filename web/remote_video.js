@@ -6,6 +6,7 @@
 //     and time (seconds × fps = frames)
 import { app } from "../../scripts/app.js";
 import { registerRemote } from "./remote_core.js";
+import { inLinked } from "./g13_mode.js";
 
 const NODE_ID = "RemoteVideoGeN13";
 const SYNCED = ["aspect_ratio", "megapixels", "seconds", "frame_rule", "steps"];
@@ -48,8 +49,7 @@ function sizeOf(ratio, mp) {
 }
 
 function imageLinked(node) {
-  const i = node.inputs?.find((x) => x.name === "image");
-  return !!(i && i.link != null);
+  return inLinked(node, node.inputs?.findIndex((x) => x.name === "image") ?? -1);
 }
 
 function setup(node) {

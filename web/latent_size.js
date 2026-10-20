@@ -22,7 +22,7 @@
 //   - button widgets render in both the classic canvas (Nodes 1.0) and Vue nodes (2.0)
 
 import { app } from "../../scripts/app.js";
-import { isOff, onModeChange } from "./g13_mode.js";
+import { isOff, onModeChange, inLink, inLinked } from "./g13_mode.js";
 import { pick } from "./g13_i18n.js";
 
 const IDS = ["ResizeGeN13"];
@@ -133,8 +133,7 @@ function invertLabel(node) {
 }
 
 function linked(node, name) {
-  const slot = node.inputs?.find((i) => i.name === name);
-  return !!(slot && slot.link != null);
+  return inLinked(node, node.inputs?.findIndex((i) => i.name === name) ?? -1);
 }
 
 function setText(b, text) {
@@ -184,10 +183,9 @@ const SIZE_WIDGETS = ["aspect_ratio", "megapixels", "upscale_method", "keep_prop
 
 // a link counts only when its upstream node runs (mode 2 = mute / never, 4 = bypass)
 function active(node, name) {
-  const slot = node.inputs?.find((i) => i.name === name);
-  if (!slot || slot.link == null) return false;
-  const link = node.graph?.links?.[slot.link] ?? node.graph?.links?.get?.(slot.link);
-  const up = link ? node.graph?.getNodeById?.(link.origin_id) : null;
+  const link = inLink(node, node.inputs?.findIndex((i) => i.name === name) ?? -1);
+  if (!link) return false;
+  const up = node.graph?.getNodeById?.(link.origin_id);
   return !(up && isOff(up));
 }
 

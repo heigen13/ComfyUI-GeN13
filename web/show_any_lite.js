@@ -16,6 +16,7 @@
 
 import { app } from "../../scripts/app.js";
 import { T, setTip, countText, convertLabel, emptyText } from "./g13_i18n.js";
+import { inLink, inLinked, outLinks } from "./g13_mode.js";
 
 const NODE_ID = "ShowAnyLiteGeN13";
 const ROW = 32; // DOM margin 1 + wrap pad 3 / 3 + 24px box
@@ -101,8 +102,7 @@ async function writeClip(text) {
 }
 
 function anyLinked(node) {
-  const s = node.inputs?.find((i) => i.name === "any");
-  return !!(s && s.link != null);
+  return inLinked(node, node.inputs?.findIndex((i) => i.name === "any") ?? -1);
 }
 
 // text the copy button / Show Any swap should use: typed text when free, shown text when linked
@@ -205,10 +205,6 @@ function setTyped(node, v) {
 
 // right-click: swap between Show Any and Show Any Lite in place, keeping the links, the shown
 // text, position and colors (same code in show_any.js and show_any_lite.js)
-function g13GetLink(graph, id) {
-  return graph?.links?.[id] ?? graph?.links?.get?.(id) ?? null;
-}
-
 function g13SwapShowAny(node, toType) {
   const LG = globalThis.LiteGraph;
   const graph = node.graph ?? app.graph;
@@ -232,18 +228,16 @@ function g13SwapShowAny(node, toType) {
   if (cw) cw.value = text;
 
   // input: the "any" link
-  const inp = node.inputs?.find((s) => s.name === "any");
-  if (inp && inp.link != null) {
-    const l = g13GetLink(graph, inp.link);
-    const src = l ? graph.getNodeById(l.origin_id) : null;
+  const l = inLink(node, node.inputs?.findIndex((s) => s.name === "any") ?? -1);
+  if (l) {
+    const src = graph.getNodeById(l.origin_id);
     const to = nn.inputs?.findIndex((s) => s.name === "any") ?? -1;
     if (src && to >= 0) src.connectSlots(src.outputs[l.origin_slot], nn, nn.inputs[to]);
   }
   // outputs: STRING (0) and any (1) are in the same order on both nodes
   (node.outputs ?? []).forEach((o, k) => {
-    for (const id of [...(o.links ?? [])]) {
-      const l = g13GetLink(graph, id);
-      const dst = l ? graph.getNodeById(l.target_id) : null;
+    for (const l of outLinks(node, k)) {
+      const dst = graph.getNodeById(l.target_id);
       if (dst && k < (nn.outputs?.length ?? 0)) nn.connectSlots(nn.outputs[k], dst, dst.inputs[l.target_slot]);
     }
   });

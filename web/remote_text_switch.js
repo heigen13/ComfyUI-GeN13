@@ -16,7 +16,7 @@
 //   - grey line at the bottom: channel · N mirrors · target count
 
 import { app } from "../../scripts/app.js";
-import { isOff, onModeChange } from "./g13_mode.js";
+import { isOff, onModeChange, outLinks } from "./g13_mode.js";
 import { T, setTip, pick, cloneText, emptyText } from "./g13_i18n.js";
 import { applyWireLock, wireSuffix, wiredMirrors } from "./remote_link.js";
 
@@ -112,10 +112,6 @@ function group(node) {
   return allNodes().filter((n) => n.type === NODE_ID && chan(n) === c);
 }
 
-function linkOf(g, id) {
-  return g?.links?.[id] ?? g?.links?.get?.(id) ?? null;
-}
-
 // Text Switch chain heads reached from the INT output of any mirror of the group
 function targets(node) {
   const ts = TS();
@@ -124,9 +120,8 @@ function targets(node) {
   let all = null;
   const walkOut = (n) => {
     const g = n.graph;
-    for (const id of n.outputs?.[0]?.links ?? []) {
-      const l = linkOf(g, id);
-      const t = l ? g?.getNodeById?.(l.target_id) : null;
+    for (const l of outLinks(n, 0)) {
+      const t = g?.getNodeById?.(l.target_id);
       if (!t || seen.has(t)) continue;
       seen.add(t);
       if (t.type === TS_ID) {

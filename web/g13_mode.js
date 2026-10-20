@@ -92,3 +92,54 @@ export function allNodes(root) {
 export function isLight() {
   return !document.documentElement.classList.contains("dark-theme");
 }
+
+// ---- links without the deprecated slot getters --------------------------------------------------
+// Frontend 1.55 warns on input.link / output.links and may drop them; these read the same facts
+// through node.getInputLink / isInputConnected and the graph's link map, and fall back to the old
+// fields on frontends that predate the new methods.
+const slotIndex = (list, s) => (typeof s === "number" ? s : list?.indexOf(s) ?? -1);
+
+// the link object feeding input `s` (index or slot), or null
+export function inLink(node, s) {
+  const i = slotIndex(node?.inputs, s);
+  if (i < 0 || !node.graph) return null; // not in a graph yet (onNodeCreated): no links, and the new getters throw
+  if (typeof node.getInputLink === "function") return node.getInputLink(i) ?? null;
+  const id = node.inputs[i]?.link;
+  if (id == null) return null;
+  const g = node.graph;
+  return g?.links?.get?.(id) ?? g?.links?.[id] ?? null;
+}
+
+// is input `s` (index or slot) connected
+export function inLinked(node, s) {
+  const i = slotIndex(node?.inputs, s);
+  if (i < 0 || !node.graph) return false;
+  if (typeof node.isInputConnected === "function") return !!node.isInputConnected(i);
+  return node.inputs[i]?.link != null;
+}
+
+// the link objects leaving output `s` (index or slot)
+export function outLinks(node, s) {
+  const i = slotIndex(node?.outputs, s);
+  const g = node?.graph;
+  if (i < 0 || !g) return [];
+  if (typeof node.isOutputConnected !== "function") {
+    const ids = node.outputs[i]?.links ?? [];
+    return ids.map((id) => g?.links?.get?.(id) ?? g?.links?.[id]).filter(Boolean);
+  }
+  if (!node.isOutputConnected(i) || !g?.links) return [];
+  const all = typeof g.links.values === "function" ? g.links.values() : Object.values(g.links);
+  const out = [];
+  for (const l of all) {
+    if (l && String(l.origin_id) === String(node.id) && l.origin_slot === i) out.push(l);
+  }
+  return out;
+}
+
+// is output `s` (index or slot) connected
+export function outLinked(node, s) {
+  const i = slotIndex(node?.outputs, s);
+  if (i < 0 || !node.graph) return false;
+  if (typeof node.isOutputConnected === "function") return !!node.isOutputConnected(i);
+  return (node.outputs[i]?.links?.length ?? 0) > 0;
+}

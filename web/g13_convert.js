@@ -20,13 +20,11 @@
 
 import { app } from "../../scripts/app.js";
 import { convertLabel } from "./g13_i18n.js";
+import { inLink, inLinked, outLinks, outLinked } from "./g13_mode.js";
 
 // menu label in the ComfyUI language (en / zh-TW / zh / ja)
 const LG = () => globalThis.LiteGraph;
 
-function getLink(graph, id) {
-  return graph?.links?.[id] ?? graph?.links?.get?.(id) ?? null;
-}
 function wv(node, name) {
   return node.widgets?.find((x) => x.name === name);
 }
@@ -67,9 +65,9 @@ function swapNode(node, toType, opts = {}) {
 
   // inputs
   const usedIn = new Set();
-  (node.inputs ?? []).forEach((inp) => {
-    if (inp.link == null) return;
-    const l = getLink(graph, inp.link);
+  (node.inputs ?? []).forEach((inp, ii) => {
+    const l = inLink(node, ii);
+    if (!l) return;
     const src = l ? graph.getNodeById(l.origin_id) : null;
     const k = pickSlot(nn.inputs ?? [], inp, usedIn, opts.inMap);
     if (!src || k < 0) return;
@@ -78,13 +76,13 @@ function swapNode(node, toType, opts = {}) {
   });
   // outputs
   const outFor = new Map();
-  (node.outputs ?? []).forEach((o) => {
-    if (!o.links?.length) return;
+  (node.outputs ?? []).forEach((o, oi) => {
+    const ls = outLinks(node, oi);
+    if (!ls.length) return;
     const k = pickSlot(nn.outputs ?? [], o, new Set(outFor.values()), opts.outMap);
     if (k < 0) return;
     outFor.set(o, k);
-    for (const id of [...o.links]) {
-      const l = getLink(graph, id);
+    for (const l of ls) {
       const dst = l ? graph.getNodeById(l.target_id) : null;
       if (dst) nn.connectSlots(nn.outputs[k], dst, dst.inputs[l.target_slot]);
     }
@@ -130,9 +128,8 @@ const PRIMITIVES = {
 function channelFor(node, remoteType) {
   const graph = node.graph ?? app.graph;
   let base = "remote";
-  for (const id of node.outputs?.[0]?.links ?? []) {
-    const l = getLink(graph, id);
-    const dst = l ? graph.getNodeById(l.target_id) : null;
+  for (const l of outLinks(node, 0)) {
+    const dst = graph.getNodeById(l.target_id);
     const nm = dst?.inputs?.[l.target_slot]?.widget?.name ?? dst?.inputs?.[l.target_slot]?.name;
     if (nm) {
       base = nm;
@@ -164,11 +161,9 @@ function primitiveToRemote(node, type) {
     after: (_, nn) => {
       // the remote output is the first (only) output whatever the primitive called it
       const graph = nn.graph ?? app.graph;
-      const o = node.outputs?.[0];
-      if (!o?.links?.length || nn.outputs?.[0]?.links?.length) return;
-      for (const id of [...o.links]) {
-        const l = getLink(graph, id);
-        const dst = l ? graph.getNodeById(l.target_id) : null;
+      if (!outLinked(node, 0) || outLinked(nn, 0)) return;
+      for (const l of outLinks(node, 0)) {
+        const dst = graph.getNodeById(l.target_id);
         if (dst) nn.connectSlots(nn.outputs[0], dst, dst.inputs[l.target_slot]);
       }
     },
@@ -179,8 +174,8 @@ function boxCount(node) {
   return Math.max(1, Number(wv(node, "count")?.value) || 1);
 }
 function textSwitchChained(node) {
-  const up = node.inputs?.find((s) => s.name === "chain")?.link != null;
-  const down = node.outputs?.find((s) => s.name === "chain")?.links?.length > 0;
+  const up = inLinked(node, node.inputs?.findIndex((s) => s.name === "chain") ?? -1);
+  const down = outLinked(node, node.outputs?.findIndex((s) => s.name === "chain") ?? -1);
   return up || down;
 }
 

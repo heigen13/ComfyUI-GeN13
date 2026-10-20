@@ -58,7 +58,7 @@
 //     core control_after_generate. Chained nodes show the head's setting, dimmed.
 
 import { app } from "../../scripts/app.js";
-import { isOff, isLight, onModeChange } from "./g13_mode.js";
+import { isOff, isLight, onModeChange, inLink, inLinked, outLinks, outLinked } from "./g13_mode.js";
 import { T, setTip, emptyText } from "./g13_i18n.js";
 
 const NODE_ID = "TextSwitchGeN13";
@@ -180,8 +180,7 @@ function w(node, name) {
 }
 
 function linked(node, name) {
-  const slot = node.inputs?.find((i) => i.name === name);
-  return !!(slot && slot.link != null);
+  return inLinked(node, node.inputs?.findIndex((i) => i.name === name) ?? -1);
 }
 
 function el(widget) {
@@ -217,9 +216,7 @@ function nodeById(node, id) {
 }
 
 function upstream(node) {
-  const slot = node.inputs?.find((i) => i.name === "chain");
-  if (!slot || slot.link == null) return null;
-  const l = graphOf(node)?.links?.[slot.link] ?? graphOf(node)?.links?.get?.(slot.link);
+  const l = inLink(node, node.inputs?.findIndex((i) => i.name === "chain") ?? -1);
   const up = l ? nodeById(node, l.origin_id) : null;
   // a muted (2) node is removed from the prompt together with its chain output: the next node
   // runs as a head of its own, so the chain is cut there on the canvas too
@@ -229,15 +226,10 @@ function upstream(node) {
 // select_num has a usable link: linked, and the real source node is neither muted (2) nor bypassed (4).
 // Virtual nodes in between (KJNodes Get / Set, reroutes) are walked through to the node that
 // actually ends up in the prompt; a muted / bypassed virtual node in the path counts too.
-function linkOf(g, id) {
-  return g?.links?.[id] ?? g?.links?.get?.(id) ?? null;
-}
 // the real node feeding select_num, or null when unlinked / muted / bypassed anywhere on the path
 function sourceOf(node) {
-  const slot = node.inputs?.find((i) => i.name === "select_num");
-  if (!slot || slot.link == null) return null;
   let g = graphOf(node);
-  let l = linkOf(g, slot.link);
+  let l = inLink(node, node.inputs?.findIndex((i) => i.name === "select_num") ?? -1);
   for (let hop = 0; l && hop < 16; hop++) {
     const up = g?.getNodeById?.(l.origin_id);
     if (!up) return null;
@@ -251,8 +243,7 @@ function sourceOf(node) {
       g = setter?.graph ?? up.graph ?? g;
       l = next;
     } else {
-      const inp = up.inputs?.[0];
-      l = inp?.link != null ? linkOf(up.graph ?? g, inp.link) : null;
+      l = up.inputs?.length ? inLink(up, 0) : null;
     }
   }
   return null;
@@ -286,11 +277,9 @@ function staticNum(node) {
 }
 
 function downstream(node) {
-  const out = node.outputs?.find((o) => o.name === "chain");
   const res = [];
-  for (const id of out?.links ?? []) {
-    const l = graphOf(node)?.links?.[id] ?? graphOf(node)?.links?.get?.(id);
-    const t = l ? nodeById(node, l.target_id) : null;
+  for (const l of outLinks(node, node.outputs?.findIndex((o) => o.name === "chain") ?? -1)) {
+    const t = nodeById(node, l.target_id);
     if (t && t.type === NODE_ID && t.mode !== 2) res.push(t);
   }
   return res;
@@ -322,7 +311,7 @@ const OUT_BASE = 2; // outputs: 0 chain, 1 STRING, 2.. boxes
 function maxLinkedOut(node) {
   let m = 0;
   (node.outputs ?? []).forEach((o, k) => {
-    if (k >= OUT_BASE && o.links?.length) m = k - OUT_BASE + 1;
+    if (k >= OUT_BASE && outLinked(node, k)) m = k - OUT_BASE + 1;
   });
   return m;
 }
@@ -1055,7 +1044,7 @@ app.registerExtension({
         if (up && up !== this) {
           this.setSize?.([up.size[0], this.size[1]]);
           this.pos = [up.pos[0] + up.size[0] + 30, up.pos[1]];
-          if (up.outputs?.[1]?.links?.length) up.disconnectOutput(1); // its STRING is dead from now on
+          if (outLinked(up, 1)) up.disconnectOutput(1); // its STRING is dead from now on
         }
         this._g13prevChain = chainNodes(this);
       } else if (isChainIn && !connected) {

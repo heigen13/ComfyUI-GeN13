@@ -10,6 +10,7 @@
 //   - two mirrors wiring the same input from different places: the first one found wins
 import { app } from "../../scripts/app.js";
 import { pick } from "./g13_i18n.js";
+import { inLinked } from "./g13_mode.js";
 
 export const REMOTE_TYPES = ["RemoteIntGeN13", "RemoteFloatGeN13", "RemoteStringGeN13", "RemoteBooleanGeN13",
   "RemoteTextSwitchGeN13", "RemoteVideoGeN13"];
@@ -17,7 +18,9 @@ const FOLLOW_VALUE = ["control_after_generate", "auto_next"]; // locked together
 
 function linkedNames(node) {
   const s = new Set();
-  for (const i of node.inputs ?? []) if (i.link != null && i.name && i.name !== "channel") s.add(i.name);
+  (node.inputs ?? []).forEach((i, k) => {
+    if (i.name && i.name !== "channel" && inLinked(node, k)) s.add(i.name);
+  });
   return s;
 }
 

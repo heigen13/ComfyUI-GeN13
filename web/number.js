@@ -10,7 +10,7 @@
 //     increment / decrement step by 1, randomize picks an integer in 0..RANDOM_MAX.
 
 import { app } from "../../scripts/app.js";
-import { isOff } from "./g13_mode.js";
+import { isOff, inLinked } from "./g13_mode.js";
 import { pick } from "./g13_i18n.js";
 
 const NODE_ID = "NumberGeN13";
@@ -44,8 +44,7 @@ function w(node, name) {
 }
 
 function linked(node, name) {
-  const slot = node.inputs?.find((i) => i.name === name);
-  return !!(slot && slot.link != null);
+  return inLinked(node, node.inputs?.findIndex((i) => i.name === name) ?? -1);
 }
 
 function toInt(v, mode) {

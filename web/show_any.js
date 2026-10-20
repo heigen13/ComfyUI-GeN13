@@ -24,6 +24,7 @@
 
 import { app } from "../../scripts/app.js";
 import { T, setTip, countText, convertLabel } from "./g13_i18n.js";
+import { inLink, inLinked, outLinks } from "./g13_mode.js";
 
 const NODE_ID = "ShowAnyGeN13";
 const LINE = 18; // 12px font, line-height 1.5
@@ -101,8 +102,7 @@ function w(node, name) {
 }
 
 function linked(node, name) {
-  const slot = node.inputs?.find((i) => i.name === name);
-  return !!(slot && slot.link != null);
+  return inLinked(node, node.inputs?.findIndex((i) => i.name === name) ?? -1);
 }
 
 function el(widget) {
@@ -311,10 +311,6 @@ function makeEdit(node) {
 
 // right-click: swap between Show Any and Show Any Lite in place, keeping the links, the shown
 // text, position and colors (same code in show_any.js and show_any_lite.js)
-function g13GetLink(graph, id) {
-  return graph?.links?.[id] ?? graph?.links?.get?.(id) ?? null;
-}
-
 function g13SwapShowAny(node, toType) {
   const LG = globalThis.LiteGraph;
   const graph = node.graph ?? app.graph;
@@ -340,18 +336,16 @@ function g13SwapShowAny(node, toType) {
   }
 
   // input: the "any" link
-  const inp = node.inputs?.find((s) => s.name === "any");
-  if (inp && inp.link != null) {
-    const l = g13GetLink(graph, inp.link);
-    const src = l ? graph.getNodeById(l.origin_id) : null;
+  const l = inLink(node, node.inputs?.findIndex((s) => s.name === "any") ?? -1);
+  if (l) {
+    const src = graph.getNodeById(l.origin_id);
     const to = nn.inputs?.findIndex((s) => s.name === "any") ?? -1;
     if (src && to >= 0) src.connectSlots(src.outputs[l.origin_slot], nn, nn.inputs[to]);
   }
   // outputs: STRING (0) and any (1) are in the same order on both nodes
   (node.outputs ?? []).forEach((o, k) => {
-    for (const id of [...(o.links ?? [])]) {
-      const l = g13GetLink(graph, id);
-      const dst = l ? graph.getNodeById(l.target_id) : null;
+    for (const l of outLinks(node, k)) {
+      const dst = graph.getNodeById(l.target_id);
       if (dst && k < (nn.outputs?.length ?? 0)) nn.connectSlots(nn.outputs[k], dst, dst.inputs[l.target_slot]);
     }
   });
@@ -366,11 +360,11 @@ function g13SwapShowAny(node, toType) {
 function rerouteContent(node) {
   const ci = node.inputs?.findIndex((s) => s.name === "content") ?? -1;
   const ai = node.inputs?.findIndex((s) => s.name === "any") ?? -1;
-  if (ci < 0 || ai < 0 || node.inputs[ci].link == null) return;
+  if (ci < 0 || ai < 0) return;
+  const l = inLink(node, ci);
+  if (!l) return;
   const g = node.graph;
-  const id = node.inputs[ci].link;
-  const l = g?.links?.[id] ?? g?.links?.get?.(id);
-  const src = l ? g.getNodeById?.(l.origin_id) : null;
+  const src = g?.getNodeById?.(l.origin_id);
   node.disconnectInput(ci);
   if (src && src.outputs?.[l.origin_slot]) src.connectSlots(src.outputs[l.origin_slot], node, node.inputs[ai]);
 }
@@ -380,7 +374,7 @@ function rerouteContent(node) {
 function dropContentSocket(node) {
   rerouteContent(node);
   const ci = node.inputs?.findIndex((s) => s.name === "content") ?? -1;
-  if (ci >= 0 && node.inputs[ci].link == null) node.removeInput(ci);
+  if (ci >= 0 && !inLinked(node, ci)) node.removeInput(ci);
 }
 
 app.registerExtension({
@@ -513,7 +507,7 @@ app.registerExtension({
     const onConn = nodeType.prototype.onConnectionsChange;
     nodeType.prototype.onConnectionsChange = function () {
       const r = onConn?.apply(this, arguments);
-      if (this.inputs?.find((x) => x.name === "content")?.link != null) setTimeout(() => rerouteContent(this), 0);
+      if (inLinked(this, this.inputs?.findIndex((x) => x.name === "content") ?? -1)) setTimeout(() => rerouteContent(this), 0);
       update(this);
       return r;
     };

@@ -18,6 +18,7 @@
 
 import { app } from "../../scripts/app.js";
 import { emptyText } from "./g13_i18n.js";
+import { inLinked, outLinked } from "./g13_mode.js";
 
 const NODE_ID = "TextConcatenateGeN13";
 const MAX = 20;
@@ -83,8 +84,7 @@ function w(node, name) {
 }
 
 function linked(node, name) {
-  const slot = node.inputs?.find((i) => i.name === name);
-  return !!(slot && slot.link != null);
+  return inLinked(node, node.inputs?.findIndex((i) => i.name === name) ?? -1);
 }
 
 function el(widget) {
@@ -125,7 +125,7 @@ function patchCanvas() {
     if (node?.type === NODE_ID && !vueMode()) {
       const m = /^on_(\d\d)$/.exec(input?.name ?? "");
       const tx = m ? node.inputs?.find((s) => s.name === `text_${m[1]}`) : null;
-      if (tx && tx.link != null) return this.moveInputLink(network, node, tx);
+      if (tx && inLinked(node, tx)) return this.moveInputLink(network, node, tx);
     }
     return orig.call(this, network, node, input, ...rest);
   };
@@ -134,7 +134,7 @@ function patchCanvas() {
 function maxLinkedOut(node) {
   let m = 0;
   (node.outputs ?? []).forEach((o, k) => {
-    if (k >= OUT_BASE && o.links?.length) m = k - OUT_BASE + 1;
+    if (k >= OUT_BASE && outLinked(node, k)) m = k - OUT_BASE + 1;
   });
   return m;
 }
