@@ -114,6 +114,12 @@ git clone https://github.com/heigen13/ComfyUI-GeN13
 - 在 ComfyUI 0.40 的经典画布（Nodes 1.0）开发与测试；图片预览也支持 Nodes 2.0。
 - Remote 与 Text Switch 的图为示意图；隐私遮罩、Color Match、Degrease 的范例都是节点实际输出。
 
+## 赞助
+
+GeN13 免费使用。如果这些节点帮你省了时间，欢迎在 Ko-fi 请我喝杯咖啡。
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/gen13)
+
 ## 授权
 
 Copyright (C) 2026 GeN's Studio Inc.

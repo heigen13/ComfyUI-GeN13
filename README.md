@@ -114,6 +114,12 @@ Optional: the `nvidia_rtx_vsr` upscale method in **Resize** needs the `nvidia-vf
 - Built and tested on ComfyUI 0.40 with the classic canvas (Nodes 1.0). Nodes 2.0 is supported for the image previews.
 - The Remote and Text Switch pictures are diagrams; the privacy, color match and degrease examples are real node output.
 
+## Support
+
+GeN13 is free. If these nodes save you time, you can buy me a coffee on Ko-fi.
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/gen13)
+
 ## License
 
 Copyright (C) 2026 GeN's Studio Inc.

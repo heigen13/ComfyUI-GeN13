@@ -114,6 +114,12 @@ ComfyUI を再起動すれば使えます。追加の Python パッケージは�
 - ComfyUI 0.40 のクラシックキャンバス(Nodes 1.0)で開発・テストしています。画像プレビューは Nodes 2.0 にも対応。
 - Remote と Text Switch の画像は説明用の図です。プライバシーカバー、Color Match、Degrease の例はノードの実際の出力です。
 
+## サポート
+
+GeN13 は無料です。ノードが役に立ったら、Ko-fi でコーヒーをおごっていただけるとうれしいです。
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/gen13)
+
 ## ライセンス
 
 Copyright (C) 2026 GeN's Studio Inc.
