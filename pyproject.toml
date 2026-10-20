@@ -1,7 +1,7 @@
 [project]
 name = "comfyui-gen13"
 description = "GeN13 custom nodes for ComfyUI: temporal video color match, portrait retouch, private image preview, text switch, remote controls and more."
-version = "1.0.2"
+version = "1.0.3"
 license = { text = "GPL-3.0" }
 dependencies = []
 
