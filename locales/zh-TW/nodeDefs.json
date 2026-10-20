@@ -302,7 +302,7 @@
         "tooltip": "張數:空 latent 或編碼結果的數量;接 samples 時不作用。"
       },
       "upscale_method": {
-        "tooltip": "演算法:lanczos 最銳利;nvidia_rtx_vsr 需要 RTX 顯卡;latent 一律用 bicubic。"
+        "tooltip": "演算法:lanczos 最銳利;nvidia_rtx_vsr 需要 RTX 顯卡;latent 選這兩種時改用 bicubic。"
       },
       "keep_proportion": {
         "tooltip": "比例不同時:crop 裁切、resize 縮進框內、pad 補色、pad_edge 延伸邊緣、stretch 拉伸。"

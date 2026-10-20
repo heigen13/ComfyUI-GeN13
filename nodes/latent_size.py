@@ -22,7 +22,7 @@ Resize
     給 Qwen Edit / Flux2 多參考圖用;latent、遮罩、寬高只依 image1。
   - aspect_ratio = keep:依 keep_size 決定尺寸;original 時只置中裁到 multiple_of 的倍數、不重新取樣
     (像素對齊),megapixels 依像素量,long_edge / short_edge 長邊或短邊等於 edge_length。
-  - 演算法含 lanczos 與 nvidia_rtx_vsr(需 nvidia-vfx);latent 一律 bicubic,pad 以邊緣延伸補。
+  - 演算法含 lanczos 與 nvidia_rtx_vsr(需 nvidia-vfx);latent 照選的演算法縮放(lanczos、nvidia_rtx_vsr 退回 bicubic),pad 以邊緣延伸補。
 
 比例橫直都列;invert 只是前端按鈕(16:9 ↔ 9:16、custom 時對調 width / height),不是後端欄位。只依賴 torch。
 """
@@ -258,7 +258,7 @@ class Resize:
                     "tooltip": "Batch size: number of empty latents or encoded images. Not used when samples is connected."}),
                 "upscale_method": (IMAGE_METHODS, {
                     "default": "lanczos",
-                    "tooltip": "Scaling method: lanczos is the sharpest; nvidia_rtx_vsr needs an RTX GPU. Latents always use bicubic."}),
+                    "tooltip": "Scaling method: lanczos is the sharpest; nvidia_rtx_vsr needs an RTX GPU. Latents use bicubic for these two."}),
                 "keep_proportion": (FIT_MODES, {
                     "default": "crop",
                     "tooltip": "When ratios differ: crop trims, resize fits inside, pad fills with color, pad_edge extends the edges, stretch distorts."}),

@@ -302,7 +302,7 @@
         "tooltip": "バッチサイズ:空の潜在またはエンコード結果の数。samples 接続時は使いません。"
       },
       "upscale_method": {
-        "tooltip": "アルゴリズム:lanczos が最もシャープ。nvidia_rtx_vsr は RTX GPU が必要。潜在は常に bicubic です。"
+        "tooltip": "アルゴリズム:lanczos が最もシャープ。nvidia_rtx_vsr は RTX GPU が必要。潜在ではこの 2 つは bicubic になります。"
       },
       "keep_proportion": {
         "tooltip": "比率が違うとき:crop は切り抜き、resize は枠内に収める、pad は色で埋める、pad_edge は端を延長、stretch は引き伸ばし。"
