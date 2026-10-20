@@ -1,0 +1,375 @@
+{
+  "id": "8c1c7a87-7422-4e98-bdfa-62a0ec60464c",
+  "revision": 0,
+  "last_node_id": 4,
+  "last_link_id": 2,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "Note",
+      "pos": [
+        40,
+        40
+      ],
+      "size": [
+        860,
+        110
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {},
+      "widgets_values": [
+        "Degrease cleans up skin on generated portraits: deblemish, smooth, deshine, even tone and decontour, each 0 (off) to 100 (full).\nEyes, lashes, brows and lips are protected. Press and hold a preview to see the original under the privacy cover.\nLoad a portrait and run."
+      ],
+      "widgets_values_named": {
+        "text": "Degrease cleans up skin on generated portraits: deblemish, smooth, deshine, even tone and decontour, each 0 (off) to 100 (full).\nEyes, lashes, brows and lips are protected. Press and hold a preview to see the original under the privacy cover.\nLoad a portrait and run."
+      },
+      "color": "#432",
+      "bgcolor": "#653"
+    },
+    {
+      "id": 2,
+      "type": "LoadImagePrivateGeN13",
+      "pos": [
+        40,
+        230
+      ],
+      "size": [
+        300,
+        450
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "image",
+          "name": "image",
+          "type": "COMBO",
+          "widget": {
+            "name": "image"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "IMAGE",
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            1
+          ]
+        },
+        {
+          "localized_name": "MASK",
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        },
+        {
+          "localized_name": "width",
+          "name": "width",
+          "type": "INT",
+          "links": null
+        },
+        {
+          "localized_name": "height",
+          "name": "height",
+          "type": "INT",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImagePrivateGeN13",
+        "g13_preview": true,
+        "g13_privacy": false,
+        "g13_privacy_style": "gradient",
+        "g13_palette": "AURORA",
+        "g13_custom_colors": [
+          "#101030",
+          "#FF5FA2"
+        ],
+        "g13_solid_auto": true,
+        "g13_solid_color": "#5B2A86",
+        "g13_frost_blur": 4,
+        "g13_glass": "plain",
+        "g13_brightness": 100
+      },
+      "widgets_values": [
+        "example.png"
+      ],
+      "widgets_values_named": {
+        "image": "example.png"
+      }
+    },
+    {
+      "id": 3,
+      "type": "DegreaseGeN13",
+      "pos": [
+        400,
+        230
+      ],
+      "size": [
+        270,
+        178
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "link": 1
+        },
+        {
+          "localized_name": "enabled",
+          "name": "enabled",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "enabled"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "smooth",
+          "name": "smooth",
+          "type": "FLOAT",
+          "widget": {
+            "name": "smooth"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "deblemish",
+          "name": "deblemish",
+          "type": "FLOAT",
+          "widget": {
+            "name": "deblemish"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "deshine",
+          "name": "deshine",
+          "type": "FLOAT",
+          "widget": {
+            "name": "deshine"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "even_tone",
+          "name": "even_tone",
+          "type": "FLOAT",
+          "widget": {
+            "name": "even_tone"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "decontour",
+          "name": "decontour",
+          "type": "FLOAT",
+          "widget": {
+            "name": "decontour"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "links": [
+            2
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "DegreaseGeN13"
+      },
+      "widgets_values": [
+        true,
+        30,
+        80,
+        15,
+        10,
+        10
+      ],
+      "widgets_values_named": {
+        "enabled": true,
+        "smooth": 30,
+        "deblemish": 80,
+        "deshine": 15,
+        "even_tone": 10,
+        "decontour": 10
+      }
+    },
+    {
+      "id": 4,
+      "type": "SaveImagePrivateGeN13",
+      "pos": [
+        730,
+        230
+      ],
+      "size": [
+        300,
+        526
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "link": 2
+        },
+        {
+          "localized_name": "save",
+          "name": "save",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "save"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "filename_prefix",
+          "name": "filename_prefix",
+          "type": "STRING",
+          "widget": {
+            "name": "filename_prefix"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "format",
+          "name": "format",
+          "type": "COMBO",
+          "widget": {
+            "name": "format"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "padding",
+          "name": "padding",
+          "type": "INT",
+          "widget": {
+            "name": "padding"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "jpg_quality",
+          "name": "jpg_quality",
+          "type": "INT",
+          "widget": {
+            "name": "jpg_quality"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "png_compression",
+          "name": "png_compression",
+          "type": "INT",
+          "widget": {
+            "name": "png_compression"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "IMAGE",
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": null
+        },
+        {
+          "localized_name": "width",
+          "name": "width",
+          "type": "INT",
+          "links": null
+        },
+        {
+          "localized_name": "height",
+          "name": "height",
+          "type": "INT",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SaveImagePrivateGeN13",
+        "g13_preview": true,
+        "g13_privacy": false,
+        "g13_privacy_style": "gradient",
+        "g13_palette": "AURORA",
+        "g13_custom_colors": [
+          "#101030",
+          "#FF5FA2"
+        ],
+        "g13_solid_auto": true,
+        "g13_solid_color": "#5B2A86",
+        "g13_frost_blur": 4,
+        "g13_glass": "plain",
+        "g13_brightness": 100
+      },
+      "widgets_values": [
+        true,
+        "GeN13_retouch",
+        "PNG",
+        5,
+        95,
+        4
+      ],
+      "widgets_values_named": {
+        "save": true,
+        "filename_prefix": "GeN13_retouch",
+        "format": "PNG",
+        "padding": 5,
+        "jpg_quality": 95,
+        "png_compression": 4
+      }
+    }
+  ],
+  "links": [
+    [
+      1,
+      2,
+      0,
+      3,
+      0,
+      "IMAGE"
+    ],
+    [
+      2,
+      3,
+      0,
+      4,
+      0,
+      "IMAGE"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 1,
+      "offset": [
+        70,
+        150
+      ]
+    }
+  },
+  "version": 0.4
+}

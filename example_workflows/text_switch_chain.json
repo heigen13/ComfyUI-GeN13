@@ -1,0 +1,1099 @@
+{
+  "id": "c91cad1a-e855-4ed9-a3be-43d35bdfce2d",
+  "revision": 0,
+  "last_node_id": 5,
+  "last_link_id": 3,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "Note",
+      "pos": [
+        40,
+        40
+      ],
+      "size": [
+        820,
+        110
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {},
+      "widgets_values": [
+        "Pick a box with the Remote Text Switch: press ◀ ▶ or type a number. Empty boxes are skipped.\nNumbers continue across the chain; chain more Text Switch nodes for more boxes.\nauto next = NEXT steps to the next filled box on every queue."
+      ],
+      "widgets_values_named": {
+        "text": "Pick a box with the Remote Text Switch: press ◀ ▶ or type a number. Empty boxes are skipped.\nNumbers continue across the chain; chain more Text Switch nodes for more boxes.\nauto next = NEXT steps to the next filled box on every queue."
+      },
+      "color": "#432",
+      "bgcolor": "#653"
+    },
+    {
+      "id": 2,
+      "type": "RemoteTextSwitchGeN13",
+      "pos": [
+        40,
+        230
+      ],
+      "size": [
+        380,
+        156
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "channel",
+          "name": "channel",
+          "type": "STRING",
+          "widget": {
+            "name": "channel"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "value",
+          "name": "value",
+          "type": "INT",
+          "widget": {
+            "name": "value"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "auto_next",
+          "name": "auto_next",
+          "type": "COMBO",
+          "widget": {
+            "name": "auto_next"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "INT",
+          "name": "INT",
+          "type": "INT",
+          "links": [
+            1
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "RemoteTextSwitchGeN13"
+      },
+      "widgets_values": [
+        "prompt",
+        6,
+        "OFF"
+      ],
+      "widgets_values_named": {
+        "channel": "prompt",
+        "value": 6,
+        "auto_next": "OFF"
+      }
+    },
+    {
+      "id": 3,
+      "type": "TextSwitchGeN13",
+      "pos": [
+        40,
+        466
+      ],
+      "size": [
+        400,
+        488
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "chain",
+          "name": "chain",
+          "shape": 7,
+          "type": "G13_SWITCH",
+          "link": null
+        },
+        {
+          "localized_name": "select_num",
+          "name": "select_num",
+          "shape": 7,
+          "type": "INT",
+          "link": 1
+        },
+        {
+          "localized_name": "count",
+          "name": "count",
+          "type": "INT",
+          "widget": {
+            "name": "count"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "select",
+          "name": "select",
+          "type": "COMBO",
+          "widget": {
+            "name": "select"
+          },
+          "link": null
+        },
+        {
+          "label": "#01 Rainy street",
+          "localized_name": "text_01",
+          "name": "text_01",
+          "type": "STRING",
+          "widget": {
+            "name": "text_01"
+          },
+          "link": null
+        },
+        {
+          "label": "#02 Neon rooftop",
+          "localized_name": "text_02",
+          "name": "text_02",
+          "type": "STRING",
+          "widget": {
+            "name": "text_02"
+          },
+          "link": null
+        },
+        {
+          "label": "#03",
+          "localized_name": "text_03",
+          "name": "text_03",
+          "type": "STRING",
+          "widget": {
+            "name": "text_03"
+          },
+          "link": null
+        },
+        {
+          "label": "#04 Cafe window",
+          "localized_name": "text_04",
+          "name": "text_04",
+          "type": "STRING",
+          "widget": {
+            "name": "text_04"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "text_05",
+          "name": "text_05",
+          "type": "STRING",
+          "widget": {
+            "name": "text_05"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "text_06",
+          "name": "text_06",
+          "type": "STRING",
+          "widget": {
+            "name": "text_06"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "text_07",
+          "name": "text_07",
+          "type": "STRING",
+          "widget": {
+            "name": "text_07"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "text_08",
+          "name": "text_08",
+          "type": "STRING",
+          "widget": {
+            "name": "text_08"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "text_09",
+          "name": "text_09",
+          "type": "STRING",
+          "widget": {
+            "name": "text_09"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "text_10",
+          "name": "text_10",
+          "type": "STRING",
+          "widget": {
+            "name": "text_10"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "text_11",
+          "name": "text_11",
+          "type": "STRING",
+          "widget": {
+            "name": "text_11"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "text_12",
+          "name": "text_12",
+          "type": "STRING",
+          "widget": {
+            "name": "text_12"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "text_13",
+          "name": "text_13",
+          "type": "STRING",
+          "widget": {
+            "name": "text_13"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "text_14",
+          "name": "text_14",
+          "type": "STRING",
+          "widget": {
+            "name": "text_14"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "text_15",
+          "name": "text_15",
+          "type": "STRING",
+          "widget": {
+            "name": "text_15"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "text_16",
+          "name": "text_16",
+          "type": "STRING",
+          "widget": {
+            "name": "text_16"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "text_17",
+          "name": "text_17",
+          "type": "STRING",
+          "widget": {
+            "name": "text_17"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "text_18",
+          "name": "text_18",
+          "type": "STRING",
+          "widget": {
+            "name": "text_18"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "text_19",
+          "name": "text_19",
+          "type": "STRING",
+          "widget": {
+            "name": "text_19"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "text_20",
+          "name": "text_20",
+          "type": "STRING",
+          "widget": {
+            "name": "text_20"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "text_21",
+          "name": "text_21",
+          "type": "STRING",
+          "widget": {
+            "name": "text_21"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "text_22",
+          "name": "text_22",
+          "type": "STRING",
+          "widget": {
+            "name": "text_22"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "text_23",
+          "name": "text_23",
+          "type": "STRING",
+          "widget": {
+            "name": "text_23"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "text_24",
+          "name": "text_24",
+          "type": "STRING",
+          "widget": {
+            "name": "text_24"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "text_25",
+          "name": "text_25",
+          "type": "STRING",
+          "widget": {
+            "name": "text_25"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "chain",
+          "type": "G13_SWITCH",
+          "links": [
+            2
+          ]
+        },
+        {
+          "color_off": "#444",
+          "color_on": "#444",
+          "name": "STRING",
+          "type": "STRING",
+          "links": null
+        },
+        {
+          "label": "​",
+          "name": "#01",
+          "type": "STRING",
+          "pos": [
+            391,
+            170
+          ],
+          "links": null
+        },
+        {
+          "label": "​",
+          "name": "#02",
+          "type": "STRING",
+          "pos": [
+            391,
+            247
+          ],
+          "links": null
+        },
+        {
+          "label": "​",
+          "name": "#03",
+          "type": "STRING",
+          "pos": [
+            391,
+            324
+          ],
+          "links": null
+        },
+        {
+          "label": "​",
+          "name": "#04",
+          "type": "STRING",
+          "pos": [
+            391,
+            401
+          ],
+          "links": null
+        }
+      ],
+      "properties": {
+        "g13": {
+          "t": [
+            "Rainy street",
+            "Neon rooftop",
+            "",
+            "Cafe window",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ],
+          "c": [
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "adv": false
+        },
+        "Node name for S&R": "TextSwitchGeN13"
+      },
+      "widgets_values": [
+        4,
+        "#06",
+        "rainy city street at night, neon reflections on wet asphalt, cinematic",
+        "rooftop at dusk, neon signs, city skyline, light breeze, cinematic",
+        "",
+        "cozy cafe by the window, morning light, steam rising from a cup",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "widgets_values_named": {
+        "count": 4,
+        "select": "#06",
+        "text_01": "rainy city street at night, neon reflections on wet asphalt, cinematic",
+        "text_02": "rooftop at dusk, neon signs, city skyline, light breeze, cinematic",
+        "text_03": "",
+        "text_04": "cozy cafe by the window, morning light, steam rising from a cup",
+        "text_05": "",
+        "text_06": "",
+        "text_07": "",
+        "text_08": "",
+        "text_09": "",
+        "text_10": "",
+        "text_11": "",
+        "text_12": "",
+        "text_13": "",
+        "text_14": "",
+        "text_15": "",
+        "text_16": "",
+        "text_17": "",
+        "text_18": "",
+        "text_19": "",
+        "text_20": "",
+        "text_21": "",
+        "text_22": "",
+        "text_23": "",
+        "text_24": "",
+        "text_25": ""
+      }
+    },
+    {
+      "id": 4,
+      "type": "TextSwitchGeN13",
+      "pos": [
+        470,
+        466
+      ],
+      "size": [
+        400,
+        488
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "chain",
+          "name": "chain",
+          "shape": 7,
+          "type": "G13_SWITCH",
+          "link": 2
+        },
+        {
+          "localized_name": "select_num",
+          "name": "select_num",
+          "shape": 7,
+          "type": "INT",
+          "link": null
+        },
+        {
+          "localized_name": "count",
+          "name": "count",
+          "type": "INT",
+          "widget": {
+            "name": "count"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "select",
+          "name": "select",
+          "type": "COMBO",
+          "widget": {
+            "name": "select"
+          },
+          "link": null
+        },
+        {
+          "label": "#05 Night market",
+          "localized_name": "text_01",
+          "name": "text_01",
+          "type": "STRING",
+          "widget": {
+            "name": "text_01"
+          },
+          "link": null
+        },
+        {
+          "label": "#06 Train platform",
+          "localized_name": "text_02",
+          "name": "text_02",
+          "type": "STRING",
+          "widget": {
+            "name": "text_02"
+          },
+          "link": null
+        },
+        {
+          "label": "#07 Beach sunset",
+          "localized_name": "text_03",
+          "name": "text_03",
+          "type": "STRING",
+          "widget": {
+            "name": "text_03"
+          },
+          "link": null
+        },
+        {
+          "label": "#08 Snow alley",
+          "localized_name": "text_04",
+          "name": "text_04",
+          "type": "STRING",
+          "widget": {
+            "name": "text_04"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "text_05",
+          "name": "text_05",
+          "type": "STRING",
+          "widget": {
+            "name": "text_05"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "text_06",
+          "name": "text_06",
+          "type": "STRING",
+          "widget": {
+            "name": "text_06"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "text_07",
+          "name": "text_07",
+          "type": "STRING",
+          "widget": {
+            "name": "text_07"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "text_08",
+          "name": "text_08",
+          "type": "STRING",
+          "widget": {
+            "name": "text_08"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "text_09",
+          "name": "text_09",
+          "type": "STRING",
+          "widget": {
+            "name": "text_09"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "text_10",
+          "name": "text_10",
+          "type": "STRING",
+          "widget": {
+            "name": "text_10"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "text_11",
+          "name": "text_11",
+          "type": "STRING",
+          "widget": {
+            "name": "text_11"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "text_12",
+          "name": "text_12",
+          "type": "STRING",
+          "widget": {
+            "name": "text_12"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "text_13",
+          "name": "text_13",
+          "type": "STRING",
+          "widget": {
+            "name": "text_13"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "text_14",
+          "name": "text_14",
+          "type": "STRING",
+          "widget": {
+            "name": "text_14"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "text_15",
+          "name": "text_15",
+          "type": "STRING",
+          "widget": {
+            "name": "text_15"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "text_16",
+          "name": "text_16",
+          "type": "STRING",
+          "widget": {
+            "name": "text_16"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "text_17",
+          "name": "text_17",
+          "type": "STRING",
+          "widget": {
+            "name": "text_17"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "text_18",
+          "name": "text_18",
+          "type": "STRING",
+          "widget": {
+            "name": "text_18"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "text_19",
+          "name": "text_19",
+          "type": "STRING",
+          "widget": {
+            "name": "text_19"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "text_20",
+          "name": "text_20",
+          "type": "STRING",
+          "widget": {
+            "name": "text_20"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "text_21",
+          "name": "text_21",
+          "type": "STRING",
+          "widget": {
+            "name": "text_21"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "text_22",
+          "name": "text_22",
+          "type": "STRING",
+          "widget": {
+            "name": "text_22"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "text_23",
+          "name": "text_23",
+          "type": "STRING",
+          "widget": {
+            "name": "text_23"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "text_24",
+          "name": "text_24",
+          "type": "STRING",
+          "widget": {
+            "name": "text_24"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "text_25",
+          "name": "text_25",
+          "type": "STRING",
+          "widget": {
+            "name": "text_25"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "chain",
+          "type": "G13_SWITCH",
+          "links": null
+        },
+        {
+          "name": "STRING",
+          "type": "STRING",
+          "links": [
+            3
+          ]
+        },
+        {
+          "label": "​",
+          "name": "#01",
+          "type": "STRING",
+          "pos": [
+            391,
+            170
+          ],
+          "links": null
+        },
+        {
+          "label": "​",
+          "name": "#02",
+          "type": "STRING",
+          "pos": [
+            391,
+            247
+          ],
+          "links": null
+        },
+        {
+          "label": "​",
+          "name": "#03",
+          "type": "STRING",
+          "pos": [
+            391,
+            324
+          ],
+          "links": null
+        },
+        {
+          "label": "​",
+          "name": "#04",
+          "type": "STRING",
+          "pos": [
+            391,
+            401
+          ],
+          "links": null
+        }
+      ],
+      "properties": {
+        "g13": {
+          "t": [
+            "Night market",
+            "Train platform",
+            "Beach sunset",
+            "Snow alley",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ],
+          "c": [
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "adv": false
+        },
+        "Node name for S&R": "TextSwitchGeN13"
+      },
+      "widgets_values": [
+        4,
+        "#06",
+        "crowded night market, paper lanterns, street food stalls, warm light",
+        "empty train platform at blue hour, light rain, long shadows",
+        "quiet beach at sunset, golden light, gentle waves",
+        "narrow alley in heavy snow, warm window light, soft fog",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "widgets_values_named": {
+        "count": 4,
+        "select": "#06",
+        "text_01": "crowded night market, paper lanterns, street food stalls, warm light",
+        "text_02": "empty train platform at blue hour, light rain, long shadows",
+        "text_03": "quiet beach at sunset, golden light, gentle waves",
+        "text_04": "narrow alley in heavy snow, warm window light, soft fog",
+        "text_05": "",
+        "text_06": "",
+        "text_07": "",
+        "text_08": "",
+        "text_09": "",
+        "text_10": "",
+        "text_11": "",
+        "text_12": "",
+        "text_13": "",
+        "text_14": "",
+        "text_15": "",
+        "text_16": "",
+        "text_17": "",
+        "text_18": "",
+        "text_19": "",
+        "text_20": "",
+        "text_21": "",
+        "text_22": "",
+        "text_23": "",
+        "text_24": "",
+        "text_25": ""
+      }
+    },
+    {
+      "id": 5,
+      "type": "ShowAnyGeN13",
+      "pos": [
+        960,
+        466
+      ],
+      "size": [
+        380,
+        220
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "any",
+          "name": "any",
+          "shape": 7,
+          "type": "*",
+          "link": 3
+        },
+        {
+          "localized_name": "content",
+          "name": "content",
+          "type": "STRING",
+          "widget": {
+            "name": "content"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "STRING",
+          "name": "STRING",
+          "shape": 6,
+          "type": "STRING",
+          "links": null
+        },
+        {
+          "localized_name": "any",
+          "name": "any",
+          "shape": 6,
+          "type": "*",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ShowAnyGeN13"
+      },
+      "widgets_values": [
+        ""
+      ],
+      "widgets_values_named": {
+        "content": ""
+      }
+    }
+  ],
+  "links": [
+    [
+      1,
+      2,
+      0,
+      3,
+      1,
+      "INT"
+    ],
+    [
+      2,
+      3,
+      0,
+      4,
+      0,
+      "G13_SWITCH"
+    ],
+    [
+      3,
+      4,
+      1,
+      5,
+      0,
+      "STRING"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.9224318658280922,
+      "offset": [
+        79.25,
+        162.61363636363637
+      ]
+    }
+  },
+  "version": 0.4
+}

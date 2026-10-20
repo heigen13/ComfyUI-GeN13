@@ -78,6 +78,7 @@ const CSS = `
 .g13sw-h .g13sw-no{width:34px}
 .g13sw-h .g13sw-no:hover{color:#ddd}
 .g13sw-h.g13sw-sel .g13sw-no{background:#35d0ff;color:#0b2a33}
+.g13sw-h.g13sw-off .g13sw-no{color:#555;pointer-events:none}
 .g13sw-h input{all:unset;box-sizing:border-box;flex:1;min-width:0;height:22px;padding:0 8px;color:#c8c8c8;font:12px/1 Inter,Helvetica,Arial,sans-serif;cursor:text}
 .g13sw-h input::placeholder{color:#666}
 .g13sw-h .g13sw-lk{display:none;height:22px;align-items:center;padding:0 8px;color:#777;border-left:1px solid #1e1e1e}
@@ -311,7 +312,7 @@ function maxLinkedOut(node) {
 // keep exactly `count` box outputs; only trailing outputs are added or removed
 const BASE_OUT = [["chain", "G13_SWITCH"], ["STRING", "STRING"]];
 
-function syncOutputs(node, count, offset, titles) {
+function syncOutputs(node, count, offset, titles, off) {
   // a node restored from an older save may come with fewer (or renamed) outputs: the first two are
   // always chain / STRING, every later one is a box output named #NN
   if (!node.outputs) node.outputs = [];
@@ -339,7 +340,7 @@ function syncOutputs(node, count, offset, titles) {
     const o = node.outputs[OUT_BASE + i - 1];
     if (!o) continue;
     const t = String(titles[i - 1] || "").trim();
-    const label = vueMode() ? `#${nn(offset + i)}${t ? " " + t : ""}` : "\u200B";
+    const label = vueMode() ? `${off ? "\u2014" : "#" + nn(offset + i)}${t ? " " + t : ""}` : "\u200B";
     if (o.label !== label) o.label = label;
   }
 }
@@ -356,10 +357,20 @@ function numOf(v) {
   return Math.max(1, Math.min(SEL_MAX, n));
 }
 
+// a bypassed node: at run time ComfyUI hands its chain input straight to the next node (a bypassed
+// head hands on nothing, so the next node runs as the head from #01 with its mirrored select), so its
+// boxes drop out of the numbering, the same as unplugging it; they come back when the bypass is lifted
+function skipped(chain, k) {
+  return chain[k]?.mode === 4;
+}
+function boxesOf(chain, k) {
+  return skipped(chain, k) ? 0 : countOf(chain[k]);
+}
+
 // offs[k] = global number before node k's first box; offs[chain.length] = total visible boxes
 function offsetsOf(chain) {
   const offs = [0];
-  for (const n of chain) offs.push(offs[offs.length - 1] + countOf(n));
+  chain.forEach((n, k) => offs.push(offs[k] + boxesOf(chain, k)));
   return offs;
 }
 
@@ -403,7 +414,7 @@ function advanceNext(head) {
   const offs = offsetsOf(chain);
   const list = [];
   chain.forEach((n, k) => {
-    const c = countOf(n);
+    const c = boxesOf(chain, k);
     for (let i = 1; i <= c; i++) {
       const name = `text_${nn(i)}`;
       const has = linked(n, name) || String(w(n, name)?.value ?? "").trim() !== "";
@@ -444,6 +455,7 @@ function selectBox(node, i) {
   const chain = chainNodes(node);
   const head = chain[0];
   const pos = Math.max(0, chain.indexOf(node));
+  if (skipped(chain, pos)) return; // bypassed: its boxes have no number right now
   const g = offsetsOf(chain)[pos] + i;
   const src = extLinked(head) ? staticSource(head) : null;
   if (src) {
@@ -486,12 +498,12 @@ function update(node, allowShrink, inChain) {
     const rsrc = remoteSource(head); // a Text Switch Remote owns the pick: this switch mirrors it
     let g = rsrc ? numOf(w(rsrc, "value").value) : numOf(hw0.value);
     // counts or chain membership changed: keep the same box (node + local index), renumbered
-    const key = chain.map((n) => `${n.id}:${countOf(n)}`).join(",");
+    const key = chain.map((n, k) => `${n.id}:${boxesOf(chain, k)}`).join(",");
     const pick = head._g13pick;
     const moved = head._g13key !== undefined && head._g13key !== key && pick;
     if (moved) {
       const k = chain.findIndex((n) => n.id === pick.id);
-      if (k >= 0) g = offs[k] + Math.min(pick.i, countOf(chain[k]));
+      if (k >= 0) g = boxesOf(chain, k) ? offs[k] + Math.min(pick.i, boxesOf(chain, k)) : Math.max(1, offs[k]);
     }
     if (rsrc) {
       // renumber the remote only for a real edit, never while a workflow is still loading
@@ -520,7 +532,8 @@ function update(node, allowShrink, inChain) {
   } else if (sw) {
     sw.disabled = ext && !remoteSource(head);
   }
-  const sel = ext && known == null ? -1 : gsel - offset; // local box number, or out of range
+  const off = skipped(chain, pos); // bypassed after the head: its boxes are out of the numbering
+  const sel = off || (ext && known == null) ? -1 : gsel - offset; // local box number, or out of range
   const ah = el(node._g13adv)?.firstElementChild;
   if (ah) {
     // fed by a Text Switch Remote: its auto_next is the one that acts, so show that (dimmed)
@@ -531,7 +544,7 @@ function update(node, allowShrink, inChain) {
     bOff?.classList.toggle("on", !on);
     bNext?.classList.toggle("on", on);
   }
-  syncOutputs(node, count, offset, p.t);
+  syncOutputs(node, count, offset, p.t, off);
   const so = node.outputs?.[1];
   if (so) {
     const live = downstream(node).length === 0;
@@ -562,8 +575,9 @@ function update(node, allowShrink, inChain) {
       h.classList.toggle("g13sw-sel", i === sel);
       h.classList.toggle("g13sw-col", !!p.c[i - 1]);
       h.classList.toggle("g13sw-linked", isLinked);
+      h.classList.toggle("g13sw-off", off);
       const no = h.querySelector(".g13sw-no");
-      const label = `#${nn(offset + i)}`;
+      const label = off ? "\u2014" : `#${nn(offset + i)}`;
       if (no && no.textContent !== label) no.textContent = label;
       const ta = el(tx);
       if (ta && ta.placeholder !== label) ta.placeholder = label;
@@ -754,7 +768,7 @@ globalThis.G13TextSwitch = {
     const offs = offsetsOf(chain);
     const list = [];
     chain.forEach((n, k) => {
-      for (let i = 1; i <= countOf(n); i++) {
+      for (let i = 1; i <= boxesOf(chain, k); i++) {
         const name = `text_${nn(i)}`;
         if (linked(n, name) || String(w(n, name)?.value ?? "").trim() !== "") list.push(offs[k] + i);
       }
@@ -836,7 +850,9 @@ app.registerExtension({
       const step = () => {
         if (chainNodes(node)[0] !== node || !props(node).adv) return;
         if (extLinked(node)) return; // an INT link owns the pick
-        if (isOff(node)) return; // muted / bypassed, itself or its subgraph: the box was not used
+        // every node of the chain muted / bypassed (itself or its subgraph): no box was used. A bypassed
+        // head alone still steps: the next node runs in its place with the mirrored select
+        if (chainNodes(node).every((n) => isOff(n))) return;
         advanceNext(node);
       };
       adv.beforeQueued = () => {
@@ -886,6 +902,12 @@ app.registerExtension({
         const ext = extLinked(this);
         const known = ext ? staticNum(this) : null;
         if (ext !== this._g13ext || known !== this._g13known) updateChain(this, false);
+      }
+      // bypass toggled on this node raises no event either: renumber the chain when the mode changes
+      if (this._g13prev && this._g13mode !== this.mode) {
+        const first = this._g13mode === undefined;
+        this._g13mode = this.mode;
+        if (!first) updateChain(this, false);
       }
       return r;
     };

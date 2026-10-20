@@ -60,6 +60,8 @@ git clone https://github.com/heigen13/ComfyUI-GeN13
 Restart ComfyUI. No extra Python packages are needed; everything uses what ComfyUI already ships (torch, numpy, Pillow).
 Optional: the `nvidia_rtx_vsr` upscale method in **Resize** needs the `nvidia-vfx` package and an RTX GPU.
 
+**Example workflows**: four ready-made workflows (Text Switch chain, Remote two-pass txt2img, portrait retouch, video color match) are in the ComfyUI Templates panel under ComfyUI-GeN13, or in [`example_workflows`](example_workflows).
+
 ## All nodes
 
 ### Video / color

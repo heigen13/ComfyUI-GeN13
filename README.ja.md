@@ -60,6 +60,8 @@ git clone https://github.com/heigen13/ComfyUI-GeN13
 ComfyUI を再起動すれば使えます。追加の Python パッケージは不要で、ComfyUI に含まれる torch、numpy、Pillow だけを使います。
 オプション:**Resize** の `nvidia_rtx_vsr` には `nvidia-vfx` パッケージと RTX GPU が必要です。
 
+**サンプルワークフロー**:Text Switch の連結、Remote による 2 段階生成、人物補正、動画の色合わせの 4 つを用意しました。ComfyUI の Templates パネルの ComfyUI-GeN13 から開くか、[`example_workflows`](example_workflows) を参照してください。
+
 ## ノード一覧
 
 ### 動画 / 色

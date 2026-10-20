@@ -60,6 +60,8 @@ git clone https://github.com/heigen13/ComfyUI-GeN13
 重開 ComfyUI 即可，不需要另外安裝套件，全部使用 ComfyUI 本身已有的 torch、numpy、Pillow。
 選用：**Resize** 的 `nvidia_rtx_vsr` 縮放需要 `nvidia-vfx` 套件與 RTX 顯卡。
 
+**範例工作流**：Text Switch 串接、Remote 雙段生圖、人像美顏、影片校色四份現成工作流，在 ComfyUI 的 Templates 面板 ComfyUI-GeN13 底下，或見 [`example_workflows`](example_workflows)。
+
 ## 節點一覽
 
 ### 影片／色彩
