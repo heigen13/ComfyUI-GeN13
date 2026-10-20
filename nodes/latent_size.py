@@ -195,11 +195,11 @@ def fit_image(img, mask, w, h, mode, pos, method, pad_color):
         t = torch.nn.functional.pad(t, pads, mode="replicate")
     else:
         rgb = _parse_color(pad_color) + [1.0] * max(0, t.shape[1] - 3)
-        canvas = torch.tensor(rgb[:t.shape[1]], dtype=t.dtype).view(1, -1, 1, 1).expand(t.shape[0], -1, h, w).clone()
+        canvas = torch.tensor(rgb[:t.shape[1]], dtype=t.dtype, device=t.device).view(1, -1, 1, 1).expand(t.shape[0], -1, h, w).clone()
         canvas[:, :, y:y + nh, x:x + nw] = t
         t = canvas
     if mask is None:
-        mask = torch.zeros((img.shape[0], nh, nw), dtype=torch.float32)
+        mask = torch.zeros((img.shape[0], nh, nw), dtype=torch.float32, device=img.device)
     mask = torch.nn.functional.pad(mask.unsqueeze(1), pads, value=1.0).squeeze(1)  # 補出來的區域遮罩為 1
     return t.movedim(1, -1), mask
 
@@ -403,6 +403,10 @@ class Resize:
                 out_img = out_img.repeat(batch_size, 1, 1, 1)
                 out_mask = out_mask.repeat(batch_size, 1, 1)
             latent = {"samples": t}
+            try:  # 帶上倍率:接到下一顆沒接 vae 的 Resize 時,Flux.2、HunyuanImage 2.1 的 16 倍才不會被當成 8 倍
+                latent["downscale_ratio_spacial"] = int(vae.spacial_compression_encode())
+            except Exception:  # noqa: BLE001
+                pass
         elif samples is not None:
             latent = samples.copy()
             lmode = "crop" if original else fmode

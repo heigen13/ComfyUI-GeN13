@@ -6,7 +6,7 @@
 //     changed. The armed pulse is kept in node.properties.g13_armed so it survives F5.
 
 import { app } from "../../scripts/app.js";
-import { T, setTip, setWidgetTip } from "./g13_i18n.js";
+import { T, setTip } from "./g13_i18n.js";
 
 const NODE_ID = "TriggerGeN13";
 const BTN_H = 46; // margin 1 + pad 6 / 6 + 32px button
@@ -71,6 +71,7 @@ function update(node) {
   let text = "READY";
   if (armed) text = "ARMED · NEXT RUN RESETS";
   else if (byInput) text = "TRIGGERED BY INPUT";
+  st.state = armed ? "armed" : byInput ? "input" : "ready"; // read by the status line's hover text
   st.line.classList.toggle("g13tg-on", armed || byInput);
   st.line.classList.toggle("g13tg-armed", armed);
   if (st.text.textContent !== text) st.text.textContent = text;
@@ -121,6 +122,12 @@ app.registerExtension({
       const dot = document.createElement("i");
       const text = document.createElement("span");
       line.append(dot, text);
+      const TIPS = {
+        ready: T("Status: READY, waiting; press TRIGGER and the connected Counter resets on the next run.", "狀態:READY,待命中;按 TRIGGER 後,下次執行時接著的 Counter 會歸零。"),
+        armed: T("Status: ARMED, the button was pressed; the connected Counter resets on the next run.", "狀態:ARMED,已按下;下次執行時接著的 Counter 會歸零。"),
+        input: T("Status: TRIGGERED BY INPUT, the input value changed on the last run and fired the trigger.", "狀態:TRIGGERED BY INPUT,上次執行時 input 的值改變,已觸發。"),
+      };
+      setTip(line, { toString: () => String(TIPS[node._g13tg?.state] ?? TIPS.ready) });
       addDom(node, "g13_trigger_status", line, ST_H, true);
 
       node._g13tg = { line, text, inputUntil: 0 };

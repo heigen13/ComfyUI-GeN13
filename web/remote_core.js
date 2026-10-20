@@ -19,7 +19,7 @@
 // This file registers no extension of its own; ComfyUI loading it directly is harmless.
 
 import { app } from "../../scripts/app.js";
-import { T, setTip, setWidgetTip } from "./g13_i18n.js";
+import { T, setTip, setWidgetTip, pick, countText, cloneText } from "./g13_i18n.js";
 import { onModeChange } from "./g13_mode.js";
 import { applyWireLock, wireSuffix } from "./remote_link.js";
 
@@ -126,6 +126,8 @@ function appendText(cur, add) {
   return cur.endsWith("\n") ? cur + add : cur + "\n" + add;
 }
 
+const placeholder = () => pick("value", "輸入文字", "输入文字", "テキストを入力");
+
 function countInfo(v) {
   let chars = 0;
   for (const _ of v) chars++; // code points: emoji / CJK count once
@@ -134,7 +136,7 @@ function countInfo(v) {
     lines = 1;
     for (let i = 0; i < v.length; i++) if (v.charCodeAt(i) === 10) lines++;
   }
-  return `${chars.toLocaleString("en-US")} chars · ${lines.toLocaleString("en-US")} ${lines === 1 ? "line" : "lines"}`;
+  return countText(chars, lines);
 }
 
 async function clipRead() {
@@ -169,7 +171,7 @@ export function registerRemote({ nodeId, extName, synced = ["value"], stepPicker
     if (!b) return;
     const g = group(node);
     const k = g.length;
-    const t = `${chan(node) || "(no channel)"}  ·  ${k} ${k === 1 ? "mirror" : "mirrors"}${wireSuffix(applyWireLock(node, g))}`;
+    const t = `${cloneText(chan(node), k)}${wireSuffix(applyWireLock(node, g))}`;
     if (b.label !== t) {
       b.label = t;
       b.name = t;
@@ -244,6 +246,8 @@ export function registerRemote({ nodeId, extName, synced = ["value"], stepPicker
     if (c.ta.value !== v && document.activeElement !== c.ta) c.ta.value = v;
     const cnt = countInfo(v);
     if (c.cnt.textContent !== cnt) c.cnt.textContent = cnt;
+    const ph = placeholder();
+    if (c.ta.placeholder !== ph) c.ta.placeholder = ph; // follows a language switch
   };
 
   const BOX_MIN = 100; // bar + about three lines; the box takes any extra node height
@@ -273,7 +277,7 @@ export function registerRemote({ nodeId, extName, synced = ["value"], stepPicker
     const ta = document.createElement("textarea");
     ta.className = "g13rs-ta";
     ta.spellcheck = false;
-    ta.placeholder = "value";
+    ta.placeholder = placeholder();
     setTip(ta, T("Text: syncs to every clone in the group as you type.", "文字:打字時即時同步到同組所有分身。"));
     bar.append(cnt, tb);
     box.append(bar, ta);

@@ -168,6 +168,17 @@ def _unique(path):
     return "%s-%d%s" % (root, serial, ext)
 
 
+_FELL_BACK = {}  # unique_id -> the last run had a link but read the file (upstream gave nothing)
+
+
+def _write_atomic(path, text):
+    """Write to a temp file, then replace: a favorite copied at the same moment gets the old or the new file, never half."""
+    tmp = "%s.%d.tmp" % (path, os.getpid())
+    with open(tmp, "w", encoding="utf-8", newline="\n") as f:
+        f.write(text)
+    os.replace(tmp, path)
+
+
 def _make_favorite(save_as):
     """Copy the current save_as file to a timestamped favorite. Kept forever."""
     src = _resolve(save_as)
@@ -259,7 +270,14 @@ class GenPromptCache:
         # queue, fixed seed or not; keying on the file would still cost one extra
         # full re-run right after the script changed, because run() writes it.)
         if _mode(mode) != MODE_CACHE and _text_is_linked(prompt, unique_id):
-            return "live"
+            if not _FELL_BACK.get(unique_id):
+                return "live"
+            # the last run fell back to the file: an edit made to that file outside ComfyUI must re-run
+            try:
+                with open(_target(save_as, read_file), "rb") as f:
+                    return "live:" + hashlib.sha1(f.read()).hexdigest()
+            except Exception:
+                return "live:missing"
         # cache mode, or no link (fallback reads the file): key on the file content
         try:
             with open(_target(save_as, read_file), "rb") as f:
@@ -271,6 +289,7 @@ class GenPromptCache:
             prompt=None, unique_id=None, **kwargs):
         if _mode(mode) == MODE_OFF:
             return {"ui": {"source": ["OFF"], "file": [""]}, "result": ("",)}
+        _FELL_BACK[unique_id] = _mode(mode) != MODE_CACHE and text is not None and not text.strip()
         if _mode(mode) == MODE_CACHE or text is None or not text.strip():
             target = _target(save_as, read_file)
             return {"ui": {"source": ["CACHE"], "file": [os.path.basename(target)]},
@@ -292,8 +311,7 @@ class GenPromptCache:
                 prev_path = os.path.join(BASE_DIR, _stem(path) + PREV_SUFFIX + ".txt")
                 shutil.copy2(path, prev_path)  # overwrites the older backup
             os.makedirs(BASE_DIR, exist_ok=True)
-            with open(path, "w", encoding="utf-8", newline="\n") as f:
-                f.write(text)
+            _write_atomic(path, text)
 
         return {"ui": {"source": ["LLM"], "file": [os.path.basename(path)]},
                 "result": (text,)}

@@ -11,6 +11,7 @@
 
 import { app } from "../../scripts/app.js";
 import { isOff } from "./g13_mode.js";
+import { pick } from "./g13_i18n.js";
 
 const NODE_ID = "NumberGeN13";
 const LIMIT = 1_000_000_000;
@@ -88,7 +89,7 @@ function update(node) {
   let text;
   if (ln) {
     const r = node.properties?.g13_last;
-    text = typeof r === "number" ? line(toInt(r, mode), r, applyFormat(node, fmtStr(r))) : "from input";
+    text = typeof r === "number" ? line(toInt(r, mode), r, applyFormat(node, fmtStr(r))) : pick("from input", "來自輸入", "来自输入", "入力から");
   } else {
     const v = Number(val?.value) || 0;
     text = line(toInt(v, mode), v, applyFormat(node, fmtStr(v)));

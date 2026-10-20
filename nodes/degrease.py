@@ -269,7 +269,7 @@ def degrease(images, smooth=30.0, deblemish=80.0, deshine=15.0, even_tone=10.0, 
     """images: [B,H,W,C] 0..1 -> [B,H,W,3] float32(CPU);五個量皆 0..100"""
     img = images[..., :3]
     if smooth <= 0 and deblemish <= 0 and deshine <= 0 and even_tone <= 0 and decontour <= 0:
-        return img
+        return img.cpu().float()                           # 與正常路徑一致(CPU float32),run() 接回 alpha 時才不會 device 不一致
     if device is None:
         device = mm.get_torch_device() if mm else torch.device("cpu")
     n, h, w = img.shape[0], img.shape[1], img.shape[2]

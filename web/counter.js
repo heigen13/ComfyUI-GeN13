@@ -13,7 +13,7 @@
 
 import { app } from "../../scripts/app.js";
 import { isOff } from "./g13_mode.js";
-import { T, setTip, setWidgetTip } from "./g13_i18n.js";
+import { T, setTip, lang, pick, cjkFont } from "./g13_i18n.js";
 
 const NODE_ID = "CounterGeN13";
 const BAR_H = 32;
@@ -116,6 +116,7 @@ function update(node) {
   const next = valueAt(idx, mode, start, end, step);
   const bounded = mode !== "increment" && mode !== "decrement";
   let txt;
+  let word = ""; // "step" in front of txt; CJK words get their own span with a CJK face
   let pct = 0;
   if (bounded) {
     const n = countOf(mode, start, end, step);
@@ -123,7 +124,8 @@ function update(node) {
     txt = `${pos} / ${n} · ${fmt(start)} → ${fmt(end)}`;
     pct = n > 1 ? ((pos - 1) / (n - 1)) * 100 : 100;
   } else {
-    txt = `step ${mode === "increment" ? "+" : "−"}${fmt(Math.abs(step) || 1)}`;
+    word = pick("step", "間距", "间距", "間隔");
+    txt = `${mode === "increment" ? "+" : "−"}${fmt(Math.abs(step) || 1)}`;
   }
   const k = rel % hold; // which run of this number comes next (0-based)
   st.inf.textContent = "";
@@ -134,9 +136,21 @@ function update(node) {
     st.inf.appendChild(e);
     return e;
   };
-  span("", "next");
+  const cjk = lang() !== "en";
+  const wordSpan = (t) => {
+    const e = span("", t);
+    if (cjk) e.style.fontFamily = cjkFont();
+    return e;
+  };
+  wordSpan(pick("next", "下一個", "下一个", "次"));
   st.nx = span("g13ct-nx", fmt(next));
-  span("", `· ${txt}`);
+  if (!word) span("", `· ${txt}`);
+  else if (!cjk) span("", `· ${word} ${txt}`);
+  else {
+    span("", "·");
+    wordSpan(word);
+    span("", txt);
+  }
   if (hold > 1 && hold <= MAX_DOTS) {
     const d = span("g13ct-dots");
     for (let i = 0; i < hold; i++) {
@@ -145,7 +159,12 @@ function update(node) {
       d.appendChild(sq);
     }
   } else if (hold > MAX_DOTS) {
-    span("", `· hold ${k + 1} / ${hold}`);
+    if (!cjk) span("", `· hold ${k + 1} / ${hold}`);
+    else {
+      span("", "·");
+      wordSpan(pick("hold", "維持", "维持", "保持"));
+      span("", `${k + 1} / ${hold}`);
+    }
   }
   st.pg.style.width = `${pct}%`;
 }

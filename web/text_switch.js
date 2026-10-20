@@ -59,7 +59,7 @@
 
 import { app } from "../../scripts/app.js";
 import { isOff, onModeChange } from "./g13_mode.js";
-import { T, setTip, setWidgetTip } from "./g13_i18n.js";
+import { T, setTip, emptyText } from "./g13_i18n.js";
 
 const NODE_ID = "TextSwitchGeN13";
 const MAX = 25;
@@ -532,6 +532,10 @@ function update(node, allowShrink, inChain) {
   }
   const ext = extLinked(head); // pick driven by an INT link at run time
   const known = ext ? staticNum(head) : null; // ... whose number is known right now
+  // the head's dimmed dropdown shows that number too (not while loading / pasting: chain incomplete)
+  if (hw0 && known != null && known <= total && !(head._g13loading || app.configuringGraph || !head.graph)) {
+    if (hw0.value !== lbl(known)) hw0.value = lbl(known);
+  }
   node._g13ext = isHead ? ext : undefined; // only the head watches its own select_num on redraw
   node._g13known = isHead ? known : undefined;
   const gsel = known ?? numOf(hw0?.value);
@@ -621,7 +625,7 @@ function update(node, allowShrink, inChain) {
     const body = linked(owner, `text_${nn(li)}`)
       ? `[#${nn(gsel)}]`
       : String(otx?.value ?? "").trim().replace(/\s*\n\s*/g, " ");
-    out = `#${nn(gsel)}${title ? " " + title : ""} \u00B7 ${body || "(empty)"}`;
+    out = `#${nn(gsel)}${title ? " " + title : ""} \u00B7 ${body || emptyText()}`;
   }
   out = clipToWidth(out, previewWidth(node));
   setText(node._g13prev, out);

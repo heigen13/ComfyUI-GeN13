@@ -52,14 +52,17 @@ def load_image_file(path):
     img = node_helpers.pillow(Image.open, path)
     images, masks = [], []
     w = h = None
-    for frame in ImageSequence.Iterator(img):
-        rgb, mask = frame_to_arrays(frame)
-        if w is None:
-            h, w = rgb.shape[:2]
-        elif rgb.shape[:2] != (h, w):
-            continue
-        images.append(torch.from_numpy(rgb))
-        masks.append(torch.from_numpy(mask))
+    try:
+        for frame in ImageSequence.Iterator(img):
+            rgb, mask = frame_to_arrays(frame)
+            if w is None:
+                h, w = rgb.shape[:2]
+            elif rgb.shape[:2] != (h, w):
+                continue
+            images.append(torch.from_numpy(rgb))
+            masks.append(torch.from_numpy(mask))
+    finally:
+        img.close()  # 多格 GIF / APNG 讀完就釋放檔案,不等回收
     return torch.stack(images, 0), torch.stack(masks, 0), w, h
 
 

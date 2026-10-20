@@ -14,6 +14,7 @@
 
 import { app } from "../../scripts/app.js";
 import { api } from "../../scripts/api.js";
+import { T, setTip, setWidgetTip, setWidgetLabel } from "./g13_i18n.js";
 
 const LOAD_ID = "LoadImagePrivateGeN13";
 const SAVE_ID = "SaveImagePrivateGeN13";
@@ -672,6 +673,7 @@ function openColorPanel(node, event, kind) {
     const auto = document.createElement("button");
     auto.type = "button";
     auto.textContent = "AUTO";
+    setTip(auto, T("Auto: uses the image's average color.", "自動:取圖片平均色。"));
     const paint = () => {
       const on = prop(node, P_SOLID_AUTO);
       auto.style.cssText = "height:28px;padding:0 10px;display:flex;align-items:center;justify-content:center;" +
@@ -737,7 +739,9 @@ function setupNode(node, isLoad) {
         return r;
       };
     }
-    frontOnly(node.addWidget("button", "choose file to upload", null, () => pickFile(node), { serialize: false }));
+    const up = frontOnly(node.addWidget("button", "choose file to upload", null, () => pickFile(node), { serialize: false }));
+    setWidgetLabel(up, T("choose file to upload", "選擇檔案上傳"));
+    setWidgetTip(up, T("Upload: choose an image file; dropping an image on the node also works.", "上傳:選擇圖片檔,也可直接把圖片拖到節點上。"));
     // same sources as the core Load Image: files from the OS, and images dragged from the queue /
     // history panel or another tab (asset card or URL, fetched from our own server and uploaded)
     node.onDragOver = dragHasImage;
@@ -821,6 +825,17 @@ function addPrivacyWidgets(node) {
       refreshCover(node);
     }, { min: 10, max: 200, step: 50, step2: 5, round: 5, precision: 0, serialize: false })
   );
+  setWidgetLabel(custom, T("edit custom colors", "編輯自訂色"));
+  setWidgetLabel(solid, T("edit solid color", "編輯純色"));
+  setWidgetTip(preview, T("Preview: SHOW opens the image panel; HIDE folds it away. Front end only, never in the prompt.", "預覽:SHOW 顯示圖片面板,HIDE 收起;只存在前端,不寫入 prompt。"));
+  setWidgetTip(privacy, T("Privacy: ON covers the preview; hold the preview to see the real image.", "隱私:ON 時預覽加上遮罩,按住預覽可看原圖。"));
+  setWidgetTip(style, T("Cover style: mosaic, frosted glass, blurred gradient, palette gradient map, or one solid color.", "遮罩樣式:馬賽克、霧面玻璃、模糊漸層、色盤漸層映射或單一純色。"));
+  setWidgetTip(palette, T("Palette: colors of the gradient map, dark to light; CUSTOM uses your two colors.", "色盤:漸層映射的配色,由暗到亮;CUSTOM 使用自訂的兩色。"));
+  setWidgetTip(custom, T("Custom colors: the dark and light ends of the CUSTOM palette.", "自訂色:CUSTOM 色盤的暗端與亮端兩色。"));
+  setWidgetTip(solid, T("Solid color: AUTO uses the image's average color, or pick a fixed color.", "純色:AUTO 取圖片平均色,或指定固定顏色。"));
+  setWidgetTip(frost, T("Frost blur: blur radius as a % of the long edge; higher values blur more.", "霧化模糊:模糊半徑,以長邊百分比計;數值越高越模糊。"));
+  setWidgetTip(glass, T("Glass: texture in front of the frost; plain, reeded (vertical ribs) or hammered.", "玻璃:霧面前的紋理;plain 平板、reeded 長虹直紋、hammered 錘紋。"));
+  setWidgetTip(bright, T("Brightness: cover brightness in %; 100 is unchanged, higher values are brighter.", "亮度:遮罩亮度百分比,100 為不變;數值越高越亮。"));
   for (const w of [palette, custom, solid, frost, glass, bright]) w.hidden = true;
   node._pvW = { preview, privacy, style, palette, custom, solid, frost, glass, bright };
   addPreviewPanel(node);

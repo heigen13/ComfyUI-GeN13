@@ -9,6 +9,7 @@
 //     `value` also locks control after generate and auto next. Grey line: "← wired" / "N wires".
 //   - two mirrors wiring the same input from different places: the first one found wins
 import { app } from "../../scripts/app.js";
+import { pick } from "./g13_i18n.js";
 
 export const REMOTE_TYPES = ["RemoteIntGeN13", "RemoteFloatGeN13", "RemoteStringGeN13", "RemoteBooleanGeN13",
   "RemoteTextSwitchGeN13", "RemoteVideoGeN13"];
@@ -49,7 +50,10 @@ export function applyWireLock(node, groupNodes) {
 
 export function wireSuffix(state) {
   if (!state.wired) return "";
-  return state.wired > 1 ? `  ·  ${state.wired} wires` : "  ·  ← wired";
+  const n = state.wired;
+  return n > 1
+    ? `  ·  ${pick(`${n} wires`, `${n} 條接線`, `${n} 条接线`, `接続 ${n} 本`)}`
+    : `  ·  ${pick("← wired", "← 已接線", "← 已接线", "← 接続中")}`;
 }
 
 // ---------- prompt rewrite ----------

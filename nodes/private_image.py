@@ -274,7 +274,7 @@ def _thumb(path):
         im = ImageOps.exif_transpose(next(ImageSequence.Iterator(im)))
         size = im.size
         if im.mode in ("I;16", "I;16B", "I;16L", "I"):
-            im = im.point(lambda p: p * (1 / 256)).convert("L")
+            im = im.convert("I").point(lambda p: p * (1 / 256)).convert("L")  # I;16B 不能直接 point
         if "A" in im.getbands() or (im.mode == "P" and "transparency" in im.info):
             rgba = im.convert("RGBA")
             bg = Image.new("RGB", rgba.size, (32, 32, 32))

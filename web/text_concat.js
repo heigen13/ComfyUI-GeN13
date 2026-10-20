@@ -17,6 +17,7 @@
 //     Nodes 1.0: each box output sits at the right end of its #NN ON/OFF row (no label)
 
 import { app } from "../../scripts/app.js";
+import { emptyText } from "./g13_i18n.js";
 
 const NODE_ID = "TextConcatenateGeN13";
 const MAX = 20;
@@ -199,7 +200,7 @@ function update(node, allowShrink) {
     }
   }
   let out = parts.join(delim);
-  if (!out) out = "(empty)";
+  if (!out) out = emptyText();
   else out = clipToWidth(out, previewWidth(node));
   setText(node._g13prev, out);
 
@@ -225,7 +226,7 @@ app.registerExtension({
           return out;
         };
         const m = /^(on|text)_(\d\d)$/.exec(x.name);
-        if (m && m[1] === "on") x.label = `#${m[2]}`;
+        if (m) x.label = `#${m[2]}`; // Nodes 2.0 shows the raw name (text_01) without a label
         const e = el(x);
         if (e && e.tagName === "TEXTAREA") {
           if (m) e.placeholder = `#${m[2]}`;

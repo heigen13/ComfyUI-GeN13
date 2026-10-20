@@ -364,10 +364,13 @@ def _peek(q):
     except ValueError:
         index = 0
     folder = (q.get("folder_path", "") or "").strip().strip('"')
-    if not folder or not os.path.isdir(folder):
+    if not folder:
         return {"ok": False, "error": "folder not found", "total": 0}
+    # 先查權限再查存在:未開放的路徑一律同一訊息,不透露資料夾存不存在
     if not _preview_allowed(folder):
         return {"ok": False, "error": "preview: run once to enable this folder", "total": 0}
+    if not os.path.isdir(folder):
+        return {"ok": False, "error": "folder not found", "total": 0}
     folder, files = _list(folder, sort_by, q.get("filename_filter", "*"),
                           q.get("subfolders", "false").lower() == "true",
                           q.get("extensions", DEFAULT_EXT))
@@ -400,7 +403,7 @@ def _thumb(path):
     with Image.open(path) as im:
         im = ImageOps.exif_transpose(next(ImageSequence.Iterator(im)))
         if im.mode in ("I;16", "I;16B", "I;16L", "I"):
-            im = im.point(lambda p: p * (1 / 256)).convert("L")
+            im = im.convert("I").point(lambda p: p * (1 / 256)).convert("L")  # I;16B 不能直接 point
         if "A" in im.getbands() or (im.mode == "P" and "transparency" in im.info):
             rgba = im.convert("RGBA")
             bg = Image.new("RGB", rgba.size, (32, 32, 32))

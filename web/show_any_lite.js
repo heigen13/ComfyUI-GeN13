@@ -15,7 +15,7 @@
 //     any linked: read-only display of the upstream content, as before.
 
 import { app } from "../../scripts/app.js";
-import { T, setTip, setWidgetTip } from "./g13_i18n.js";
+import { T, setTip, countText, convertLabel, emptyText } from "./g13_i18n.js";
 
 const NODE_ID = "ShowAnyLiteGeN13";
 const ROW = 32; // DOM margin 1 + wrap pad 3 / 3 + 24px box
@@ -115,6 +115,8 @@ function render(node) {
   if (free) {
     st.tx.classList.remove("g13sl-em");
     st.ta.wrap = multi ? "soft" : "off";
+    const ph = String(T("Enter text", "輸入文字"));
+    if (st.ta.placeholder !== ph) st.ta.placeholder = ph; // follows a language switch
     const t = String(node._g13in ?? "");
     if (st.ta.value !== t && document.activeElement !== st.ta) st.ta.value = t;
     st.box.title = "";
@@ -123,7 +125,7 @@ function render(node) {
   const v = String(node.properties?.g13_text ?? "");
   st.tx.classList.toggle("g13sl-em", !v);
   let shown;
-  if (!v) shown = "(empty)";
+  if (!v) shown = emptyText();
   else if (multi) shown = v;
   else {
     const lines = v.split("\n");
@@ -159,7 +161,7 @@ function countInfo(v) {
     lines = 1;
     for (let i = 0; i < v.length; i++) if (v.charCodeAt(i) === 10) lines++;
   }
-  return `${chars.toLocaleString("en-US")} chars · ${lines.toLocaleString("en-US")} ${lines === 1 ? "line" : "lines"}`;
+  return countText(chars, lines);
 }
 
 async function readClip() {
@@ -246,7 +248,7 @@ app.registerExtension({
     const getMenu = nodeType.prototype.getExtraMenuOptions;
     nodeType.prototype.getExtraMenuOptions = function (canvas, options) {
       const r = getMenu?.apply(this, arguments);
-      options.unshift({ content: "Convert to Show Any (GeN13)", callback: () => g13SwapShowAny(this, "ShowAnyGeN13") }, null);
+      options.unshift({ content: convertLabel("Show Any"), callback: () => g13SwapShowAny(this, "ShowAnyGeN13") }, null);
       return r;
     };
 

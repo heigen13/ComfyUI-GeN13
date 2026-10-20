@@ -19,20 +19,9 @@
 //     typed yet (IMAGE, STRING, INT, FLOAT)
 
 import { app } from "../../scripts/app.js";
+import { convertLabel } from "./g13_i18n.js";
 
 // menu label in the ComfyUI language (en / zh-TW / zh / ja)
-function convertLabel(name) {
-  let l = "en";
-  try {
-    l = app.extensionManager?.setting?.get?.("Comfy.Locale") ?? "en";
-  } catch {}
-  const n = `${name} (GeN13)`;
-  if (l === "zh-TW") return `轉換成 ${n}`;
-  if (l === "zh") return `转换成 ${n}`;
-  if (l === "ja") return `${n} に変換`;
-  return `Convert to ${n}`;
-}
-
 const LG = () => globalThis.LiteGraph;
 
 function getLink(graph, id) {

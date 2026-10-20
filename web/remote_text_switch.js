@@ -17,7 +17,7 @@
 
 import { app } from "../../scripts/app.js";
 import { isOff, onModeChange } from "./g13_mode.js";
-import { T, setTip, setWidgetTip } from "./g13_i18n.js";
+import { T, setTip, pick, cloneText, emptyText } from "./g13_i18n.js";
 import { applyWireLock, wireSuffix, wiredMirrors } from "./remote_link.js";
 
 const NODE_ID = "RemoteTextSwitchGeN13";
@@ -281,16 +281,16 @@ function render(node) {
   let dim = false;
   let off = false;
   if (!head) {
-    ttlText = "no Text Switch";
+    ttlText = pick("no Text Switch", "無 Text Switch", "无 Text Switch", "Text Switch なし");
     dim = off = true;
   } else {
     const d = TS().describe(head, g);
     if (!d.ok) {
-      ttlText = "no box";
+      ttlText = pick("no box", "無此框", "无此框", "枠なし");
       dim = off = true;
     } else if (d.title) ttlText = d.title;
     else {
-      ttlText = d.body || "(empty)";
+      ttlText = d.body || emptyText();
       dim = true;
     }
   }
@@ -307,9 +307,9 @@ function render(node) {
   const ws = applyWireLock(node, grp);
   if (r) r.row.classList.toggle("g13tr-lock", isOff(node) || ws.wired > 0);
   const k = grp.length;
-  const c = chan(node) || "(no channel)";
-  const extra = heads.length > 1 ? `  ·  ${heads.length} switches` : "";
-  const info = `${c}  ·  ${k} ${k === 1 ? "mirror" : "mirrors"}${extra}${wireSuffix(ws)}`;
+  const hn = heads.length;
+  const extra = hn > 1 ? `  ·  ${pick(`${hn} switches`, `${hn} 個 Text Switch`, `${hn} 个 Text Switch`, `Text Switch ${hn} 個`)}` : "";
+  const info = `${cloneText(chan(node), k)}${extra}${wireSuffix(ws)}`;
   const b = node._g13info;
   if (b && b.label !== info) {
     b.label = info;
@@ -338,6 +338,12 @@ function autoStep(node) {
 
 app.registerExtension({
   name: "gen13.remote_text_switch",
+
+  // a loaded / switched-to workflow starts fresh: its first "before" queue is skipped again, like the
+  // core control (whose flag lives on each widget and so resets with the nodes)
+  afterConfigureGraph() {
+    firstSeen.clear();
+  },
 
   beforeRegisterNodeDef(nodeType, nodeData) {
     if (nodeData.name !== NODE_ID) return;

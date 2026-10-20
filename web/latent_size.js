@@ -23,6 +23,7 @@
 
 import { app } from "../../scripts/app.js";
 import { isOff, onModeChange } from "./g13_mode.js";
+import { pick } from "./g13_i18n.js";
 
 const IDS = ["ResizeGeN13"];
 const IMAGES = ["image1", "image2", "image3", "image4"];
@@ -155,11 +156,12 @@ function sizeText(node, mode) {
   // mode: original / megapixels / long_edge / short_edge
   if (mode === "original") return "original";
   const e = val(node, "edge_length", 1024);
-  const es = e == null ? "\u2190 input" : e;
-  if (mode === "long_edge") return `long edge ${es}`;
-  if (mode === "short_edge") return `short edge ${es}`;
+  const inp = pick("\u2190 input", "\u2190 輸入", "\u2190 输入", "\u2190 入力");
+  const es = e == null ? inp : e;
+  if (mode === "long_edge") return `${pick("long edge", "長邊", "长边", "長辺")} ${es}`;
+  if (mode === "short_edge") return `${pick("short edge", "短邊", "短边", "短辺")} ${es}`;
   const mp = val(node, "megapixels", 1);
-  return mp == null ? "\u2190 input MP" : `${mp.toFixed(2)} MP`;
+  return mp == null ? `${inp} MP` : `${mp.toFixed(2)} MP`;
 }
 
 // keep with a known source size (nothing linked: width x height)
@@ -204,7 +206,11 @@ function t2iSize(node) {
 function statusText(node, keep, custom, keepMode, src, i2i) {
   if (!i2i || !src) {
     const s = t2iSize(node);
-    const why = !i2i ? "T2I" : linked(node, "image1") ? "I2I \u00B7 image1 off" : "I2I \u00B7 no image";
+    const why = !i2i
+      ? "T2I"
+      : linked(node, "image1")
+        ? `I2I \u00B7 ${pick("image1 off", "image1 停用", "image1 停用", "image1 無効")}`
+        : `I2I \u00B7 ${pick("no image", "無圖片", "无图片", "画像なし")}`;
     const r = w(node, "aspect_ratio")?.value;
     const byRatio = r && r !== "keep" && r !== "custom";
     const how = byRatio ? `${r} \u00B7 ${sizeText(node, "megapixels")}` : "custom";
@@ -341,7 +347,9 @@ app.registerExtension({
     const onConfigure = nodeType.prototype.onConfigure;
     nodeType.prototype.onConfigure = function () {
       const r = onConfigure?.apply(this, arguments);
-      syncRatio(this); // ratio mode: width / height on the node show what megapixels gives
+      // ratio mode: width / height on the node show what megapixels gives. A linked megapixels with no
+      // value from a past run is unknown: recomputing from 1 MP would mark the workflow modified on open
+      if (!(linked(this, "megapixels") && val(this, "megapixels", 1) == null)) syncRatio(this);
       update(this);
       return r;
     };

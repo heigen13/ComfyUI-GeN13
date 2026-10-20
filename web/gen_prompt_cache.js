@@ -9,6 +9,7 @@
 
 import { app } from "../../scripts/app.js";
 import { api } from "../../scripts/api.js";
+import { allNodes } from "./g13_mode.js";
 
 const NODE_ID = "GenPromptCacheGeN13";
 
@@ -25,6 +26,9 @@ const LIST_WIDGET = "read_file";
 const NAME_WIDGET = "save_as";
 
 async function refreshReadFileList() {
+  // subgraphs included; nothing to refresh (and no /object_info request) without a Prompt Cache
+  const nodes = allNodes(app.rootGraph ?? app.graph).filter((n) => n.comfyClass === NODE_ID);
+  if (!nodes.length) return;
   let values;
   try {
     const resp = await api.fetchApi(`/object_info/${NODE_ID}`);
@@ -36,8 +40,7 @@ async function refreshReadFileList() {
   }
   if (!Array.isArray(values) || values.length === 0) return;
 
-  for (const node of app.graph?._nodes ?? []) {
-    if (node.comfyClass !== NODE_ID) continue;
+  for (const node of nodes) {
     const widget = node.widgets?.find((w) => w.name === LIST_WIDGET);
     if (!widget) continue;
     widget.options = widget.options ?? {};
@@ -81,8 +84,8 @@ app.registerExtension({
     const onCreated = nodeType.prototype.onNodeCreated;
     nodeType.prototype.onNodeCreated = function () {
       onCreated?.apply(this, arguments);
-      const button = this.addWidget("button", "Save favorite", null, () => saveFavorite(this));
-      button.serialize = false; // not part of the prompt payload
+      // serialize: false keeps the button out of the prompt / API export
+      this.addWidget("button", "Save favorite", null, () => saveFavorite(this), { serialize: false });
     };
 
     const onMenu = nodeType.prototype.getExtraMenuOptions;

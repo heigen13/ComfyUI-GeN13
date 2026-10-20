@@ -23,7 +23,7 @@
 //     execCommand and PASTE focuses the box so Ctrl+V works.
 
 import { app } from "../../scripts/app.js";
-import { T, setTip, setWidgetTip } from "./g13_i18n.js";
+import { T, setTip, countText, convertLabel } from "./g13_i18n.js";
 
 const NODE_ID = "ShowAnyGeN13";
 const LINE = 18; // 12px font, line-height 1.5
@@ -132,7 +132,7 @@ function countInfo(v) {
     lines = 1;
     for (let i = 0; i < v.length; i++) if (v.charCodeAt(i) === 10) lines++;
   }
-  return `${chars.toLocaleString("en-US")} chars · ${lines.toLocaleString("en-US")} ${lines === 1 ? "line" : "lines"}`;
+  return countText(chars, lines);
 }
 
 async function writeClip(text, ta) {
@@ -376,7 +376,7 @@ app.registerExtension({
     const getMenu = nodeType.prototype.getExtraMenuOptions;
     nodeType.prototype.getExtraMenuOptions = function (canvas, options) {
       const r = getMenu?.apply(this, arguments);
-      options.unshift({ content: "Convert to Show Any Lite (GeN13)", callback: () => g13SwapShowAny(this, "ShowAnyLiteGeN13") }, null);
+      options.unshift({ content: convertLabel("Show Any Lite"), callback: () => g13SwapShowAny(this, "ShowAnyLiteGeN13") }, null);
       return r;
     };
 

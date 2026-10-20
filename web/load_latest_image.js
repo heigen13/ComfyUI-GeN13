@@ -13,6 +13,8 @@
 
 import { app } from "../../scripts/app.js";
 import { api } from "../../scripts/api.js";
+import { pick } from "./g13_i18n.js";
+import { allNodes } from "./g13_mode.js";
 import {
   attachPrivacy,
   clearPreviewImage,
@@ -34,6 +36,18 @@ function shorten(text) {
   const keep = LABEL_MAX - 3;
   return text.slice(0, Math.ceil(keep / 2)) + "..." + text.slice(text.length - Math.floor(keep / 2));
 }
+
+// server messages (English) -> the current language
+const ERR = {
+  "folder not found": ["找不到資料夾", "找不到文件夹", "フォルダーが見つかりません"],
+  "preview: run once to enable this folder": ["預覽:執行一次後才開放此資料夾", "预览:运行一次后才开放此文件夹", "プレビュー:一度実行するとこのフォルダーが有効になります"],
+  "no matching images": ["沒有符合的圖片", "没有符合的图片", "一致する画像がありません"],
+  "index out of range": ["index 超出範圍", "index 超出范围", "index が範囲外です"],
+  "no readable image": ["沒有可讀取的圖片", "没有可读取的图片", "読み込める画像がありません"],
+  "preview unavailable": ["無法預覽", "无法预览", "プレビューできません"],
+};
+const errText = (e) => (ERR[e] ? pick(e, ...ERR[e]) : String(e ?? ""));
+const refreshWord = () => pick("refresh", "重新整理", "刷新", "更新");
 
 function setLabel(node, text) {
   const btn = node._g13btn;
@@ -61,11 +75,11 @@ async function refresh(node) {
 
   if (!data.ok) {
     node._g13key = null;
-    setLabel(node, `refresh: ${data.error}`);
+    setLabel(node, `${refreshWord()}: ${errText(data.error)}`);
     clearPreviewImage(node);
     return;
   }
-  setLabel(node, `refresh: ${shorten(data.filename)} (${data.position} / ${data.total})`);
+  setLabel(node, `${refreshWord()}: ${shorten(data.filename)} (${data.position} / ${data.total})`);
   const size = [data.width, data.height];
 
   const key = `${data.path}|${data.mtime}`;
@@ -95,8 +109,8 @@ function schedule(node, delay = 250) {
 }
 
 function refreshAll() {
-  for (const node of app.graph?._nodes ?? []) {
-    if (node.comfyClass === NODE_ID) schedule(node, 300);
+  for (const node of allNodes(app.rootGraph ?? app.graph)) {
+    if (node.comfyClass === NODE_ID) schedule(node, 300); // subgraphs included
   }
 }
 
@@ -129,6 +143,7 @@ app.registerExtension({
 
       const btn = node.addWidget("button", "refresh", null, () => refresh(node), { serialize: false });
       btn.serialize = false; // not part of the prompt payload
+      btn.label = refreshWord();
       node._g13btn = btn;
 
       attachPrivacy(node);

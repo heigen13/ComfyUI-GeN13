@@ -15,6 +15,7 @@
 import { app } from "../../scripts/app.js";
 import { isOff, onModeChange } from "./g13_mode.js";
 import { applyWireLock, wireSuffix, wiredMirrors } from "./remote_link.js";
+import { cloneText } from "./g13_i18n.js";
 
 const NODE_ID = "RemoteIntGeN13";
 const LIMIT = 1_000_000_000;
@@ -114,9 +115,7 @@ function adopt(node) {
 }
 
 function label(node, state) {
-  const c = chan(node) || "(no channel)";
-  const k = group(node).length;
-  return `${c}  ·  ${k} ${k === 1 ? "mirror" : "mirrors"}${wireSuffix(state)}`;
+  return `${cloneText(chan(node), group(node).length)}${wireSuffix(state)}`;
 }
 
 function refresh(node) {
@@ -160,6 +159,12 @@ function step(node) {
 
 app.registerExtension({
   name: "gen13.remote_int",
+
+  // a loaded / switched-to workflow starts fresh: its first "before" queue is skipped again, like the
+  // core control (whose flag lives on each widget and so resets with the nodes)
+  afterConfigureGraph() {
+    firstSeen.clear();
+  },
 
   beforeRegisterNodeDef(nodeType, nodeData) {
     if (nodeData.name !== NODE_ID) return;

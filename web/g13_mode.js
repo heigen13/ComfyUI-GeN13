@@ -70,3 +70,20 @@ export function onModeChange(fn) {
   modeListeners.add(fn);
   return () => modeListeners.delete(fn);
 }
+
+// every node of the workflow, subgraphs included (root: app.rootGraph ?? app.graph)
+export function allNodes(root) {
+  const out = [];
+  const seen = new Set();
+  const walk = (g) => {
+    if (!g || seen.has(g)) return;
+    seen.add(g);
+    for (const n of g._nodes ?? g.nodes ?? []) {
+      if (!n) continue;
+      out.push(n);
+      if (n.subgraph) walk(n.subgraph);
+    }
+  };
+  walk(root);
+  return out;
+}
