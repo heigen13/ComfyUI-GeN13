@@ -49,6 +49,20 @@ const CSS = `
 .g13sl-bar .g13sl-cp{margin-top:0}
 .g13sl-box.g13sl-multi{flex-direction:column;align-items:stretch;gap:0}
 .g13sl-box.g13sl-multi .g13sl-bar{display:flex}
+/* light theme (Comfy.ColorPalette light): the dark look above stays as is */
+:root:not(.dark-theme) .g13sl-box{background:#ececec;border-color:#cfcfcf}
+:root:not(.dark-theme) .g13sl-tx{color:#222}
+:root:not(.dark-theme) .g13sl-tx.g13sl-em{color:#999}
+:root:not(.dark-theme) .g13sl-ta{color:#222;caret-color:#0a8fb8}
+:root:not(.dark-theme) .g13sl-ta::placeholder{color:#999}
+:root:not(.dark-theme) .g13sl-box.g13sl-edit{border-color:#b8b8b8}
+:root:not(.dark-theme) .g13sl-box.g13sl-edit:focus-within{border-color:#0a8fb8}
+:root:not(.dark-theme) .g13sl-cp{color:#555}
+:root:not(.dark-theme) .g13sl-cp:hover{color:#000;background:#d4d4d4}
+:root:not(.dark-theme) .g13sl-cp.g13sl-ok{color:#0b2a33;background:#35d0ff}
+:root:not(.dark-theme) .g13sl-cp:disabled{background:none;color:#555}
+:root:not(.dark-theme) .g13sl-bar{border-bottom-color:#cfcfcf}
+:root:not(.dark-theme) .g13sl-cnt{color:#666}
 `;
 
 const ICON = {

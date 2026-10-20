@@ -60,6 +60,22 @@ const CSS = `
 .g13st-seg button{all:unset;pointer-events:auto;box-sizing:border-box;width:62px;height:16px;display:flex;align-items:center;justify-content:center;font:11px/1 Inter,Helvetica,Arial,sans-serif;letter-spacing:.6px;color:#888;cursor:pointer}
 .g13st-seg button:hover{color:#ddd}
 .g13st-seg button.g13st-on{background:#35d0ff;color:#0b2a33}
+/* light theme (Comfy.ColorPalette light): the dark look above stays as is */
+:root:not(.dark-theme) .g13st-ta{background:#ececec!important;border-color:#cfcfcf!important;color:#222!important}
+:root:not(.dark-theme) .g13st-ta:focus{border-color:#0a8fb8!important}
+:root:not(.dark-theme) .g13st-ta.g13st-ro{color:#444!important}
+:root:not(.dark-theme) .g13st-inf{color:#666}
+:root:not(.dark-theme) .g13st-bt{background:#d4d4d4;border-color:#bdbdbd;color:#444}
+:root:not(.dark-theme) .g13st-bt:hover{color:#000;border-color:#888}
+:root:not(.dark-theme) .g13st-bt.g13st-ok{background:#35d0ff;border-color:#35d0ff;color:#0b2a33}
+:root:not(.dark-theme) .g13st-bt.g13st-sync{border-color:#0a8fb866;color:#0a8fb8}
+:root:not(.dark-theme) .g13st-inf.g13st-up{color:#0a8fb8}
+:root:not(.dark-theme) .g13st-inf.g13st-up::before{background:#0a8fb8}
+:root:not(.dark-theme) .g13st-ed{background:#d4d4d4;border-color:#bdbdbd;color:#555}
+:root:not(.dark-theme) .g13st-seg{border-color:#aaa}
+:root:not(.dark-theme) .g13st-seg button{color:#555}
+:root:not(.dark-theme) .g13st-seg button:hover{color:#000}
+:root:not(.dark-theme) .g13st-seg button.g13st-on{background:#35d0ff;color:#0b2a33}
 `;
 
 const S = 'fill="none" stroke="currentColor" stroke-width="1.2"';

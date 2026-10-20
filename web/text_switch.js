@@ -58,7 +58,7 @@
 //     core control_after_generate. Chained nodes show the head's setting, dimmed.
 
 import { app } from "../../scripts/app.js";
-import { isOff, onModeChange } from "./g13_mode.js";
+import { isOff, isLight, onModeChange } from "./g13_mode.js";
 import { T, setTip, emptyText } from "./g13_i18n.js";
 
 const NODE_ID = "TextSwitchGeN13";
@@ -97,6 +97,23 @@ const CSS = `
 .g13sw-adv .g13sw-seg button:hover{color:#ddd}
 .g13sw-adv .g13sw-seg button.on{background:#35d0ff;color:#0b2a33}
 .g13sw-adv.g13sw-dim .g13sw-seg{opacity:.45;pointer-events:none}
+/* light theme (Comfy.ColorPalette light): the dark look above stays as is */
+:root:not(.dark-theme) .g13sw-h{background:#d4d4d4;border-color:#bdbdbd;color:#222}
+:root:not(.dark-theme) .g13sw-h button{border-right-color:#bdbdbd;color:#555}
+:root:not(.dark-theme) .g13sw-h svg path{stroke:#555}
+:root:not(.dark-theme) .g13sw-h .g13sw-no:hover{color:#000}
+:root:not(.dark-theme) .g13sw-h.g13sw-sel .g13sw-no{background:#35d0ff;color:#0b2a33}
+:root:not(.dark-theme) .g13sw-h.g13sw-off .g13sw-no{color:#aaa}
+:root:not(.dark-theme) .g13sw-h input{color:#222}
+:root:not(.dark-theme) .g13sw-h input::placeholder{color:#888}
+:root:not(.dark-theme) .g13sw-h .g13sw-lk{color:#666;border-left-color:#bdbdbd}
+:root:not(.dark-theme) .g13sw-bar button{background:#d4d4d4;border-color:#bdbdbd;color:#444}
+:root:not(.dark-theme) .g13sw-bar button:hover{color:#000;border-color:#888}
+:root:not(.dark-theme) .g13sw-adv{background:#d4d4d4;border-color:#bdbdbd;color:#555}
+:root:not(.dark-theme) .g13sw-adv .g13sw-seg{border-color:#aaa}
+:root:not(.dark-theme) .g13sw-adv .g13sw-seg button{color:#555}
+:root:not(.dark-theme) .g13sw-adv .g13sw-seg button:hover{color:#000}
+:root:not(.dark-theme) .g13sw-adv .g13sw-seg button.on{background:#35d0ff;color:#0b2a33}
 `;
 
 function injectCss() {
@@ -567,7 +584,7 @@ function update(node, allowShrink, inChain) {
   if (so) {
     const live = downstream(node).length === 0;
     node._g13strDead = !live;
-    const c = live ? undefined : "#444";
+    const c = live ? undefined : isLight() ? "#bbb" : "#444"; // dimmed: fainter than a live slot in either theme
     if (so.color_on !== c) so.color_on = c;
     if (so.color_off !== c) so.color_off = c;
   }

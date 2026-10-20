@@ -87,3 +87,8 @@ export function allNodes(root) {
   walk(root);
   return out;
 }
+
+// light color palette in use (the frontend puts .dark-theme on <html> only for dark palettes)
+export function isLight() {
+  return !document.documentElement.classList.contains("dark-theme");
+}

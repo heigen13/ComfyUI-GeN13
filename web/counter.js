@@ -40,6 +40,15 @@ const CSS = `
 .g13ct-bt svg{display:block;flex:none}
 .g13ct-pg{position:relative;box-sizing:border-box;height:3px;margin-top:3px;background:#222;border-radius:2px;overflow:hidden}
 .g13ct-pg i{position:absolute;left:0;top:0;bottom:0;background:#35d0ff;border-radius:2px;transition:width .15s ease-out}
+/* light theme (Comfy.ColorPalette light): the dark look above stays as is */
+:root:not(.dark-theme) .g13ct-inf{color:#555}
+:root:not(.dark-theme) .g13ct-inf>.g13ct-nx{color:#0a8fb8}
+:root:not(.dark-theme) .g13ct-dots i{background:#d4d4d4;border-color:#aaa}
+:root:not(.dark-theme) .g13ct-dots i.on{background:#35d0ff;border-color:#35d0ff}
+:root:not(.dark-theme) .g13ct-bt{background:#d4d4d4;border-color:#bdbdbd;color:#444}
+:root:not(.dark-theme) .g13ct-bt:hover{color:#000;border-color:#888}
+:root:not(.dark-theme) .g13ct-bt.g13ct-ok{background:#35d0ff;border-color:#35d0ff;color:#0b2a33}
+:root:not(.dark-theme) .g13ct-pg{background:#d4d4d4}
 `;
 
 const ICON = {

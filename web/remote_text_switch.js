@@ -46,6 +46,16 @@ const CSS = `
 .g13tr-ttl{min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;color:#d0d0d0;font:12px/1 Inter,Helvetica,Arial,"Microsoft JhengHei","PingFang TC","Noto Sans TC",sans-serif}
 .g13tr-ttl.g13tr-dim{color:#777}
 .g13tr-row.g13tr-lock{opacity:.45;pointer-events:none}
+/* light theme (Comfy.ColorPalette light): the dark look above stays as is */
+:root:not(.dark-theme) .g13tr-row{background:#d4d4d4;border-color:#bdbdbd}
+:root:not(.dark-theme) .g13tr-row button{color:#555}
+:root:not(.dark-theme) .g13tr-row button:hover{color:#000;background:#c8c8c8}
+:root:not(.dark-theme) .g13tr-row button:active{background:#bdbdbd}
+:root:not(.dark-theme) .g13tr-row .g13tr-prev{border-right-color:#bdbdbd}
+:root:not(.dark-theme) .g13tr-row .g13tr-next{border-left-color:#bdbdbd}
+:root:not(.dark-theme) .g13tr-row.g13tr-off .g13tr-num{background:#bbb;color:#555}
+:root:not(.dark-theme) .g13tr-ttl{color:#222}
+:root:not(.dark-theme) .g13tr-ttl.g13tr-dim{color:#777}
 `;
 
 function injectCss() {

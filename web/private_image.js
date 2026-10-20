@@ -15,6 +15,7 @@
 import { app } from "../../scripts/app.js";
 import { api } from "../../scripts/api.js";
 import { T, setTip, setWidgetTip, setWidgetLabel } from "./g13_i18n.js";
+import { isLight } from "./g13_mode.js";
 
 const LOAD_ID = "LoadImagePrivateGeN13";
 const SAVE_ID = "SaveImagePrivateGeN13";
@@ -540,7 +541,7 @@ function paint(node) {
   const size = node._pvSize;
   if (size) {
     ctx.font = "11px Arial, sans-serif";
-    ctx.fillStyle = "#CCCCCC";
+    ctx.fillStyle = isLight() ? "#444444" : "#CCCCCC";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText(`${size[0]} \u00D7 ${size[1]}  (${((size[0] * size[1]) / 1e6).toFixed(2)} MP)`, W / 2, y + h + CAPTION_H / 2 + 1);
@@ -649,7 +650,7 @@ function colorInput(value, onInput) {
   const input = document.createElement("input");
   input.type = "color";
   input.value = value.toLowerCase();
-  input.style.cssText = "width:36px;height:28px;padding:0;border:1px solid #555;background:none;cursor:pointer";
+  input.style.cssText = `width:36px;height:28px;padding:0;border:1px solid ${isLight() ? "#999" : "#555"};background:none;cursor:pointer`;
   input.oninput = () => onInput(input.value.toUpperCase());
   return input;
 }
@@ -668,7 +669,8 @@ function openColorPanel(node, event, kind) {
   const px = Math.min((event?.clientX ?? innerWidth / 2) + 8, innerWidth - 200);
   const py = Math.min((event?.clientY ?? innerHeight / 2) + 8, innerHeight - 60);
   panel.style.cssText = `position:fixed;left:${px}px;top:${py}px;z-index:10000;display:flex;gap:8px;` +
-    "align-items:center;padding:8px;background:#222;border:1px solid #555;border-radius:6px";
+    (isLight() ? "align-items:center;padding:8px;background:#f0f0f0;border:1px solid #999;border-radius:6px"
+      : "align-items:center;padding:8px;background:#222;border:1px solid #555;border-radius:6px");
   if (kind === "solid") {
     const auto = document.createElement("button");
     auto.type = "button";
@@ -678,7 +680,9 @@ function openColorPanel(node, event, kind) {
       const on = prop(node, P_SOLID_AUTO);
       auto.style.cssText = "height:28px;padding:0 10px;display:flex;align-items:center;justify-content:center;" +
         `line-height:1;font:12px Arial,sans-serif;background:none;border-radius:4px;cursor:pointer;` +
-        `border:1px solid ${on ? "#C0FF00" : "#555"};color:${on ? "#C0FF00" : "#ccc"}`;
+        (isLight()
+          ? `border:1px solid ${on ? "#4d7a00" : "#999"};color:${on ? "#4d7a00" : "#444"}`
+          : `border:1px solid ${on ? "#C0FF00" : "#555"};color:${on ? "#C0FF00" : "#ccc"}`);
     };
     auto.onclick = () => {
       setProp(node, P_SOLID_AUTO, true);

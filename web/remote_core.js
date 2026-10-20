@@ -91,6 +91,19 @@ const CLIP_CSS = `
 .g13rs-ta{all:unset;display:block;flex:1;min-height:0;box-sizing:border-box;width:100%;padding:4px 10px;font:12px/1.5 Inter,"Noto Sans TC","Microsoft JhengHei",sans-serif;color:#d8d8d8;caret-color:#35d0ff;white-space:pre-wrap;word-break:break-word;overflow-y:auto;resize:none;cursor:text}
 .g13rs-ta::placeholder{color:#555}
 .g13rs-box.g13rs-ro .g13rs-ta{color:#9a9a9a;cursor:default}
+/* light theme (Comfy.ColorPalette light): the dark look above stays as is */
+:root:not(.dark-theme) .g13rs-box{background:#ececec;border-color:#b8b8b8}
+:root:not(.dark-theme) .g13rs-box:focus-within{border-color:#0a8fb8}
+:root:not(.dark-theme) .g13rs-box.g13rs-ro{border-color:#cfcfcf}
+:root:not(.dark-theme) .g13rs-bar{border-bottom-color:#cfcfcf}
+:root:not(.dark-theme) .g13rs-cnt{color:#666}
+:root:not(.dark-theme) .g13rs-b{color:#555}
+:root:not(.dark-theme) .g13rs-b:hover{color:#000;background:#d4d4d4}
+:root:not(.dark-theme) .g13rs-b.g13rs-ok{color:#0b2a33;background:#35d0ff}
+:root:not(.dark-theme) .g13rs-b:disabled{color:#555;background:none}
+:root:not(.dark-theme) .g13rs-ta{color:#222;caret-color:#0a8fb8}
+:root:not(.dark-theme) .g13rs-ta::placeholder{color:#999}
+:root:not(.dark-theme) .g13rs-box.g13rs-ro .g13rs-ta{color:#777}
 `;
 const CLIP_ICON = {
   cut: '<svg width="12" height="12" viewBox="0 0 12 12"><circle cx="3" cy="9" r="1.8" fill="none" stroke="currentColor" stroke-width="1.2"/><circle cx="9" cy="9" r="1.8" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M4.3 7.7L9.5 1.5M7.7 7.7L2.5 1.5" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>',

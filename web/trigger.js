@@ -28,6 +28,13 @@ const CSS = `
 .g13tg-st.g13tg-on i{background:#35d0ff}
 .g13tg-st.g13tg-armed i{animation:g13tgbl 1s ease-in-out infinite}
 @keyframes g13tgbl{50%{opacity:.25}}
+/* light theme (Comfy.ColorPalette light): the dark look above stays as is */
+:root:not(.dark-theme) .g13tg-big{background:#d4d4d4;border-color:#0a8fb866;color:#0a8fb8}
+:root:not(.dark-theme) .g13tg-big:hover{border-color:#0a8fb8;background:#cfe3ea}
+:root:not(.dark-theme) .g13tg-st{color:#666}
+:root:not(.dark-theme) .g13tg-st i{background:#aaa}
+:root:not(.dark-theme) .g13tg-st.g13tg-on{color:#0a8fb8}
+:root:not(.dark-theme) .g13tg-st.g13tg-on i{background:#0a8fb8}
 `;
 
 const ICON = '<svg width="12" height="12" viewBox="0 0 12 12"><path d="M2.2 6a3.8 3.8 0 1 0 1.1-2.7" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M2 1.6v2.6h2.6" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
