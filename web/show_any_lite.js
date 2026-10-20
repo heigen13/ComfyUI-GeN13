@@ -171,8 +171,15 @@ async function readClip() {
 }
 
 // typed text changed by a button: keep the box, the stored value and the canvas in step
+// the typed text is kept in node.properties.g13_in: the front end strips a forceInput widget's slot
+// from widgets_values on load, so a value saved only there is lost on reload / paste
+function keepTyped(node) {
+  node.properties = node.properties || {};
+  node.properties.g13_in = String(node._g13in ?? "");
+}
 function setTyped(node, v) {
   node._g13in = v;
+  keepTyped(node);
   const ta = node._g13sl?.ta;
   if (ta && ta.value !== v) ta.value = v;
   if (node._g13sl?.cnt) node._g13sl.cnt.textContent = countInfo(v);
@@ -264,6 +271,7 @@ app.registerExtension({
       ta.placeholder = String(T("Enter text", "輸入文字"));
       ta.addEventListener("input", () => {
         node._g13in = ta.value;
+        keepTyped(node);
         const c = node._g13sl?.cnt;
         if (c) c.textContent = countInfo(ta.value);
         node.setDirtyCanvas?.(true, false);
@@ -327,6 +335,7 @@ app.registerExtension({
         getValue: () => String(node._g13in ?? ""),
         setValue: (v) => {
           node._g13in = String(v ?? "");
+          keepTyped(node);
           render(node);
         },
         getMinHeight: () => ROW,
@@ -371,6 +380,8 @@ app.registerExtension({
     nodeType.prototype.onConfigure = function () {
       const r = onConfigure?.apply(this, arguments);
       this._g13loaded = true;
+      const saved = this.properties?.g13_in;
+      if (typeof saved === "string") this._g13in = saved;
       // a saved node: its saved height decides the room once the widget has a position
       requestAnimationFrame(() => {
         this.onResize?.(this.size);

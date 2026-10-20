@@ -108,7 +108,13 @@ def _scan_cached(folder, exts, patterns, subfolders):
         files, dirs = hit
         try:
             if all(os.stat(d).st_mtime_ns == m for d, m in dirs):
-                return list(files)
+                # the folder's mtime does not change when a file is overwritten in place (re-saved
+                # from an editor under the same name): refresh each file's mtime / size before sorting
+                fresh = []
+                for path, _, _, rel in files:
+                    st = os.stat(path)
+                    fresh.append((path, st.st_mtime, st.st_size, rel))
+                return fresh
         except OSError:
             pass
     files, dirs = _scan(folder, exts, patterns, subfolders)
@@ -277,7 +283,7 @@ class LoadLatestImage:
         return "|".join(_sig(p) for p, _, _, _ in sel) + "#%d" % len(files)
 
     @classmethod
-    def VALIDATE_INPUTS(cls, folder_path, **kw):
+    def VALIDATE_INPUTS(cls, folder_path):
         folder = (folder_path or "").strip().strip('"')
         if not folder:
             return "folder_path is empty"

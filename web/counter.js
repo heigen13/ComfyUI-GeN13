@@ -244,6 +244,9 @@ app.registerExtension({
         if (!controlBefore()) stepRun(node);
       };
 
+      // the DOM bar is the last widget and nothing re-measures the node after it: size it now so a
+      // new node is not 12 px short (status line on the bottom edge, node growing after a reload)
+      node.setSize([node.size[0], node.computeSize()[1]]); // a loaded node gets its saved size right after
       requestAnimationFrame(() => update(node));
       return r;
     };

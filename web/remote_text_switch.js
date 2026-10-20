@@ -16,7 +16,7 @@
 //   - grey line at the bottom: channel · N mirrors · target count
 
 import { app } from "../../scripts/app.js";
-import { isOff } from "./g13_mode.js";
+import { isOff, onModeChange } from "./g13_mode.js";
 import { T, setTip, setWidgetTip } from "./g13_i18n.js";
 import { applyWireLock, wireSuffix, wiredMirrors } from "./remote_link.js";
 
@@ -330,8 +330,8 @@ function markPass(c) {
 function autoStep(node) {
   const c = chan(node);
   if (stepped.has(c)) return;
+  if (isOff(node)) return; // a running mirror may still step
   markPass(c);
-  if (isOff(node)) return;
   if (w(node, "auto_next")?.value !== "NEXT") return;
   stepValue(node, 1);
 }
@@ -371,7 +371,7 @@ app.registerExtension({
         an.beforeQueued = () => {
           if (!controlBefore()) return;
           const c = chan(node);
-          if (stepped.has(c)) return;
+          if (stepped.has(c) || isOff(node)) return;
           if (!firstSeen.has(c)) {
             firstSeen.add(c);
             markPass(c);
@@ -444,5 +444,11 @@ app.registerExtension({
       }
       return r;
     };
+    // Nodes 2.0 never draws through onDrawForeground: react to the mode setter directly
+    onModeChange((n) => {
+      if (n.type !== NODE_ID || n._g13mode === undefined || n._g13mode === n.mode) return;
+      broadcastMode(n);
+      refreshGroup(n);
+    });
   },
 });

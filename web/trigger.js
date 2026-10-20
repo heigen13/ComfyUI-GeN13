@@ -124,6 +124,8 @@ app.registerExtension({
       addDom(node, "g13_trigger_status", line, ST_H, true);
 
       node._g13tg = { line, text, inputUntil: 0 };
+      // the DOM rows are the last widgets and nothing re-measures the node after them
+      node.setSize([node.size[0], node.computeSize()[1]]); // a loaded node gets its saved size right after
       requestAnimationFrame(() => update(node));
       return r;
     };

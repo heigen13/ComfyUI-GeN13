@@ -381,18 +381,22 @@ function autoChannel(nodeType, type) {
   const onConfigure = nodeType.prototype.onConfigure;
   nodeType.prototype.onConfigure = function () {
     this._g13fresh = false;
+    this._g13loadedOnce = true;
     return onConfigure?.apply(this, arguments);
   };
   const onConn = nodeType.prototype.onConnectionsChange;
   nodeType.prototype.onConnectionsChange = function (side, slot, connected) {
     const r = onConn?.apply(this, arguments);
+    // a workflow load replays links (inside a subgraph even before onConfigure): never rename then
+    if (app.configuringGraph) return r;
     if (this._g13fresh && connected && side === LG()?.OUTPUT) {
       this._g13fresh = false;
-      const cw = wv(this, "channel");
-      if (cw && String(cw.value).trim() === "remote") {
-        const node = this;
-        setTimeout(() => setW(node, "channel", channelFor(node, type)), 0);
-      }
+      const node = this;
+      setTimeout(() => {
+        if (app.configuringGraph || node._g13loadedOnce) return;
+        const cw = wv(node, "channel");
+        if (cw && String(cw.value).trim() === "remote") setW(node, "channel", channelFor(node, type));
+      }, 0);
     }
     return r;
   };

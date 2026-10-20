@@ -10,12 +10,11 @@
 //   - EXPAND ALL / COLLAPSE ALL bar under select
 //   - no dimming: every box stays editable; the selected one is marked by its header number
 //   - STRING output: live only on the last node of a chain (no chain output linked). On every other
-//     node its dot is dimmed and the pointer lookups answer "nothing" for it — the canvas-level
-//     LGraphCanvas.isOverNodeOutput (what starts a link drag) and the node-level getOutputOnPos /
-//     getSlotOnPos / getSlotInPosition — so no link can be dragged out of it (the front end ignores
-//     onMouseDown's return value, and shrinking boundingRect moves the drawing); a connection
-//     attempt is refused too (it would carry "" whenever the pick is downstream). Linking a chain input cuts the
-//     upstream node's existing STRING links at that moment (user action only, never on load).
+//     node its dot is dimmed, the canvas's LinkConnector.dragNewFromOutput is wrapped so no link can
+//     be dragged out of it, the node-level slot lookups answer "nothing" for drop targets, and a
+//     connection attempt is refused (it would carry "" whenever the pick is downstream). Linking a
+//     chain input cuts the upstream node's existing STRING links at that moment (user action only,
+//     never on load).
 //   - a collapsed box opens when it gets selected (#NN click or the dropdown). That open is
 //     "automatic": picking another box closes it again. A box the user opened himself (arrow,
 //     EXPAND ALL) stays open. node._g13auto = local index of the box this node auto-opened.
@@ -59,7 +58,7 @@
 //     core control_after_generate. Chained nodes show the head's setting, dimmed.
 
 import { app } from "../../scripts/app.js";
-import { isOff } from "./g13_mode.js";
+import { isOff, onModeChange } from "./g13_mode.js";
 import { T, setTip, setWidgetTip } from "./g13_i18n.js";
 
 const NODE_ID = "TextSwitchGeN13";
@@ -205,7 +204,9 @@ function upstream(node) {
   if (!slot || slot.link == null) return null;
   const l = graphOf(node)?.links?.[slot.link] ?? graphOf(node)?.links?.get?.(slot.link);
   const up = l ? nodeById(node, l.origin_id) : null;
-  return up && up.type === NODE_ID ? up : null;
+  // a muted (2) node is removed from the prompt together with its chain output: the next node
+  // runs as a head of its own, so the chain is cut there on the canvas too
+  return up && up.type === NODE_ID && up.mode !== 2 ? up : null;
 }
 
 // select_num has a usable link: linked, and the real source node is neither muted (2) nor bypassed (4).
@@ -273,7 +274,7 @@ function downstream(node) {
   for (const id of out?.links ?? []) {
     const l = graphOf(node)?.links?.[id] ?? graphOf(node)?.links?.get?.(id);
     const t = l ? nodeById(node, l.target_id) : null;
-    if (t && t.type === NODE_ID) res.push(t);
+    if (t && t.type === NODE_ID && t.mode !== 2) res.push(t);
   }
   return res;
 }
@@ -361,7 +362,8 @@ function numOf(v) {
 // head hands on nothing, so the next node runs as the head from #01 with its mirrored select), so its
 // boxes drop out of the numbering, the same as unplugging it; they come back when the bypass is lifted
 function skipped(chain, k) {
-  return chain[k]?.mode === 4;
+  const m = chain[k]?.mode;
+  return m === 4 || m === 2;
 }
 function boxesOf(chain, k) {
   return skipped(chain, k) ? 0 : countOf(chain[k]);
@@ -383,6 +385,14 @@ function ownerOf(chain, g) {
 
 function updateChain(node, allowShrink) {
   for (const n of chainNodes(node)) update(n, allowShrink, true);
+}
+
+// every Text Switch in the workflow: a mute cuts a chain in two, so the nodes on both sides of the
+// muted one belong to other chains now and must be renumbered as well
+function updateAllSwitches() {
+  const root = app.graph?.rootGraph ?? app.graph;
+  const graphs = [root, ...(root?._subgraphs?.values?.() ?? [])];
+  for (const g of graphs) for (const n of g?._nodes ?? []) if (n.type === NODE_ID && n._g13prev) update(n, false, true);
 }
 
 // titles + collapsed flags live in node.properties.g13 so they are saved with the workflow
@@ -505,12 +515,14 @@ function update(node, allowShrink, inChain) {
       const k = chain.findIndex((n) => n.id === pick.id);
       if (k >= 0) g = boxesOf(chain, k) ? offs[k] + Math.min(pick.i, boxesOf(chain, k)) : Math.max(1, offs[k]);
     }
+    // renumber / clamp only for a real edit, never while a workflow is still loading or a pasted
+    // chain is still being linked up (the chain is incomplete then and the pick would be cut down)
+    // (a clone made for the clipboard has no graph and no links yet: never clamp it either)
+    const loading = head._g13loading || app.configuringGraph || !head.graph;
     if (rsrc) {
-      // renumber the remote only for a real edit, never while a workflow is still loading
-      const loading = head._g13loading || app.configuringGraph;
       if (moved && !loading && g !== numOf(w(rsrc, "value").value)) writeRemote(rsrc, "value", g);
       if (g >= 1 && g <= total && hw0.value !== lbl(g)) hw0.value = lbl(g);
-    } else {
+    } else if (!loading) {
       g = Math.max(1, Math.min(g, total));
       if (hw0.value !== lbl(g)) hw0.value = lbl(g);
     }
@@ -532,7 +544,9 @@ function update(node, allowShrink, inChain) {
   } else if (sw) {
     sw.disabled = ext && !remoteSource(head);
   }
-  const off = skipped(chain, pos); // bypassed after the head: its boxes are out of the numbering
+  // bypassed or muted: its boxes are out of the numbering (a muted node is not even in its own
+  // chain list, the chain is cut at it)
+  const off = node.mode === 2 || node.mode === 4 || skipped(chain, pos);
   const sel = off || (ext && known == null) ? -1 : gsel - offset; // local box number, or out of range
   const ah = el(node._g13adv)?.firstElementChild;
   if (ah) {
@@ -787,17 +801,18 @@ globalThis.G13TextSwitch = {
   },
 };
 
-// canvas level: a link drag starts from LGraphCanvas.isOverNodeOutput; a dead STRING is never "over"
+// canvas level: no link may start from a dead STRING output (a chained node's STRING is unused: the
+// head's STRING carries the chain's pick). Patched on the canvas's LinkConnector.
 let _canvasPatched = false;
 function patchCanvas() {
   if (_canvasPatched) return;
-  const C = globalThis.LGraphCanvas ?? app.canvas?.constructor;
-  const orig = C?.prototype?.isOverNodeOutput;
-  if (typeof orig !== "function") return;
+  const lc = app.canvas?.linkConnector;
+  if (!lc || typeof lc.dragNewFromOutput !== "function") return;
   _canvasPatched = true;
-  C.prototype.isOverNodeOutput = function (node) {
-    const r = orig.apply(this, arguments);
-    return r === 1 && node?.type === NODE_ID && node._g13strDead ? -1 : r;
+  const orig = lc.dragNewFromOutput;
+  lc.dragNewFromOutput = function (network, node, output, ...rest) {
+    if (node?.type === NODE_ID && node._g13strDead && output === node.outputs?.[1]) return;
+    return orig.call(this, network, node, output, ...rest);
   };
 }
 
@@ -881,6 +896,15 @@ app.registerExtension({
       return r;
     };
 
+    // configure() applies the saved size before onConfigure runs, and the size change triggers a
+    // synchronous update() (onResize) while the node's links are not restored yet (a paste adds the
+    // node first, links last): mark the node as loading before anything inside configure can run
+    const configure = nodeType.prototype.configure;
+    nodeType.prototype.configure = function () {
+      this._g13loading = true;
+      return configure.apply(this, arguments);
+    };
+
     const onConfigure = nodeType.prototype.onConfigure;
     nodeType.prototype.onConfigure = function () {
       const r = onConfigure?.apply(this, arguments);
@@ -907,10 +931,16 @@ app.registerExtension({
       if (this._g13prev && this._g13mode !== this.mode) {
         const first = this._g13mode === undefined;
         this._g13mode = this.mode;
-        if (!first) updateChain(this, false);
+        if (!first) updateAllSwitches();
       }
       return r;
     };
+    // Nodes 2.0 never draws through onDrawForeground: renumber on the mode setter instead
+    onModeChange((n) => {
+      if (n.type !== NODE_ID || !n._g13prev || n._g13mode === n.mode) return;
+      n._g13mode = n.mode;
+      updateAllSwitches();
+    });
 
     const onResize = nodeType.prototype.onResize;
     nodeType.prototype.onResize = function (size) {

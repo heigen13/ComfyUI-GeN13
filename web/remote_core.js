@@ -20,6 +20,7 @@
 
 import { app } from "../../scripts/app.js";
 import { T, setTip, setWidgetTip } from "./g13_i18n.js";
+import { onModeChange } from "./g13_mode.js";
 import { applyWireLock, wireSuffix } from "./remote_link.js";
 
 function w(node, name) {
@@ -158,10 +159,12 @@ export function registerRemote({ nodeId, extName, synced = ["value"], stepPicker
     if (x.value !== v) x.value = v;
     const e = elOf(x); // DOM text areas: make sure the box shows it too
     if (e && "value" in e && e.value !== v && typeof v === "string") e.value = v;
+    onDraw?.(n);
     n.setDirtyCanvas?.(true, true);
   };
 
   const render = (node) => {
+    onDraw?.(node);
     const b = node._g13info;
     if (!b) return;
     const g = group(node);
@@ -278,8 +281,15 @@ export function registerRemote({ nodeId, extName, synced = ["value"], stepPicker
     box.addEventListener("pointerdown", (ev) => ev.stopPropagation());
     box.addEventListener("wheel", (ev) => ev.stopPropagation()); // scroll the text, not the canvas
 
+    // the text lives in node.properties.g13_text: the front end strips a forceInput widget's slot from
+    // widgets_values on load, so the saved value would otherwise be lost on reload / paste
+    const keep = () => {
+      node.properties = node.properties || {};
+      node.properties.g13_text = String(node._g13v ?? "");
+    };
     const setText = (v) => {
       node._g13v = v;
+      keep();
       if (ta.value !== v) ta.value = v;
       broadcast(node, "value");
       renderBox(node);
@@ -288,6 +298,7 @@ export function registerRemote({ nodeId, extName, synced = ["value"], stepPicker
     };
     ta.addEventListener("input", () => {
       node._g13v = ta.value;
+      keep();
       cnt.textContent = countInfo(ta.value);
       broadcast(node, "value");
       node.graph?.change?.();
@@ -339,6 +350,7 @@ export function registerRemote({ nodeId, extName, synced = ["value"], stepPicker
       getValue: () => String(node._g13v ?? ""),
       setValue: (v) => {
         node._g13v = String(v ?? "");
+        keep();
         renderBox(node);
       },
       getMinHeight: () => BOX_MIN,
@@ -382,6 +394,7 @@ export function registerRemote({ nodeId, extName, synced = ["value"], stepPicker
               if (!app.configuringGraph) adopt(node);
               renderAll();
             }
+            onDraw?.(node); // summary rows follow the fields on Nodes 2.0 too (no draw hook there)
             return out;
           };
           // multiline text: sync while typing, not only when the box loses focus
@@ -421,6 +434,8 @@ export function registerRemote({ nodeId, extName, synced = ["value"], stepPicker
         this._g13loaded = true;
         this._g13mode = this.mode;
         if (textBox) {
+          const saved = this.properties?.g13_text;
+          if (typeof saved === "string") this._g13v = saved;
           // saved before value became a socket: its input still claims a widget; make it a plain socket
           const vi = this.inputs?.find((i) => i.name === "value");
           if (vi && vi.widget) {
@@ -463,6 +478,13 @@ export function registerRemote({ nodeId, extName, synced = ["value"], stepPicker
         onDraw?.(this);
         return r;
       };
+      // Nodes 2.0 never draws through onDrawForeground: react to the mode setter directly
+      onModeChange((n) => {
+        if (n.type !== nodeId || n._g13mode === undefined || n._g13mode === n.mode) return;
+        broadcastMode(n);
+        if (textBox) renderBox(n);
+        onDraw?.(n);
+      });
     },
   });
 }

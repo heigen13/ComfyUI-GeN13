@@ -125,6 +125,8 @@ def _resolve(name):
     name = (name or "").strip() or "last_prompt.txt"
     if not name.lower().endswith(".txt"):
         name += ".txt"
+    if "/" in name or "\\" in name:
+        raise ValueError("Prompt Cache: filename must not contain a path separator.")
     root = os.path.normpath(BASE_DIR)
     path = os.path.normpath(os.path.join(root, name))
     if not path.startswith(root + os.sep) and path != root:
@@ -278,12 +280,14 @@ class GenPromptCache:
         previous = None
         if os.path.isfile(path):
             try:
-                with open(path, "r", encoding="utf-8") as f:
+                with open(path, "r", encoding="utf-8", newline="") as f:
                     previous = f.read()
             except OSError:
                 previous = None
 
-        if previous != text:
+        # compare with the line endings normalized: the file is written with "\n" only, so CRLF text
+        # from upstream would otherwise never match and the single backup would be overwritten each run
+        if previous is None or previous.replace("\r\n", "\n") != text.replace("\r\n", "\n"):
             if auto_backup and previous is not None:
                 prev_path = os.path.join(BASE_DIR, _stem(path) + PREV_SUFFIX + ".txt")
                 shutil.copy2(path, prev_path)  # overwrites the older backup

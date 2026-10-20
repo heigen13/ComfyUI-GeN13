@@ -13,7 +13,7 @@
 //   - grey line at the bottom: channel · N mirrors
 
 import { app } from "../../scripts/app.js";
-import { isOff } from "./g13_mode.js";
+import { isOff, onModeChange } from "./g13_mode.js";
 import { applyWireLock, wireSuffix, wiredMirrors } from "./remote_link.js";
 
 const NODE_ID = "RemoteIntGeN13";
@@ -142,8 +142,8 @@ function markPass(c) {
 function step(node) {
   const c = chan(node);
   if (stepped.has(c)) return;
+  if (isOff(node)) return; // muted / bypassed, itself or its subgraph: a running mirror may still step
   markPass(c);
-  if (isOff(node)) return; // muted / bypassed, itself or its subgraph: the number stays
   if (wiredMirrors(group(node)).length) return; // group driven by a wire: the number is not ours to step
   const mode = w(node, "control_after_generate")?.value;
   const val = w(node, "value");
@@ -186,7 +186,7 @@ app.registerExtension({
         ctl.beforeQueued = () => {
           if (!controlBefore()) return;
           const c = chan(node);
-          if (stepped.has(c)) return;
+          if (stepped.has(c) || isOff(node)) return;
           if (!firstSeen.has(c)) {
             firstSeen.add(c); // "before" mode skips the very first queue, like the core control
             markPass(c);
@@ -246,5 +246,9 @@ app.registerExtension({
       if (this._g13mode !== undefined && this._g13mode !== this.mode) broadcastMode(this);
       return r;
     };
+    // Nodes 2.0 never draws through onDrawForeground: react to the mode setter directly
+    onModeChange((n) => {
+      if (n.type === NODE_ID && n._g13mode !== undefined && n._g13mode !== n.mode) broadcastMode(n);
+    });
   },
 });

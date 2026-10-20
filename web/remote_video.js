@@ -86,6 +86,7 @@ function setLabel(node, b, t) {
 function onDraw(node) {
   const [sz, tm] = node._g13sum || [];
   if (!sz || !tm) return;
+  if (node._g13ran && node._g13key !== `${val(node, "aspect_ratio")}|${val(node, "megapixels")}`) node._g13ran = null;
   const S = "  \u00B7  ";
   const r = val(node, "aspect_ratio") || "keep";
   const mp = `${(Number(val(node, "megapixels")) || 0).toFixed(2)} MP`;

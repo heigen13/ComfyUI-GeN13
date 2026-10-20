@@ -109,30 +109,24 @@ function vueMode() {
 const OUT_BASE = 1; // outputs: 0 STRING, 1.. boxes
 
 // Nodes 1.0: a linked box's input dot shares its row with the on_NN widget socket, which comes first
-// in the input list and would take the click. The canvas-level hit test is asked first for the
-// linked text sockets (a 20px square around the dot), then falls through to the stock lookup.
-// (Never shrink a slot's boundingRect to hide it: the front end draws from that rect.)
+// in the input list and takes the mouse-down. The canvas then starts a new link from on_NN; here that
+// start is turned into "pick up the box's existing link" (what the stock behaviour is for a linked
+// socket). Patched on the canvas's LinkConnector, so it works on frontends where the slot hit test is
+// no longer a canvas method.
 let _canvasPatched = false;
 function patchCanvas() {
   if (_canvasPatched) return;
-  const C = globalThis.LGraphCanvas ?? app.canvas?.constructor;
-  const orig = C?.prototype?.isOverNodeInput;
-  if (typeof orig !== "function") return;
+  const lc = app.canvas?.linkConnector;
+  if (!lc || typeof lc.dragNewFromInput !== "function") return;
   _canvasPatched = true;
-  C.prototype.isOverNodeInput = function (node, cx, cy, slotPos) {
-    if (node?.type === NODE_ID && !vueMode() && node.inputs) {
-      for (let k = 0; k < node.inputs.length; k++) {
-        const inp = node.inputs[k];
-        if (inp.link == null || !/^text_\d\d$/.test(inp.name) || !inp.pos) continue;
-        const x = node.pos[0] + inp.pos[0];
-        const y = node.pos[1] + inp.pos[1];
-        if (Math.abs(cx - x) <= 10 && Math.abs(cy - y) <= 10) {
-          if (slotPos) { slotPos[0] = x; slotPos[1] = y; }
-          return k;
-        }
-      }
+  const orig = lc.dragNewFromInput;
+  lc.dragNewFromInput = function (network, node, input, ...rest) {
+    if (node?.type === NODE_ID && !vueMode()) {
+      const m = /^on_(\d\d)$/.exec(input?.name ?? "");
+      const tx = m ? node.inputs?.find((s) => s.name === `text_${m[1]}`) : null;
+      if (tx && tx.link != null) return this.moveInputLink(network, node, tx);
     }
-    return orig.apply(this, arguments);
+    return orig.call(this, network, node, input, ...rest);
   };
 }
 

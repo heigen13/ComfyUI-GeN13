@@ -22,7 +22,7 @@
 //   - button widgets render in both the classic canvas (Nodes 1.0) and Vue nodes (2.0)
 
 import { app } from "../../scripts/app.js";
-import { isOff } from "./g13_mode.js";
+import { isOff, onModeChange } from "./g13_mode.js";
 
 const IDS = ["ResizeGeN13"];
 const IMAGES = ["image1", "image2", "image3", "image4"];
@@ -362,13 +362,21 @@ app.registerExtension({
       return r;
     };
 
-    // upstream mute / bypass has no event: compare a small signature on each draw
+    // upstream mute / bypass has no event: compare a small signature on each draw, and on Nodes 2.0
+    // (no draw hook) whenever any node's mode changes
     const onFg = nodeType.prototype.onDrawForeground;
     nodeType.prototype.onDrawForeground = function () {
       const r = onFg?.apply(this, arguments);
       if (this._g13status && this._g13sig !== upstreamSig(this)) update(this);
       return r;
     };
+    onModeChange(() => {
+      const root = app.graph?.rootGraph ?? app.graph;
+      const graphs = [root, ...(root?._subgraphs?.values?.() ?? [])];
+      for (const g of graphs) for (const n of g?._nodes ?? []) {
+        if (IDS.includes(n.type) && n._g13status && n._g13sig !== upstreamSig(n)) update(n);
+      }
+    });
 
     const onExecuted = nodeType.prototype.onExecuted;
     nodeType.prototype.onExecuted = function (output) {
