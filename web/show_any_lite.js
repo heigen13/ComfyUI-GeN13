@@ -256,7 +256,7 @@ app.registerExtension({
     const getMenu = nodeType.prototype.getExtraMenuOptions;
     nodeType.prototype.getExtraMenuOptions = function (canvas, options) {
       const r = getMenu?.apply(this, arguments);
-      options.unshift({ content: convertLabel("Show Any"), callback: () => g13SwapShowAny(this, "ShowAnyGeN13") }, null);
+      options.unshift({ content: convertLabel("Show Any"), callback: () => g13SwapShowAny(this, "ShowAnyGeN13") });
       return r;
     };
 

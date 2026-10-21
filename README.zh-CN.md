@@ -4,11 +4,28 @@
 
 # ComfyUI-GeN13
 
-ComfyUI 自定义节点包，围绕图生视频与人像工作流设计：在大型工作流各处同步同一个数值的遥控节点、可串接的提示词切换、可遮住预览的图片节点、视频时间轴校色，以及人像美颜。
+ComfyUI 自定义节点包，围绕图生视频与人像工作流设计：在大型工作流各处同步同一个数值的遥控节点、可串接的提示词切换、可遮住预览的图片节点、视频时间轴校色、人像美颜，以及 Run 按钮旁的实时资源监控。
 
 所有节点的显示名称都以 **(GeN13)** 结尾，在画布上双击、输入 `GeN13` 就能全部列出。
 
 ## 特色
+
+### Monitor：整台电脑的状态，一眼看完
+
+Run 按钮旁的实时监控栏。RUN 显示正在执行的节点、耗时、采样步数与排队数量，手机页面、API 或其他浏览器标签页提交的队列也能看到；点一下就跳到该节点。CPU、RAM、GPU、VRAM、功耗各有数值、趋势折线与用量条，出问题前先变红：RAM 与 VRAM 达 95%，GPU 核心达 83 °C。它不是节点，画布上不用放任何东西。在“设置 → GeN13 → 资源监控”可以单独显示或隐藏各格、调整刷新间隔。
+
+<p align="center"><img src="docs/monitor.gif" alt="运行中的资源监控栏" width="100%"></p>
+
+<p align="center"><img src="docs/monitor.png" alt="资源监控栏的深色与浅色主题" width="100%"></p>
+
+| 显卡 | 监控能读到的项目 |
+|---|---|
+| NVIDIA（Windows、Linux） | 使用率、核心温度、VRAM、功耗与功耗上限，通过 NVML（`nvidia-ml-py`） |
+| AMD（Linux） | 使用率、温度、VRAM、功耗与功耗上限，直接读 amdgpu 驱动，不用另外安装 |
+| AMD 或 Intel（Windows） | 使用率与 VRAM，来源与任务管理器相同；Windows 不提供这两家的温度与功耗 |
+| Apple 芯片、只有 CPU | RUN、CPU、RAM |
+
+读不到的项目会自动隐藏，不会显示空格。
 
 ### Remote：设一次，到处都能控制
 
@@ -55,9 +72,10 @@ Load、Save、Preview Image Private 的节点预览可以盖上马赛克、毛�
 ```bash
 cd ComfyUI/custom_nodes
 git clone https://github.com/heigen13/ComfyUI-GeN13
+pip install -r ComfyUI-GeN13/requirements.txt
 ```
 
-重开 ComfyUI 即可，不需要另外安装套件，全部使用 ComfyUI 本身已有的 torch、numpy、Pillow。
+重开 ComfyUI 即可。ComfyUI Manager 会一并安装唯一的额外包 `nvidia-ml-py`（NVIDIA 官方的 NVML 库，资源监控用它读取 NVIDIA 显卡的使用率、温度与功耗）。手动安装时，请用 ComfyUI 自己的 Python 执行上面那行 `pip`（便携版为 `python_embeded\python.exe -m pip`）。其余全部使用 ComfyUI 本身已有的 torch、numpy、Pillow、psutil。
 选用：**Resize** 的 `nvidia_rtx_vsr` 缩放需要 `nvidia-vfx` 套件与 RTX 显卡。
 
 **示例工作流**：Text Switch 串接、Remote 双段生图、人像美颜、视频校色四份现成工作流，在 ComfyUI 的 Templates 面板 ComfyUI-GeN13 下，或见 [`example_workflows`](example_workflows)。
@@ -107,12 +125,13 @@ git clone https://github.com/heigen13/ComfyUI-GeN13
 | **Counter** | 每次送出计数，可设范围、每个数字维持几次、按钮归零、上游归零，以及每小时或每天自动归零；bypass 时停住。 |
 | **Trigger** | 按下按钮或上游改变时输出新值，接 Counter 的 reset。 |
 | **Number** | 一个数字同时输出 INT、FLOAT、STRING，可选小数转整数的方式。 |
+| **Switch Any** | 多路选号开关，任何类型都能接，select 选几号就输出第几路；只有选中的那一路会执行，`index` 输出可让两个联动，各路可自定义名称。 |
 
 ## 备注
 
 - 节点说明以英文为主，附繁体中文、简体中文与日文翻译：ComfyUI 语言设为其中一种时自动切换。
 - 在 ComfyUI 0.40 的经典画布（Nodes 1.0）开发与测试；图片预览也支持 Nodes 2.0。
-- Remote 与 Text Switch 的图为示意图；隐私遮罩、Color Match、Degrease 的范例都是节点实际输出。
+- Remote 与 Text Switch 的图为示意图；隐私遮罩、Color Match、Degrease 的范例都是节点实际输出，资源监控的图是实际监控栏套上示范数值。
 
 ## 赞助
 

@@ -1,0 +1,28 @@
+{
+  "GeN13_Monitor_Enabled": {
+    "name": "リソースモニターを表示",
+    "tooltip": "リソースモニター:Run ボタン横の RUN / CPU / RAM / GPU / VRAM / POWER 表示。"
+  },
+  "GeN13_Monitor_Rate": {
+    "name": "更新間隔(秒)",
+    "tooltip": "更新間隔:読み取りの間隔(秒)。折れ線は直近 60 回分。"
+  },
+  "GeN13_Monitor_ShowRun": {
+    "name": "RUN を表示"
+  },
+  "GeN13_Monitor_ShowCpu": {
+    "name": "CPU を表示"
+  },
+  "GeN13_Monitor_ShowRam": {
+    "name": "RAM を表示"
+  },
+  "GeN13_Monitor_ShowGpu": {
+    "name": "GPU を表示"
+  },
+  "GeN13_Monitor_ShowVram": {
+    "name": "VRAM を表示"
+  },
+  "GeN13_Monitor_ShowPower": {
+    "name": "POWER を表示"
+  }
+}

@@ -12,7 +12,7 @@
 //     number during hold still shows that a run happened.
 
 import { app } from "../../scripts/app.js";
-import { isOff } from "./g13_mode.js";
+import { isOff, liveValue } from "./g13_mode.js";
 import { T, setTip, lang, pick, cjkFont } from "./g13_i18n.js";
 
 const NODE_ID = "CounterGeN13";
@@ -68,10 +68,15 @@ function w(node, name) {
   return node.widgets?.find((x) => x.name === name);
 }
 
+// a field fed by a link reads its source on the canvas (Int, Float, Remote ...); otherwise its own value
 function val(node, name, d = 0) {
-  const v = Number(w(node, name)?.value);
+  const lv = liveValue(node, name);
+  const v = Number(lv.known ? lv.value : w(node, name)?.value);
   return Number.isFinite(v) ? v : d;
 }
+
+const LINKABLE = ["start", "end", "step", "hold"];
+const liveKey = (node) => LINKABLE.map((n) => val(node, n, "")).join(",");
 
 function controlBefore() {
   try {
@@ -283,6 +288,18 @@ app.registerExtension({
     nodeType.prototype.onConfigure = function () {
       const r = onConfigure?.apply(this, arguments);
       requestAnimationFrame(() => update(this));
+      return r;
+    };
+
+    // start / end / step / hold fed by an Int upstream: that value changes without any event here
+    const onFg = nodeType.prototype.onDrawForeground;
+    nodeType.prototype.onDrawForeground = function () {
+      const r = onFg?.apply(this, arguments);
+      const k = liveKey(this);
+      if (this._g13live !== k) {
+        this._g13live = k;
+        update(this);
+      }
       return r;
     };
 

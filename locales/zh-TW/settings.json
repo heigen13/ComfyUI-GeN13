@@ -1,0 +1,28 @@
+{
+  "GeN13_Monitor_Enabled": {
+    "name": "顯示資源監控",
+    "tooltip": "資源監控:Run 按鈕旁的 RUN / CPU / RAM / GPU / VRAM / POWER 監控列。"
+  },
+  "GeN13_Monitor_Rate": {
+    "name": "更新間隔(秒)",
+    "tooltip": "更新間隔:每次讀取相隔的秒數,折線保留最近 60 次。"
+  },
+  "GeN13_Monitor_ShowRun": {
+    "name": "顯示 RUN"
+  },
+  "GeN13_Monitor_ShowCpu": {
+    "name": "顯示 CPU"
+  },
+  "GeN13_Monitor_ShowRam": {
+    "name": "顯示 RAM"
+  },
+  "GeN13_Monitor_ShowGpu": {
+    "name": "顯示 GPU"
+  },
+  "GeN13_Monitor_ShowVram": {
+    "name": "顯示 VRAM"
+  },
+  "GeN13_Monitor_ShowPower": {
+    "name": "顯示 POWER"
+  }
+}

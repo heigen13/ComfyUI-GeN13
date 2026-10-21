@@ -1,9 +1,9 @@
 [project]
 name = "comfyui-gen13"
 description = "ComfyUI custom nodes for image-to-video and portrait workflows: synced remote values, chainable prompt switch, private image previews, temporal color match and skin retouch."
-version = "1.0.6"
+version = "1.0.7"
 license = { text = "GPL-3.0" }
-dependencies = []
+dependencies = ["nvidia-ml-py"]
 
 [project.urls]
 Repository = "https://github.com/heigen13/ComfyUI-GeN13"

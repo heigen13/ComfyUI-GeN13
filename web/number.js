@@ -3,14 +3,15 @@
 //     (STRING with the format applied, same rule as the backend: empty = the number, {} = the
 //     number put in, no {} = the number appended)
 //   - FLOAT always shows a decimal point, so it never looks like an integer
-//   - live from the value widget; when number is linked it shows the last run (or "from input");
+//   - live from the value widget; when number is linked it reads the source on the canvas (Int,
+//     Float, String, Remote ...) live, otherwise it shows the last run (or "from input");
 //     the last run is kept in node.properties.g13_last so it survives a reload
 //   - control_after_generate (fixed / increment / decrement / randomize) changes value once per
 //     queue, like the core Int node; it follows the "Widget control mode" setting (before / after).
 //     increment / decrement step by 1, randomize picks an integer in 0..RANDOM_MAX.
 
 import { app } from "../../scripts/app.js";
-import { isOff, inLinked } from "./g13_mode.js";
+import { isOff, inLinked, liveValue } from "./g13_mode.js";
 import { pick } from "./g13_i18n.js";
 
 const NODE_ID = "NumberGeN13";
@@ -86,7 +87,11 @@ function update(node) {
   const ln = linked(node, "number");
   if (val) val.disabled = ln;
   let text;
-  if (ln) {
+  const lv = ln ? liveValue(node, "number") : null;
+  const lnum = lv?.known && String(lv.value ?? "").trim() !== "" ? Number(lv.value) : NaN;
+  if (ln && Number.isFinite(lnum)) {
+    text = line(toInt(lnum, mode), lnum, applyFormat(node, fmtStr(lnum)));
+  } else if (ln) {
     const r = node.properties?.g13_last;
     text = typeof r === "number" ? line(toInt(r, mode), r, applyFormat(node, fmtStr(r))) : pick("from input", "來自輸入", "来自输入", "入力から");
   } else {
@@ -140,6 +145,21 @@ app.registerExtension({
     nodeType.prototype.onConfigure = function () {
       const r = onConfigure?.apply(this, arguments);
       update(this);
+      return r;
+    };
+
+    // number fed by an Int / Float / String on the canvas: that value changes with no event here
+    const onFg = nodeType.prototype.onDrawForeground;
+    nodeType.prototype.onDrawForeground = function () {
+      const r = onFg?.apply(this, arguments);
+      if (this._g13out && linked(this, "number")) {
+        const lv = liveValue(this, "number");
+        const k = lv.known ? String(lv.value) : "";
+        if (this._g13live !== k) {
+          this._g13live = k;
+          update(this);
+        }
+      }
       return r;
     };
 

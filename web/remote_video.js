@@ -7,7 +7,7 @@
 //     and time (seconds × fps = frames)
 import { app } from "../../scripts/app.js";
 import { registerRemote } from "./remote_core.js";
-import { inLink, inLinked } from "./g13_mode.js";
+import { inLink, inLinked, liveValue } from "./g13_mode.js";
 
 const NODE_ID = "RemoteVideoGeN13";
 const SYNCED = ["aspect_ratio", "megapixels", "seconds", "frame_rule", "steps"];
@@ -33,8 +33,11 @@ function w(node, name) {
   return node.widgets?.find((x) => x.name === name);
 }
 
+// a field fed by a link reads its source on the canvas (Int, Float, Remote ...); unknown until a
+// run otherwise, then the field's own value is shown as before
 function val(node, name) {
-  return w(node, name)?.value;
+  const lv = liveValue(node, name);
+  return lv.known && lv.value != null ? lv.value : w(node, name)?.value;
 }
 
 // Python round(): halves go to the even number (10.5 -> 10), so live sizes match the backend

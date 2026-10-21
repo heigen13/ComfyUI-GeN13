@@ -2,8 +2,9 @@
 //   - mode: I2I / T2I. T2I (or I2I with no running image) -> no source: 1:1 / 3:2 / ... use megapixels
 //     (+ invert), keep and custom use width x height (custom: invert swaps the two fields); images
 //     are sent as None (upstream muted / bypassed counts as no image; checked on every draw)
-//   - linked widgets (width / height / edge_length / megapixels fed by a link) show the value of the
-//     last run, or "\u2190 input" before the first run
+//   - linked widgets (width / height / edge_length / megapixels fed by a link) use the source's value
+//     when it sits on the canvas (Int, Float, Remote Int ...: live, no run needed); otherwise the
+//     value of the last run, or "\u2190 input" before the first run
 //   - status line (grey): the current settings, live (I2I · keep · long edge 2048, T2I · 1920 × 1088)
 //   - size lines below it: one per linked image (IMAGE1..IMAGE4). Fed by a loader (Load Image, the
 //     Private / Orient / SD loaders), the size is computed live from the picture, no run needed;
@@ -23,7 +24,7 @@
 //   - button widgets render in both the classic canvas (Nodes 1.0) and Vue nodes (2.0)
 
 import { app } from "../../scripts/app.js";
-import { isOff, onModeChange, inLink, inLinked } from "./g13_mode.js";
+import { isOff, onModeChange, inLink, inLinked, liveValue } from "./g13_mode.js";
 import { pick } from "./g13_i18n.js";
 
 const IDS = ["ResizeGeN13"];
@@ -38,6 +39,9 @@ function w(node, name) {
 // value of a widget; when its input is linked, the value reported by the last run (or null)
 function val(node, name, dflt) {
   if (linked(node, name)) {
+    // a source with its value on the canvas (Int, Float, Remote Int ...): live; else the last run
+    const lv = liveValue(node, name);
+    if (lv.known && Number.isFinite(Number(lv.value)) && Number(lv.value) !== 0) return Number(lv.value);
     const v = node.properties?.g13_params?.[name];
     return v == null ? null : Number(v);
   }
@@ -261,8 +265,10 @@ function active(node, name) {
 }
 
 function upstreamSig(node) {
-  // also the source node / fields / picture size, so a new picture in a loader redraws the size lines
-  return ["image1", "image2", "image3", "image4", "samples"].map((n) => {
+  // also the source node / fields / picture size, so a new picture in a loader redraws the size lines,
+  // and the live values of linked size widgets, so changing the Int upstream redraws at once
+  const nums = ["width", "height", "megapixels", "edge_length"].map((n) => (linked(node, n) ? val(node, n, 0) : "")).join(",");
+  return nums + "#" + ["image1", "image2", "image3", "image4", "samples"].map((n) => {
     if (!active(node, n)) return "0";
     const o = sourceOf(node, n);
     return `1${sourceKey(o)}${sourcePx(o)?.join("x") ?? ""}`;

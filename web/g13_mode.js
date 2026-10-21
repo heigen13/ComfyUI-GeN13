@@ -143,3 +143,35 @@ export function outLinked(node, s) {
   if (typeof node.isOutputConnected === "function") return !!node.isOutputConnected(i);
   return (node.outputs[i]?.links?.length ?? 0) > 0;
 }
+
+// ---- the value a linked widget will get, read from the canvas -----------------------------------
+// A widget fed by a link shows its own (stale) value until a run. When the source is a node whose
+// value sits in a field on the canvas (core Int / Float / String / Boolean, the Primitive nodes,
+// Remote Int / Float / String / Boolean), that field is the value the run will use: read it.
+// Follows legacy Reroute nodes. Returns { known: true, value } or { known: false } (computed at run
+// time, e.g. Counter, math nodes). Not linked: the widget's own value. A muted / bypassed source
+// drops out of the prompt and the widget's own value is sent, so that is returned too.
+export function liveValue(node, name) {
+  const own = () => ({ known: true, value: node.widgets?.find((x) => x.name === name)?.value });
+  const i = node.inputs?.findIndex((s) => s.name === name) ?? -1;
+  if (i < 0 || !inLinked(node, i)) return own();
+  let n = node;
+  let s = i;
+  for (let k = 0; k < 16; k++) {
+    const l = inLink(n, s);
+    if (!l) return own();
+    const o = n.graph?.getNodeById?.(l.origin_id);
+    if (!o) return { known: false };
+    if (isOff(o)) return own();
+    if (o.type === "Reroute") {
+      n = o;
+      s = 0;
+      continue;
+    }
+    if (o.type === "PrimitiveNode") return { known: true, value: o.widgets?.[0]?.value };
+    const v = o.widgets?.find((x) => x.name === "value");
+    if (v && (o.outputs?.length ?? 0) === 1) return { known: true, value: v.value };
+    return { known: false };
+  }
+  return { known: false };
+}

@@ -4,11 +4,28 @@
 
 # ComfyUI-GeN13
 
-Custom nodes for ComfyUI, built around image-to-video and portrait workflows: remote controls that keep one value in sync across a large graph, chainable prompt switching, image nodes that hide their preview, temporal color matching for generated video, and portrait retouching.
+Custom nodes for ComfyUI, built around image-to-video and portrait workflows: remote controls that keep one value in sync across a large graph, chainable prompt switching, image nodes that hide their preview, temporal color matching for generated video, portrait retouching, and a live resource monitor beside the Run button.
 
 Every node's display name ends with **(GeN13)**: double-click the canvas and type `GeN13` to list them all.
 
 ## Highlights
+
+### Monitor: your whole machine, at a glance
+
+A live strip beside the Run button. RUN shows the node that is running, its elapsed time, sampler steps and how many prompts are waiting, including prompts queued from a phone page, the API or another browser tab; click it to jump to that node. CPU, RAM, GPU, VRAM and power each get a value, a trend line and a usage bar, and turn red before trouble: RAM and VRAM at 95%, the GPU at 83 °C. It is not a node, so nothing goes on the canvas. Show or hide each cell and set the refresh rate in Settings → GeN13 → Monitor.
+
+<p align="center"><img src="docs/monitor.gif" alt="Monitor during a run" width="100%"></p>
+
+<p align="center"><img src="docs/monitor.png" alt="Monitor in dark and light themes" width="100%"></p>
+
+| GPU | What the monitor reads |
+|---|---|
+| NVIDIA (Windows, Linux) | Usage, core temperature, VRAM, power and power limit, through NVML (`nvidia-ml-py`) |
+| AMD on Linux | Usage, temperature, VRAM, power and power limit, from the amdgpu driver; nothing to install |
+| AMD or Intel on Windows | Usage and VRAM, from the same Windows counters as Task Manager; Windows does not publish their temperature or power |
+| Apple silicon, CPU only | RUN, CPU and RAM |
+
+A cell the machine cannot read is hidden, never shown empty.
 
 ### Remote: set it once, control it anywhere
 
@@ -55,9 +72,10 @@ Removes the greasy, over-detailed look of generated portraits and video. Five ef
 ```bash
 cd ComfyUI/custom_nodes
 git clone https://github.com/heigen13/ComfyUI-GeN13
+pip install -r ComfyUI-GeN13/requirements.txt
 ```
 
-Restart ComfyUI. No extra Python packages are needed; everything uses what ComfyUI already ships (torch, numpy, Pillow).
+Restart ComfyUI. ComfyUI Manager also installs the one extra package, `nvidia-ml-py` (NVIDIA's NVML library, which the monitor uses to read GPU usage, temperature and power on NVIDIA cards). For a manual install, run the `pip` line above with ComfyUI's own Python (portable build: `python_embeded\python.exe -m pip`). Everything else uses what ComfyUI already ships (torch, numpy, Pillow, psutil).
 Optional: the `nvidia_rtx_vsr` upscale method in **Resize** needs the `nvidia-vfx` package and an RTX GPU.
 
 **Example workflows**: four ready-made workflows (Text Switch chain, Remote two-pass txt2img, portrait retouch, video color match) are in the ComfyUI Templates panel under ComfyUI-GeN13, or in [`example_workflows`](example_workflows).
@@ -107,12 +125,13 @@ Optional: the `nvidia_rtx_vsr` upscale method in **Resize** needs the `nvidia-vf
 | **Counter** | Counts up or down per queue with ranges, hold (repeat each value N times), reset button, reset input and auto reset every hour or day. Freezes while bypassed. |
 | **Trigger** | A button or an upstream change produces a new value; connect it to Counter's reset. |
 | **Number** | One number out as INT, FLOAT and STRING, with a choice of rounding. |
+| **Switch Any** | Picks one of any number of inputs by number, any type. Only the selected input runs; an `index` output lets two switches follow each other. Inputs can be renamed. |
 
 ## Notes
 
 - Tooltips and descriptions are in English, with translations in Traditional Chinese, Simplified Chinese and Japanese, shown when the ComfyUI language is set to one of them.
 - Built and tested on ComfyUI 0.40 with the classic canvas (Nodes 1.0). Nodes 2.0 is supported for the image previews.
-- The Remote and Text Switch pictures are diagrams; the privacy, color match and degrease examples are real node output.
+- The Remote and Text Switch pictures are diagrams; the privacy, color match and degrease examples are real node output, and the monitor pictures are the real strip drawn with sample readings.
 
 ## Support
 

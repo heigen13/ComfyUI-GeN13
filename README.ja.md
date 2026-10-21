@@ -4,11 +4,28 @@
 
 # ComfyUI-GeN13
 
-画像から動画、人物ポートレートのワークフロー向けに作った ComfyUI カスタムノード集です。大きなワークフローのあちこちで同じ値を同期するリモートノード、連結できるプロンプト切り替え、プレビューを隠せる画像ノード、動画の時間方向の色合わせ、人物の美肌補正を収録しています。
+画像から動画、人物ポートレートのワークフロー向けに作った ComfyUI カスタムノード集です。大きなワークフローのあちこちで同じ値を同期するリモートノード、連結できるプロンプト切り替え、プレビューを隠せる画像ノード、動画の時間方向の色合わせ、人物の美肌補正、Run ボタン横のリソースモニターを収録しています。
 
 すべてのノードの表示名は **(GeN13)** で終わります。キャンバスをダブルクリックして `GeN13` と入力すると一覧できます。
 
 ## 特長
+
+### Monitor:マシン全体を、ひと目で
+
+Run ボタンの横に並ぶリアルタイムのモニターです。RUN には実行中のノード、経過時間、サンプラーのステップ数、待機中のキュー数を表示し、スマホのページや API、別のブラウザタブから送ったキューも表示されます。クリックするとそのノードへ移動します。CPU、RAM、GPU、VRAM、電力はそれぞれ数値、推移グラフ、使用量バーを持ち、問題が起きる前に赤くなります(RAM と VRAM は 95%、GPU はコア温度 83 °C)。ノードではないので、キャンバスに置くものはありません。「設定 → GeN13 → リソースモニター」で各項目の表示と更新間隔を変えられます。
+
+<p align="center"><img src="docs/monitor.gif" alt="実行中のモニター" width="100%"></p>
+
+<p align="center"><img src="docs/monitor.png" alt="ダークテーマとライトテーマのモニター" width="100%"></p>
+
+| GPU | 読み取れる項目 |
+|---|---|
+| NVIDIA(Windows、Linux) | 使用率、コア温度、VRAM、電力と電力上限(NVML / `nvidia-ml-py` 経由) |
+| AMD(Linux) | 使用率、温度、VRAM、電力と電力上限(amdgpu ドライバから直接、追加インストール不要) |
+| AMD または Intel(Windows) | 使用率と VRAM(タスクマネージャーと同じ Windows のカウンター)。温度と電力は Windows が公開していません |
+| Apple シリコン、CPU のみ | RUN、CPU、RAM |
+
+読み取れない項目は自動で非表示になり、空欄では表示しません。
 
 ### Remote:一度設定すれば、どこからでも操作
 
@@ -55,9 +72,10 @@ Load、Save、Preview Image Private はノードのプレビューにモザイ�
 ```bash
 cd ComfyUI/custom_nodes
 git clone https://github.com/heigen13/ComfyUI-GeN13
+pip install -r ComfyUI-GeN13/requirements.txt
 ```
 
-ComfyUI を再起動すれば使えます。追加の Python パッケージは不要で、ComfyUI に含まれる torch、numpy、Pillow だけを使います。
+ComfyUI を再起動すれば使えます。追加のパッケージは `nvidia-ml-py`(NVIDIA 公式の NVML ライブラリ。モニターが NVIDIA カードの使用率、温度、電力を読むのに使います)の 1 つだけで、ComfyUI Manager が一緒にインストールします。手動インストールの場合は、上の `pip` の行を ComfyUI 自身の Python で実行してください(ポータブル版は `python_embeded\python.exe -m pip`)。それ以外は ComfyUI に含まれる torch、numpy、Pillow、psutil だけを使います。
 オプション:**Resize** の `nvidia_rtx_vsr` には `nvidia-vfx` パッケージと RTX GPU が必要です。
 
 **サンプルワークフロー**:Text Switch の連結、Remote による 2 段階生成、人物補正、動画の色合わせの 4 つを用意しました。ComfyUI の Templates パネルの ComfyUI-GeN13 から開くか、[`example_workflows`](example_workflows) を参照してください。
@@ -107,12 +125,13 @@ ComfyUI を再起動すれば使えます。追加の Python パッケージは�
 | **Counter** | キューに送るたびにカウント。範囲、各数値の繰り返し回数、リセットボタン、リセット入力、毎時・毎日の自動リセットに対応。バイパス中は止まります。 |
 | **Trigger** | ボタンか上流の変化で新しい値を出力。Counter の reset に接続します。 |
 | **Number** | 1 つの数値を INT、FLOAT、STRING で同時に出力。小数から整数への変換方法を選べます。 |
+| **Switch Any** | 任意の数の入力から番号で 1 つを選んで出力。型は自由で、選んだ入力だけが実行されます。`index` 出力で 2 つのスイッチを連動でき、各入力に名前を付けられます。 |
 
 ## 補足
 
 - ノードの説明は英語が基本で、繁体字中国語、簡体字中国語、日本語の翻訳付き。ComfyUI の言語をいずれかに設定すると自動で切り替わります。
 - ComfyUI 0.40 のクラシックキャンバス(Nodes 1.0)で開発・テストしています。画像プレビューは Nodes 2.0 にも対応。
-- Remote と Text Switch の画像は説明用の図です。プライバシーカバー、Color Match、Degrease の例はノードの実際の出力です。
+- Remote と Text Switch の画像は説明用の図です。プライバシーカバー、Color Match、Degrease の例はノードの実際の出力、モニターの画像は実際のモニターにサンプルの値を表示したものです。
 
 ## サポート
 

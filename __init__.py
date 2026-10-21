@@ -118,6 +118,16 @@ try:
     _add(remote_video)
 except Exception:
     _failed("remote_video")
+try:
+    from .nodes import switch_any
+    _add(switch_any)
+except Exception:
+    _failed("switch_any")
+try:
+    from .nodes import monitor
+    _add(monitor)
+except Exception:
+    _failed("monitor")
 
 print("[ComfyUI-GeN13] %d nodes: %s" % (len(NODE_CLASS_MAPPINGS),
       ", ".join(NODE_DISPLAY_NAME_MAPPINGS.get(k, k) for k in NODE_CLASS_MAPPINGS)))
