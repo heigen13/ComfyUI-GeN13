@@ -1,3 +1,5 @@
+import { app } from "../../scripts/app.js";
+
 // ComfyUI-GeN13 - is a node really switched off?
 //   A node counts as off when it is muted (2) or bypassed (4) itself, or when it sits inside a
 //   subgraph whose every instance is muted / bypassed (directly or further up). Used by the nodes
@@ -6,6 +8,28 @@
 //   node's own mode is checked.
 
 const OFF = (m) => m === 2 || m === 4;
+
+// DOM widgets sit over the graph canvas and swallow the wheel, so the canvas never zooms while
+// the pointer is on them. forwardWheel(el): hand the wheel to the graph canvas; a scrollable
+// element under the pointer (a text box with more lines than it shows) keeps the wheel while it
+// can still scroll that way, and passes it on once it reaches the end.
+export function forwardWheel(el) {
+  el.addEventListener("wheel", (e) => {
+    const target = app.canvas?.canvas;
+    if (!target || target === e.target) return;
+    for (let t = e.target; t && t !== el; t = t.parentElement) {
+      if (t.scrollHeight > t.clientHeight + 1 && getComputedStyle(t).overflowY !== "hidden") {
+        const up = e.deltaY < 0;
+        const atEnd = up ? t.scrollTop <= 0 : t.scrollTop + t.clientHeight >= t.scrollHeight - 1;
+        if (!atEnd) return; // keep scrolling the text
+        break;
+      }
+    }
+    e.preventDefault();
+    e.stopPropagation();
+    target.dispatchEvent(new WheelEvent("wheel", e));
+  }, { passive: false });
+}
 
 function holdersOf(graph) {
   const root = graph?.rootGraph;

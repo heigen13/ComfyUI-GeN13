@@ -7,6 +7,7 @@
 
 import { app } from "../../scripts/app.js";
 import { T, setTip } from "./g13_i18n.js";
+import { forwardWheel } from "./g13_mode.js";
 
 const NODE_ID = "TriggerGeN13";
 const BTN_H = 46; // margin 1 + pad 6 / 6 + 32px button
@@ -56,6 +57,7 @@ function addDom(node, name, el, h, slim) {
   wrap.className = "g13tg-wrap" + (slim ? " g13tg-slim" : "");
   wrap.appendChild(el);
   wrap.addEventListener("pointerdown", (e) => e.stopPropagation());
+  forwardWheel(wrap);
   const wd = node.addDOMWidget(name, "g13tg", wrap, {
     serialize: false,
     hideOnZoom: true,

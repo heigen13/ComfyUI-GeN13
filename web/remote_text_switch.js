@@ -14,9 +14,14 @@
 //   - bypassed / muted: the pick row is dimmed and locked (a bypassed remote is not in the prompt,
 //     the Text Switch uses its own select meanwhile); it unlocks when the group is switched back on
 //   - grey line at the bottom: channel · N mirrors · target count
+//   - names on screen follow the Text Switch it drives, the stored names stay the Remote family's:
+//       widget "value"  is shown as "select"      (label only; sync, wire lock and page -> WF all use value)
+//       output          is named "select_num"     (RETURN_NAMES; links go by slot index, nothing else refers to it)
+//       widget "auto_next" is drawn as the OFF | NEXT segment control of Text Switch (widget hidden,
+//       still serialized; the segment writes the widget and goes through its callback -> sync)
 
 import { app } from "../../scripts/app.js";
-import { isOff, onModeChange, outLinks } from "./g13_mode.js";
+import { isOff, onModeChange, outLinks, forwardWheel } from "./g13_mode.js";
 import { T, setTip, pick, cloneText, emptyText } from "./g13_i18n.js";
 import { applyWireLock, wireSuffix, wiredMirrors } from "./remote_link.js";
 
@@ -25,6 +30,7 @@ const TS_ID = "TextSwitchGeN13";
 const LIMIT = 9999;
 const SYNCED = ["value", "auto_next"];
 const ROW_SLOT = 34; // DOM margin 1 + pad 2 / 2 + 28px row
+const ADV_SLOT = 28; // DOM margin 1 + pad 2 / 2 + 22px segment row (as Text Switch)
 
 const stepped = new Set();
 const firstSeen = new Set();
@@ -46,6 +52,13 @@ const CSS = `
 .g13tr-ttl{min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;color:#d0d0d0;font:12px/1 Inter,Helvetica,Arial,"Microsoft JhengHei","PingFang TC","Noto Sans TC",sans-serif}
 .g13tr-ttl.g13tr-dim{color:#777}
 .g13tr-row.g13tr-lock{opacity:.45;pointer-events:none}
+.g13tr-adv{box-sizing:border-box;height:22px;display:flex;align-items:center;background:#222;border:1px solid #1a1a1a;border-radius:11px;padding:0 3px 0 12px;font:12px/1 Inter,Helvetica,Arial,sans-serif;color:#999;user-select:none}
+.g13tr-adv .g13tr-lb{flex:1;display:flex;align-items:center;height:22px}
+.g13tr-adv .g13tr-seg{box-sizing:border-box;height:16px;display:flex;border:1px solid #444;border-radius:8px;overflow:hidden}
+.g13tr-adv .g13tr-seg button{all:unset;box-sizing:border-box;width:44px;height:14px;display:flex;align-items:center;justify-content:center;font:11px/1 Inter,Helvetica,Arial,sans-serif;letter-spacing:.5px;color:#888;cursor:pointer}
+.g13tr-adv .g13tr-seg button:hover{color:#ddd}
+.g13tr-adv .g13tr-seg button.on{background:#35d0ff;color:#0b2a33}
+.g13tr-adv.g13tr-dim .g13tr-seg{opacity:.45;pointer-events:none}
 /* light theme (Comfy.ColorPalette light): the dark look above stays as is */
 :root:not(.dark-theme) .g13tr-row{background:#d4d4d4;border-color:#bdbdbd}
 :root:not(.dark-theme) .g13tr-row button{color:#555}
@@ -56,6 +69,11 @@ const CSS = `
 :root:not(.dark-theme) .g13tr-row.g13tr-off .g13tr-num{background:#bbb;color:#555}
 :root:not(.dark-theme) .g13tr-ttl{color:#222}
 :root:not(.dark-theme) .g13tr-ttl.g13tr-dim{color:#777}
+:root:not(.dark-theme) .g13tr-adv{background:#d4d4d4;border-color:#bdbdbd;color:#555}
+:root:not(.dark-theme) .g13tr-adv .g13tr-seg{border-color:#aaa}
+:root:not(.dark-theme) .g13tr-adv .g13tr-seg button{color:#555}
+:root:not(.dark-theme) .g13tr-adv .g13tr-seg button:hover{color:#000}
+:root:not(.dark-theme) .g13tr-adv .g13tr-seg button.on{background:#35d0ff;color:#0b2a33}
 `;
 
 function injectCss() {
@@ -259,10 +277,47 @@ function makeRow(node) {
   return row;
 }
 
+// auto next as the OFF | NEXT segment control of Text Switch; writes the hidden auto_next widget
+function makeAdvance(node) {
+  const row = document.createElement("div");
+  row.className = "g13tr-adv";
+  const lb = document.createElement("span");
+  lb.className = "g13tr-lb";
+  lb.textContent = "auto next";
+  const seg = document.createElement("div");
+  seg.className = "g13tr-seg";
+  const mk = (label, tip) => {
+    const b = document.createElement("button");
+    b.textContent = label;
+    setTip(b, tip);
+    b.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const an = w(node, "auto_next");
+      if (!an || an.disabled) return;
+      if (an.value !== label) {
+        an.value = label;
+        an.callback?.(label); // the wrapped callback syncs the group
+      }
+      refreshGroup(node);
+      node.setDirtyCanvas?.(true, true);
+    });
+    return b;
+  };
+  seg.append(
+    mk("OFF", T("Auto next: off; select stays as set.", "自動換框:關閉,select 維持不變。")),
+    mk("NEXT", T("Auto next: moves to the next box with content after each queue, skipping empty boxes and wrapping to the first.", "自動換框:每次送出後跳到下一個有內容的框,空白框略過,到底回第一框。"))
+  );
+  row.addEventListener("pointerdown", (e) => e.stopPropagation());
+  row.append(lb, seg);
+  node._g13adv = { row, seg };
+  return row;
+}
+
 function addDom(node, name, el, h) {
   const wrap = document.createElement("div");
   wrap.className = "g13tr-wrap";
   wrap.appendChild(el);
+  forwardWheel(wrap);
   const wd = node.addDOMWidget(name, "g13tr", wrap, {
     serialize: false,
     hideOnZoom: true,
@@ -311,6 +366,15 @@ function render(node) {
   const grp = group(node);
   const ws = applyWireLock(node, grp);
   if (r) r.row.classList.toggle("g13tr-lock", isOff(node) || ws.wired > 0);
+  const adv = node._g13adv;
+  if (adv) {
+    const an = w(node, "auto_next");
+    const on = an?.value === "NEXT";
+    const [bOff, bNext] = adv.seg.querySelectorAll("button");
+    bOff?.classList.toggle("on", !on);
+    bNext?.classList.toggle("on", on);
+    adv.row.classList.toggle("g13tr-dim", isOff(node) || !!an?.disabled);
+  }
   const k = grp.length;
   const hn = heads.length;
   const extra = hn > 1 ? `  ·  ${pick(`${hn} switches`, `${hn} 個 Text Switch`, `${hn} 个 Text Switch`, `Text Switch ${hn} 個`)}` : "";
@@ -376,9 +440,13 @@ app.registerExtension({
           return out;
         };
       }
+      const vw0 = w(node, "value");
+      if (vw0) vw0.label = "select"; // shown as the Text Switch calls it; the widget stays "value"
       const an = w(node, "auto_next");
       if (an) {
         an.label = "auto next";
+        an.hidden = true; // drawn by the segment row below; still serialized and synced
+        an.computeSize = () => [0, -4]; // no slot, no gap (older front ends ignore hidden for layout)
         an.beforeQueued = () => {
           if (!controlBefore()) return;
           const c = chan(node);
@@ -395,11 +463,12 @@ app.registerExtension({
         };
       }
       const row = addDom(node, "g13_pick", makeRow(node), ROW_SLOT);
+      const advRow = addDom(node, "g13_adv", makeAdvance(node), ADV_SLOT);
       const b = node.addWidget("button", "info", null, () => {}, { serialize: false });
       b.serialize = false;
       node._g13info = b;
-      // order: channel, value, pick row, auto next, info
-      const order = [w(node, "channel"), w(node, "value"), row, an, b].filter(Boolean);
+      // order: channel, value (shown "select"), pick row, auto next segment, hidden auto_next, info
+      const order = [w(node, "channel"), w(node, "value"), row, advRow, an, b].filter(Boolean);
       const rest = (node.widgets ?? []).filter((x) => !order.includes(x));
       node.widgets.splice(0, node.widgets.length, ...order, ...rest);
       node._g13mode = node.mode;

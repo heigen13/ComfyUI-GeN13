@@ -1,5 +1,5 @@
 // ComfyUI-GeN13 - Resource Monitor
-//   One strip beside the Run button: RUN (current node, steps, elapsed time, queue) and CPU / RAM /
+//   One strip beside the Run button: RUN (current node, overall progress, elapsed time, queue) and CPU / RAM /
 //   GPU / VRAM / POWER, each with a 30-60 s line and a usage bar. Drawn on one canvas so every text
 //   row is placed by its measured ink (labels and values share one centre line per row, the text
 //   group sits centred above the bar). Data comes from nodes/monitor.py as "gen13.monitor"; the
@@ -8,6 +8,9 @@
 //   click RUN to bring the running node into view. Cells with no source on this machine are left out
 //   (see "caps" in nodes/monitor.py). A prompt queued elsewhere (a phone page, the API,
 //   another tab) is shown from the back end's "job" reading, with its own node title; no click.
+//   RUN's bar is the whole prompt, not one node's steps: the back end weights every node by how long it
+//   took in earlier runs of the same workflow ("prog"); here the shown value eases toward that target,
+//   slows down but keeps moving when a node runs late, stays under 100% until the prompt has finished.
 import { app } from "../../scripts/app.js";
 import { api } from "../../scripts/api.js";
 import { pick, cjkFont } from "./g13_i18n.js";
@@ -37,6 +40,8 @@ let data = null;
 const hist = { cpu: [], ram: [], gpu: [], vram: [], power: [] };
 const run = { state: "idle", t0: 0, last: null, node: null, step: 0, max: 0, q: 0, note: "" };
 let rem = null; // a prompt queued elsewhere: { id, title, step, max, t0 }
+let prog = null; // the back end's progress model of the running prompt, plus { id, at }
+const pv = { v: 0, end: null }; // the shown overall progress 0-1; end: "ok" glides to 1, "stop" holds
 
 const pct = {
   cpu: (d) => d.cpu,
@@ -173,46 +178,70 @@ function mmss(sec) {
 }
 const now = () => performance.now();
 
+// overall progress: linear while a node is on time, then slower and slower toward its end, never past it
+const ease = (r) => (r < 0.6 ? r : 1 - 0.4 * Math.exp(-(r - 0.6) / 0.4));
+function progTarget() {
+  const p = prog;
+  if (!p || !(p.total > 0)) return 0;
+  const se = p.se + (now() - p.at) / 1000;
+  return Math.min(0.99, (p.done + p.base + p.segw * ease(se / p.seg)) / p.total);
+}
+function resetProgress() {
+  pv.v = 0;
+  pv.end = null;
+  prog = null;
+}
+// returns true while the shown value is still moving
+function stepProgress(dt) {
+  const v0 = pv.v;
+  if (pv.end === "ok") {
+    pv.v += (1 - pv.v) * (1 - Math.exp(-dt / 0.13));
+    if (1 - pv.v < 0.001) pv.v = 1;
+  } else if (!pv.end && (run.state === "run" || rem) && prog) {
+    const t = progTarget();
+    pv.v = Math.max(pv.v, pv.v + (t - pv.v) * (1 - Math.exp(-dt / 0.6)));
+  }
+  return pv.v !== v0;
+}
+
 function drawRun(x0, w, P) {
   const x1 = x0 + w;
-  let label = "", col = P.ink, labCol = P.sub, valCol = P.ink, sec = 0, frac = 0, steps = "";
+  let label = "", col = P.ink, labCol = P.sub, valCol = P.ink, sec = 0;
+  const active = run.state === "run" || !!rem;
   if (run.state !== "run" && rem) {
     label = String(rem.title || "…").toUpperCase();
     sec = (now() - rem.t0) / 1000;
-    if (rem.max > 1) {
-      steps = `${rem.step} / ${rem.max}`;
-      frac = rem.step / rem.max;
-    }
   } else if (run.state === "run") {
     label = nodeTitle(run.node) || "…";
     sec = (now() - run.t0) / 1000;
-    if (run.max > 1) {
-      steps = `${run.step} / ${run.max}`;
-      frac = run.step / run.max;
-    }
   } else if (run.state === "error") {
     label = `ERROR · ${run.note}`;
     labCol = valCol = col = P.RED;
     sec = run.last ?? 0;
-    frac = run.max > 1 ? run.step / run.max : 1;
-    if (run.max > 1) steps = `${run.step} / ${run.max}`;
   } else {
     label = run.note || (run.last != null ? "IDLE · LAST RUN" : "IDLE");
     sec = run.last ?? 0;
   }
-  const qn = Math.max(0, run.q - (run.state === "run" || rem ? 1 : 0));
+  const shown = active ? !!prog || pv.v > 0 : run.last != null && pv.v > 0;
+  const qn = Math.max(0, run.q - (active ? 1 : 0));
   const q = qn > 0 ? `QUEUE ${qn}` : "";
   const kw = caps("RUN", x0 + PAD, P.lab);
   let qw = 0;
   if (q) qw = caps(q, x1 - PAD, P.lab, 0, true);
   caps(label, x0 + PAD + kw + 8, labCol, x1 - PAD - (qw ? qw + 12 : 0) - (x0 + PAD + kw + 8));
   num(run.last == null && run.state === "idle" && !rem ? "--:--.-" : mmss(sec), x0 + PAD, valCol);
-  if (steps) num(steps, x1 - PAD - numW(steps), P.lab);
+  if (shown) {
+    const pc = String(Math.floor(pv.v * 100));
+    const uw = caps("%", x1 - PAD, P.lab, 0, true, M.valBase);
+    num(pc, x1 - PAD - uw - 4 - numW(pc), valCol);
+  }
   const bw = w - PAD * 2;
   ctx.fillStyle = P.track;
   ctx.fillRect(x0 + PAD, BAR_Y, bw, TH);
-  ctx.fillStyle = col;
-  ctx.fillRect(x0 + PAD, BAR_Y, Math.round(bw * Math.min(1, frac)), TH);
+  if (shown) {
+    ctx.fillStyle = col;
+    ctx.fillRect(x0 + PAD, BAR_Y, Math.round(bw * Math.min(1, pv.v)), TH);
+  }
 }
 
 function drawCell(c, x0, P) {
@@ -316,7 +345,7 @@ cv.addEventListener("pointermove", (ev) => {
   hover = key;
   if (!l) cv.title = "";
   else if (key === "run")
-    cv.title = pick("Run: elapsed time of the running prompt from any device; click to show a node run from this page.", "執行:正在執行的佇列耗時,含其他裝置送出的;本頁送出的可點一下移到該節點。", "执行:正在执行的队列耗时,含其他设备提交的;本页提交的可点一下移到该节点。", "実行:実行中のキューの経過時間(他の端末からの分も含む)。このページから実行した分はクリックでノードへ移動します。");
+    cv.title = pick("Run: overall progress and elapsed time of the running prompt from any device, estimated from earlier runs of the same workflow; click to show a node run from this page.", "執行:正在執行的佇列整體進度與耗時,含其他裝置送出的,依同一工作流先前的耗時估算;本頁送出的可點一下移到該節點。", "执行:正在执行的队列整体进度与耗时,含其他设备提交的,依同一工作流先前的耗时估算;本页提交的可点一下移到该节点。", "実行:実行中のキューの全体進捗と経過時間(他の端末からの分も含む)。同じワークフローの過去の所要時間から推定。このページから実行した分はクリックでノードへ移動します。");
   else cv.title = l.c.tip(data).replace("%s", String(Math.round(HIST * (data?.rate ?? 1))));
 });
 cv.addEventListener("pointerleave", () => {
@@ -343,13 +372,19 @@ function onJob(j) {
   const other = j.id != null && j.client !== api.clientId;
   if (other && run.state !== "run") {
     if (!rem || rem.id !== j.id) {
+      if (rem || run.state !== "idle" || pv.end) resetProgress();
       rem = { id: j.id, t0: now() - (j.elapsed || 0) * 1000 };
       run.note = "";
     }
     Object.assign(rem, { title: j.title, step: j.step || 0, max: j.max || 0 });
   } else if (rem) {
     run.last = (now() - rem.t0) / 1000; // finished (or our own run took over): keep its time
+    if (run.state !== "run") pv.end = j.last && j.last.id === rem.id && j.last.ok ? "ok" : "stop";
     rem = null;
+  }
+  if (j.id != null && j.prog) {
+    if (prog && prog.id !== j.id) resetProgress(); // the next prompt in the queue
+    prog = Object.assign({}, j.prog, { id: j.id, at: now() });
   }
 }
 function onData(d) {
@@ -366,6 +401,7 @@ function onData(d) {
 
 function finish(note) {
   if (run.state === "run") run.last = (now() - run.t0) / 1000;
+  if (run.state === "run") pv.end = note ? "stop" : "ok";
   run.state = "idle";
   run.note = note || "";
   run.step = run.max = 0;
@@ -378,6 +414,7 @@ function eventNode(d) {
 function listen() {
   api.addEventListener("gen13.monitor", (e) => onData(e.detail));
   api.addEventListener("execution_start", () => {
+    resetProgress();
     Object.assign(run, { state: "run", t0: now(), node: null, step: 0, max: 0, note: "" });
     draw();
   });
@@ -387,7 +424,10 @@ function listen() {
       if (run.state === "run") finish();
       return;
     }
-    if (run.state !== "run") Object.assign(run, { state: "run", t0: now(), note: "" }); // page opened mid-run
+    if (run.state !== "run") {
+      if (!rem) resetProgress();
+      Object.assign(run, { state: "run", t0: now(), note: "" }); // page opened mid-run
+    }
     if (run.node !== n) Object.assign(run, { node: n, step: 0, max: 0 });
     draw();
   });
@@ -404,6 +444,7 @@ function listen() {
   api.addEventListener("execution_error", (e) => {
     const d = e.detail ?? {};
     if (run.state === "run") run.last = (now() - run.t0) / 1000;
+    pv.end = "stop";
     run.state = "error";
     run.note = nodeTitle(d.node_id, d.node_type) || "NODE";
     draw();
@@ -462,9 +503,15 @@ app.registerExtension({
     ping();
     setInterval(mount, 2000); // the menu can be rebuilt (layout or setting changes): put the strip back
     setInterval(ping, 5000);
-    setInterval(() => {
-      if (run.state === "run") draw();
-    }, 100);
+    let lastT = 0;
+    const frame = (t) => {
+      const dt = lastT ? Math.min(0.1, (t - lastT) / 1000) : 0;
+      lastT = t;
+      const moving = stepProgress(dt);
+      if (run.state === "run" || rem || moving) draw();
+      requestAnimationFrame(frame);
+    };
+    requestAnimationFrame(frame);
     new MutationObserver(redraw).observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
     document.addEventListener("visibilitychange", () => {
       if (!document.hidden) ping();

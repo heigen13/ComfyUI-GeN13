@@ -12,7 +12,7 @@ ComfyUI 自訂節點包，圍繞圖生影片與人像工作流設計：在大型
 
 ### Monitor：整台電腦的狀態，一眼看完
 
-Run 按鈕旁的即時監控列。RUN 顯示正在執行的節點、耗時、取樣步數與排隊數量，手機頁面、API 或其他瀏覽器分頁送出的佇列也看得到；點一下就移到該節點。CPU、RAM、GPU、VRAM、功耗各有數值、趨勢折線與用量條，出問題前先轉紅：RAM 與 VRAM 達 95%，GPU 核心達 83 °C。它不是節點，畫布上不用放任何東西。在「設定 → GeN13 → 資源監控」可以個別顯示或隱藏各格、調整更新間隔。
+Run 按鈕旁的即時監控列。RUN 顯示正在執行的節點、耗時、整個佇列的整體進度與排隊數量，手機頁面、API 或其他瀏覽器分頁送出的佇列也看得到。進度依同一工作流先前的耗時估算，進度條平穩前進，不會一個節點一個節點跳；跑完保留最後的進度條；本頁送出的可點一下移到該節點。CPU、RAM、GPU、VRAM、功耗各有數值、趨勢折線與用量條，出問題前先轉紅：RAM 與 VRAM 達 95%，GPU 核心達 83 °C。它不是節點，畫布上不用放任何東西。在「設定 → GeN13 → 資源監控」可以個別顯示或隱藏各格、調整更新間隔。
 
 <p align="center"><img src="docs/monitor.gif" alt="執行中的資源監控列" width="100%"></p>
 
@@ -37,7 +37,7 @@ Run 按鈕旁的即時監控列。RUN 顯示正在執行的節點、耗時、取
 
 ### Text Switch：切換提示詞，串接不限數量
 
-直接在有標題的框裡打提示詞，選一框輸出。多顆並排用 chain 串接，框數不限；編號一路接續，由第一顆或畫布任何角落的 Remote Text Switch 選框。`auto next` 每次送出自動跳到下一個有內容的框，而且只有選中那一框的上游會執行。
+直接在有標題的框裡打提示詞，選一框輸出。多顆並排用 chain 串接，框數不限；編號一路接續，由第一顆或畫布任何角落的 Remote Text Switch 選框。`auto next` 每次送出自動跳到下一個有內容的框，而且只有選中那一框的上游會執行。第一顆有選號列 ‹ #07 標題 ›，串接再長也看得到選中哪一框，‹ › 自動略過空白框。已選中的 #NN 再按一次可收合，EXPAND ALL／COLLAPSE ALL 整條串接一起動，右鍵 → Clear all boxes 清空單顆，把 chain 輸出拖到空白處會自動長出下一顆並接好。
 
 <p align="center"><img src="docs/textswitch.gif" alt="Text Switch 動畫示範" width="80%"></p>
 
@@ -53,15 +53,19 @@ Load、Save、Preview Image Private 的節點預覽可以蓋上馬賽克、毛�
 
 ### Color Match Temporal：修正圖生影片的偏色
 
-生成的影片常常越播越偏藍或偏暖。Color Match Temporal 把每一格拉回首幀圖的色調，並沿時間軸平滑，不會閃爍。預設的 `white balance` 只修色偏、亮度照原片；它量的是畫面中沒動的背景，大面積白衣服或特寫都騙不了它；換鏡頭後，每個鏡頭各自對齊自己的開頭。
+生成的影片常常越播越偏藍或偏暖。Color Match Temporal 把每一格拉回首幀圖的色調，並沿時間軸平滑，不會閃爍。預設的 `white balance` 只修色偏、亮度照原片；它量的是畫面中沒動的背景，大面積白衣服或特寫都騙不了它；換鏡頭後，每個鏡頭各自對齊自己的開頭。最後由 `skin_anchor` 把每格的膚色對準參考圖的膚色，修正切到近景後皮膚重繪偏紅的問題。
 
 <p align="center"><img src="docs/colormatch.jpg" alt="模擬偏色經 Color Match Temporal 校正" width="100%"></p>
 
 ### Degrease：皮膚乾淨，五官不動
 
-去除生成人像與影片常見的油膩感與過度細節。五種效果，每一種都從 0（關閉）到 100（全開）：去斑、磨皮、去油光、勻膚、減立體。眼睛、睫毛、眉毛、嘴唇自動保護，只處理皮膚。
+去除生成人像與影片常見的油膩感與過度細節。六種效果，每一種都從 0（關閉）到 100（全開）：去斑、磨皮、去油光、勻膚、減立體、冷白皮（膚色往偏白、偏冷收，唇色保留）。眼睛、睫毛、眉毛、嘴唇自動保護，只處理皮膚。
 
 <p align="center"><img src="docs/degrease.jpg" alt="Degrease 從 0 到 100 的效果" width="100%"></p>
+
+### 接線更快
+
+把連線放到空白處，符合該接點的 GeN13 節點會排在搜尋框與連線選單最前面，連線也會落在該接的欄位（Trigger → Counter 的 `reset`、Remote Text Switch → Text Switch 的 `select_num`）。在內建的 Load／Save／Preview Image 或 Primitive 上按右鍵，可原地轉換成 Private 或 Remote 版，設定與接線都保留。兩項都可以在「設定 → GeN13 → 連線」關閉。
 
 ## 安裝
 
@@ -86,8 +90,8 @@ pip install -r ComfyUI-GeN13/requirements.txt
 
 | 節點 | 功能 |
 |---|---|
-| **Color Match Temporal** | 生成影片的每一格對齊參考圖（通常是首幀），並沿時間軸平滑。`white balance` 只修色偏；`mkl`、`reinhard` 連亮度一起對齊。自動偵測換鏡頭，可輸出 `.cube` LUT。 |
-| **Degrease** | 圖片與影片的人像美顏：去斑、磨皮、去油光、勻膚、減立體，各項 0 為關閉。五官自動保護，只處理皮膚。 |
+| **Color Match Temporal** | 生成影片的每一格對齊參考圖（通常是首幀），並沿時間軸平滑。`white balance` 只修色偏；`mkl`、`reinhard` 連亮度一起對齊。自動偵測換鏡頭；`skin_anchor` 把膚色拉回參考圖的膚色。可輸出 `.cube` LUT。 |
+| **Degrease** | 圖片與影片的人像美顏：去斑、磨皮、去油光、勻膚、減立體、冷白皮，各項 0 為關閉。五官自動保護，只處理皮膚。 |
 | **Remote Video** | 首幀依比例與像素量縮放，輸出寬、高、秒數、FPS，以及符合 MiniMax H3、Wan 2.1 / 2.2、LTX 的合法幀數；channel 相同的分身互相同步。 |
 
 ### 圖片
@@ -111,7 +115,7 @@ pip install -r ComfyUI-GeN13/requirements.txt
 
 | 節點 | 功能 |
 |---|---|
-| **Text Switch** | 每顆最多 25 個可命名、可收合的提示詞框，串接後數量不限；`auto next` 與 `select_num`（INT 輸入）可控制選框。 |
+| **Text Switch** | 每顆最多 25 個可命名、可收合的提示詞框，串接後數量不限；第一顆的選號列 ‹ ›、`auto next` 與 `select_num`（INT 輸入）可控制選框。右鍵 → Clear all boxes 清空。 |
 | **Text Concatenate** | 在框內打字並串接，各框可開關、可獨奏，空白框自動略過。 |
 | **Prompt Cache** | 把上游文字（如 LLM 寫的腳本）存成檔案，之後不必載入上游模型就能重用；保留一代自動備份與不限數量的收藏。 |
 | **Show Any** / **Show Any Lite** | 任何型別都能接，顯示並直通輸出；有剪下、複製、貼上按鈕，內容隨工作流保存。 |
@@ -121,7 +125,7 @@ pip install -r ComfyUI-GeN13/requirements.txt
 | 節點 | 功能 |
 |---|---|
 | **Remote Int / Float / String / Boolean** | `channel` 名稱相同的分身互相同步（數值、步進、bypass），子圖裡也一樣；任一顆接線，就由該上游控制整組。 |
-| **Remote Text Switch** | Text Switch 遙控器，顯示選中框的編號與標題，◀ ▶ 自動略過空白框。 |
+| **Remote Text Switch** | Text Switch 遙控器，顯示選中框的編號與標題，‹ › 自動略過空白框。輸出 `select_num` 接 Text Switch 的 `select_num`；`auto next` 與 Text Switch 同一種 OFF／NEXT 開關。 |
 | **Counter** | 每次送出計數，可設範圍、每個數字維持幾次、按鈕歸零、上游歸零，以及每小時或每天自動歸零；bypass 時停住。 |
 | **Trigger** | 按下按鈕或上游改變時輸出新值，接 Counter 的 reset。 |
 | **Number** | 一個數字同時輸出 INT、FLOAT、STRING，可選小數轉整數的方式。 |
@@ -138,6 +142,10 @@ pip install -r ComfyUI-GeN13/requirements.txt
 GeN13 免費使用。如果這些節點幫你省了時間，歡迎在 Ko-fi 請我喝杯咖啡。
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/gen13)
+
+## 免責聲明
+
+GeN13 依現狀提供，不附任何擔保（見 GPL-3.0 第 15、16 條）。如何使用由使用者自行負責，並須遵守所在地的法律。請勿用於製作或修改違法、侵害著作權或肖像權的內容，處理真人影像請先取得當事人同意。隱私遮罩只遮住畫面上的預覽，不會加密或保護圖片檔案本身。
 
 ## 授權
 

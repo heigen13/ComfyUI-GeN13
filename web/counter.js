@@ -12,7 +12,7 @@
 //     number during hold still shows that a run happened.
 
 import { app } from "../../scripts/app.js";
-import { isOff, liveValue } from "./g13_mode.js";
+import { isOff, liveValue, forwardWheel } from "./g13_mode.js";
 import { T, setTip, lang, pick, cjkFont } from "./g13_i18n.js";
 
 const NODE_ID = "CounterGeN13";
@@ -252,6 +252,7 @@ app.registerExtension({
       pgw.appendChild(pg);
       wrap.append(bar, pgw);
       wrap.addEventListener("pointerdown", (e) => e.stopPropagation());
+      forwardWheel(wrap);
 
       const bw = node.addDOMWidget("g13_counter_bar", "g13ct", wrap, {
         serialize: false,

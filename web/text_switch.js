@@ -3,11 +3,17 @@
 //   - the select dropdown only lists the visible boxes; select above count drops to the last box
 //   - every box has a header row (DOM widget, Nodes 1.0 and 2.0): [arrow] [#NN] [title]
 //       arrow  : collapse / expand this box (text box hidden, node shrinks)
-//       #NN    : click = select this box (highlighted when selected); also expands it
+//       #NN    : click = select this box (highlighted when selected); also expands it.
+//                Clicking the box that is already selected folds / unfolds it, like the arrow.
 //       title  : free text, kept in node.properties.g13 (saved with the workflow, not in the API prompt)
 //       linked : shown at the right end when the box is fed by a link
 //   - a 6px spacer row above count keeps the slot block (chain / select_num) off the widgets
-//   - EXPAND ALL / COLLAPSE ALL bar under select
+//   - pick row under select (head only): [prev] #07 title [next], same look as the Remote Text Switch
+//     row. prev / next jump between boxes with text or a link (empty boxes skipped, wrapping) and pick
+//     the box like a #NN click (a Remote feeding select_num gets the number). Untitled boxes show the
+//     start of their text, dimmed. Locked while select_num comes from a value only known at run time.
+//     Front end only (serialize: false): saved workflows and widget values are not touched.
+//   - EXPAND ALL / COLLAPSE ALL bar under select: acts on the whole chain, like a pick does
 //   - no dimming: every box stays editable; the selected one is marked by its header number
 //   - STRING output: live only on the last node of a chain (no chain output linked). On every other
 //     node its dot is dimmed, the canvas's LinkConnector.dragNewFromOutput is wrapped so no link can
@@ -41,6 +47,10 @@
 //     #NN clicks and auto next stay live and write into the remote (which passes them on to its
 //     mirrors); count changes keep the same box and renumber the remote. Fed by any other live INT,
 //     select and auto next are dimmed.
+//   - right-click "Clear all boxes" (confirm in a submenu): empties every typed box, title and
+//     collapsed flag of this node only, count drops to 1 (or the highest linked box), the head's
+//     select goes back to #01. Links stay; the chain renumbers as usual. Reset widget values can't
+//     do this because titles and box texts are not plain widget values.
 //   - globalThis.G13TextSwitch: isHead / describe / stepBox / refresh, used by Text Switch Remote.
 //   - chain: nodes linked chain(out) -> chain(in) form one switch. The head (no chain input) owns
 //     select and lists every visible box of the whole chain; a chained node shows the head's pick in
@@ -58,14 +68,15 @@
 //     core control_after_generate. Chained nodes show the head's setting, dimmed.
 
 import { app } from "../../scripts/app.js";
-import { isOff, isLight, onModeChange, inLink, inLinked, outLinks, outLinked } from "./g13_mode.js";
-import { T, setTip, emptyText } from "./g13_i18n.js";
+import { isOff, isLight, onModeChange, inLink, inLinked, outLinks, outLinked, forwardWheel } from "./g13_mode.js";
+import { T, pick, setTip, emptyText } from "./g13_i18n.js";
 
 const NODE_ID = "TextSwitchGeN13";
 const MAX = 25;
 const BOX_MIN = 36; // one empty line
 const BOX_MAX = 1000;
 const HEAD_H = 28; // widget slot; DOM margin 1 + 2px pad top/bottom = 22px header
+const PICK_H = 34; // pick row slot: DOM margin 1 + 2px pad top/bottom = 28px row (as Remote Text Switch)
 const GAP_H = 6; // spacer between the input slots and count
 const SEL_MAX = 9999; // select is "#N"; two digits minimum, grows past #99 naturally
 const CSS = `
@@ -97,7 +108,29 @@ const CSS = `
 .g13sw-adv .g13sw-seg button:hover{color:#ddd}
 .g13sw-adv .g13sw-seg button.on{background:#35d0ff;color:#0b2a33}
 .g13sw-adv.g13sw-dim .g13sw-seg{opacity:.45;pointer-events:none}
+.g13sw-pk{box-sizing:border-box;height:28px;display:flex;align-items:center;background:#2b2b2b;border:1px solid #1e1e1e;border-radius:6px;overflow:hidden;user-select:none}
+.g13sw-pk button{all:unset;box-sizing:border-box;flex:none;width:30px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#999}
+.g13sw-pk button:hover{color:#eee;background:#333}
+.g13sw-pk button:active{background:#3a3a3a}
+.g13sw-pk button svg{display:block}
+.g13sw-pk .g13sw-pv{border-right:1px solid #1e1e1e}
+.g13sw-pk .g13sw-nx{border-left:1px solid #1e1e1e}
+.g13sw-pk .g13sw-pm{flex:1;min-width:0;height:28px;display:flex;align-items:center;justify-content:center;gap:8px;padding:0 8px}
+.g13sw-pk .g13sw-pn{flex:none;height:18px;padding:0 6px;display:flex;align-items:center;border-radius:4px;background:#35d0ff;color:#0b2a33;font:12px/1 Inter,Helvetica,Arial,sans-serif}
+.g13sw-pk.g13sw-pkoff .g13sw-pn{background:#444;color:#aaa}
+.g13sw-pk .g13sw-pt{min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;color:#d0d0d0;font:12px/1 Inter,Helvetica,Arial,"Microsoft JhengHei","PingFang TC","Noto Sans TC",sans-serif}
+.g13sw-pk .g13sw-pt.g13sw-ptdim{color:#777}
+.g13sw-pk.g13sw-pklock button{opacity:.45;pointer-events:none}
 /* light theme (Comfy.ColorPalette light): the dark look above stays as is */
+:root:not(.dark-theme) .g13sw-pk{background:#d4d4d4;border-color:#bdbdbd}
+:root:not(.dark-theme) .g13sw-pk button{color:#555}
+:root:not(.dark-theme) .g13sw-pk button:hover{color:#000;background:#c8c8c8}
+:root:not(.dark-theme) .g13sw-pk button:active{background:#bdbdbd}
+:root:not(.dark-theme) .g13sw-pk .g13sw-pv{border-right-color:#bdbdbd}
+:root:not(.dark-theme) .g13sw-pk .g13sw-nx{border-left-color:#bdbdbd}
+:root:not(.dark-theme) .g13sw-pk.g13sw-pkoff .g13sw-pn{background:#bbb;color:#555}
+:root:not(.dark-theme) .g13sw-pk .g13sw-pt{color:#222}
+:root:not(.dark-theme) .g13sw-pk .g13sw-pt.g13sw-ptdim{color:#777}
 :root:not(.dark-theme) .g13sw-h{background:#d4d4d4;border-color:#bdbdbd;color:#222}
 :root:not(.dark-theme) .g13sw-h button{border-right-color:#bdbdbd;color:#555}
 :root:not(.dark-theme) .g13sw-h svg path{stroke:#555}
@@ -488,6 +521,70 @@ function selectBox(node, i) {
   updateChain(node, true);
 }
 
+// right-click "Clear all boxes": this node only; linked boxes keep their link (nothing typed there)
+function clearAll(node) {
+  const p = props(node);
+  for (let i = 1; i <= MAX; i++) {
+    const tx = w(node, `text_${nn(i)}`);
+    if (tx && !linked(node, `text_${nn(i)}`)) {
+      tx.value = "";
+      const e = el(tx);
+      if (e && "value" in e) e.value = "";
+    }
+    p.t[i - 1] = "";
+    p.c[i - 1] = false;
+  }
+  node._g13auto = 0;
+  const cw = w(node, "count");
+  if (cw) {
+    cw.value = Math.max(1, maxLinked(node), maxLinkedOut(node));
+    cw.callback?.(cw.value);
+  }
+  const chain = chainNodes(node);
+  if (chain[0] === node && !extLinked(node)) {
+    const sw = w(node, "select");
+    if (sw) sw.value = lbl(1);
+  }
+  updateChain(node, true);
+  node.graph?.setDirtyCanvas?.(true, true);
+}
+
+// the head's pick row: #NN + title (or the start of the text, dimmed) of the box picked now
+function renderPick(head) {
+  const pr = head?._g13pkEls;
+  if (!pr) return;
+  const ext = extLinked(head);
+  const known = ext ? staticNum(head) : null;
+  const gsel = known ?? numOf(w(head, "select")?.value);
+  {
+    const lock = ext && known == null; // a run-time value owns the pick
+    const g = gsel;
+    let numText = lock ? "#\u2014" : `#${nn(g)}`;
+    let ttlText;
+    let dim = false;
+    let nobox = false;
+    if (lock) {
+      ttlText = "select \u2190 select_num";
+      dim = true;
+    } else {
+      const d = globalThis.G13TextSwitch.describe(head, g);
+      if (!d.ok) {
+        ttlText = pick("no box", "無此框", "无此框", "枠なし");
+        dim = nobox = true;
+      } else if (d.title) ttlText = d.title;
+      else {
+        ttlText = d.body || emptyText();
+        dim = true;
+      }
+    }
+    if (pr.num.textContent !== numText) pr.num.textContent = numText;
+    if (pr.ttl.textContent !== ttlText) pr.ttl.textContent = ttlText;
+    pr.ttl.classList.toggle("g13sw-ptdim", dim);
+    pr.row.classList.toggle("g13sw-pkoff", lock || nobox);
+    pr.row.classList.toggle("g13sw-pklock", lock);
+  }
+}
+
 function update(node, allowShrink, inChain) {
   const p = props(node);
   const cw = w(node, "count");
@@ -579,6 +676,12 @@ function update(node, allowShrink, inChain) {
   }
 
   let hid = !!allowShrink;
+  const pw = node._g13pk;
+  if (pw && !!pw.hidden !== !isHead) {
+    pw.hidden = !isHead; // only the head picks
+    hid = true;
+  }
+  renderPick(head); // always the head's row: a box edited on a chained node shows there too
   for (let i = 1; i <= MAX; i++) {
     const tx = w(node, `text_${nn(i)}`);
     const hw = node._g13head?.[i - 1];
@@ -672,9 +775,17 @@ function makeHeader(node, i) {
   const no = document.createElement("button");
   no.className = "g13sw-no";
   no.textContent = `#${nn(i)}`;
-  setTip(no, T("Output this box", "選擇此框輸出"));
+  setTip(no, T("Output this box; click again when selected to collapse / expand.", "選擇此框輸出;已選中時再按一次收合 / 展開。"));
   no.addEventListener("click", (e) => {
     e.stopPropagation();
+    if (h.classList.contains("g13sw-sel") && !h.classList.contains("g13sw-linked")) {
+      // already the picked box: a second click folds / unfolds it, same as the arrow
+      const p = props(node);
+      p.c[i - 1] = !p.c[i - 1];
+      if (node._g13auto === i) node._g13auto = 0;
+      update(node, true);
+      return;
+    }
     selectBox(node, i);
   });
   const inp = document.createElement("input");
@@ -692,6 +803,67 @@ function makeHeader(node, i) {
   lk.textContent = "linked";
   h.append(ar, no, inp, lk);
   return h;
+}
+
+function svgChevron(dir) {
+  const ns = "http://www.w3.org/2000/svg";
+  const s = document.createElementNS(ns, "svg");
+  s.setAttribute("width", "10");
+  s.setAttribute("height", "10");
+  s.setAttribute("viewBox", "0 0 10 10");
+  const p = document.createElementNS(ns, "path");
+  p.setAttribute("d", dir < 0 ? "M6.5 1.5L3 5l3.5 3.5" : "M3.5 1.5L7 5 3.5 8.5");
+  p.setAttribute("fill", "none");
+  p.setAttribute("stroke", "currentColor");
+  p.setAttribute("stroke-width", "1.5");
+  p.setAttribute("stroke-linecap", "round");
+  p.setAttribute("stroke-linejoin", "round");
+  s.appendChild(p);
+  return s;
+}
+
+// prev / next on the pick row: the next box with content, picked as if its #NN was clicked
+function stepPick(node, dir) {
+  const chain = chainNodes(node);
+  const head = chain[0];
+  if (head !== node) return;
+  if (extLinked(head) && staticNum(head) == null) return; // run-time value owns the pick
+  const g = staticNum(head) ?? numOf(w(head, "select")?.value);
+  const t = globalThis.G13TextSwitch.stepBox(head, g, dir);
+  if (t === g) return;
+  const o = ownerOf(chain, t);
+  if (o.k >= 0) selectBox(chain[o.k], o.i);
+}
+
+function makePick(node) {
+  const row = document.createElement("div");
+  row.className = "g13sw-pk";
+  const mk = (dir, cls, tip) => {
+    const b = document.createElement("button");
+    b.className = cls;
+    setTip(b, tip);
+    b.appendChild(svgChevron(dir));
+    b.addEventListener("click", (e) => {
+      e.stopPropagation();
+      stepPick(node, dir);
+    });
+    return b;
+  };
+  const mid = document.createElement("div");
+  mid.className = "g13sw-pm";
+  const num = document.createElement("span");
+  num.className = "g13sw-pn";
+  const ttl = document.createElement("span");
+  ttl.className = "g13sw-pt";
+  mid.append(num, ttl);
+  row.append(
+    mk(-1, "g13sw-pv", T("Previous: goes to the previous box with content.", "上一框:跳到前一個有內容的框。")),
+    mid,
+    mk(1, "g13sw-nx", T("Next: goes to the next box with content.", "下一框:跳到下一個有內容的框。"))
+  );
+  row.addEventListener("pointerdown", (e) => e.stopPropagation());
+  node._g13pkEls = { row, num, ttl };
+  return row;
 }
 
 function makeAdvance(node) {
@@ -734,10 +906,13 @@ function makeBar(node) {
     b.textContent = label;
     b.addEventListener("click", (e) => {
       e.stopPropagation();
-      const p = props(node);
-      for (let i = 0; i < MAX; i++) p.c[i] = collapsed;
-      node._g13auto = 0;
-      update(node, true);
+      // whole chain, so it matches a pick (a pick can open a box on any node of the chain)
+      for (const n of chainNodes(node)) {
+        const p = props(n);
+        for (let i = 0; i < MAX; i++) p.c[i] = collapsed;
+        n._g13auto = 0;
+      }
+      updateChain(node, true);
     });
     return b;
   };
@@ -757,6 +932,7 @@ function addDom(node, name, element, height, cls) {
   const wrap = document.createElement("div");
   wrap.className = "g13sw-wrap" + (cls ? " " + cls : "");
   wrap.appendChild(element);
+  forwardWheel(wrap);
   const wd = node.addDOMWidget(name, "g13sw", wrap, {
     serialize: false,
     hideOnZoom: true,
@@ -868,6 +1044,8 @@ app.registerExtension({
       }
       // extra widgets: bar after select, one header before each text box, preview at the end
       const gap = addDom(node, "g13_gap", document.createElement("div"), GAP_H);
+      const pk = addDom(node, "g13_pick", makePick(node), PICK_H);
+      node._g13pk = pk;
       const adv = addDom(node, "g13_adv", makeAdvance(node), HEAD_H);
       node._g13adv = adv;
       // same timing as the core control_after_generate; only the head of a chain steps
@@ -896,7 +1074,7 @@ app.registerExtension({
       b.serialize = false;
       node._g13prev = b;
 
-      const order = [gap, w(node, "count"), w(node, "select"), adv, bar];
+      const order = [gap, w(node, "count"), w(node, "select"), pk, adv, bar];
       for (let i = 1; i <= MAX; i++) order.push(node._g13head[i - 1], w(node, `text_${nn(i)}`));
       order.push(b);
       const rest = (node.widgets ?? []).filter((x) => !order.includes(x));
@@ -925,6 +1103,22 @@ app.registerExtension({
         this._g13loading = false;
         update(this, true); // height follows content after load / paste (linked boxes are 0 high)
       }, 300);
+      return r;
+    };
+
+    // right-click menu: clear every box of this node (second click in the submenu confirms)
+    const getMenu = nodeType.prototype.getExtraMenuOptions;
+    nodeType.prototype.getExtraMenuOptions = function (canvas, options) {
+      const r = getMenu?.apply(this, arguments);
+      const node = this;
+      options.push({
+        content: pick("Clear all boxes", "清空所有框", "清空所有框", "全ボックスを消去"),
+        has_submenu: true,
+        submenu: { options: [{
+          content: pick("Confirm: clear all boxes of this node", "確認:清空這顆的所有框", "确认:清空这颗的所有框", "確認:このノードの全ボックスを消去"),
+          callback: () => clearAll(node),
+        }] },
+      });
       return r;
     };
 

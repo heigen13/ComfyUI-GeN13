@@ -24,5 +24,13 @@
   },
   "GeN13_Monitor_ShowPower": {
     "name": "POWER を表示"
+  },
+  "GeN13_Links_PreferGeN13": {
+    "name": "リンク検索で GeN13 ノードを先頭に表示",
+    "tooltip": "リンク検索:リンクを空白に放したとき、接続先に合う GeN13 ノードを検索ボックスとメニューの先頭に表示。"
+  },
+  "GeN13_Links_BuiltinConvert": {
+    "name": "右クリックで内蔵ノードを GeN13 に変換",
+    "tooltip": "右クリック変換:Load / Save / Preview Image を Private 版に、Primitive を対応する Remote に変換。"
   }
 }

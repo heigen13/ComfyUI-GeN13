@@ -16,7 +16,7 @@
 
 import { app } from "../../scripts/app.js";
 import { T, setTip, countText, convertLabel, emptyText } from "./g13_i18n.js";
-import { inLink, inLinked, outLinks } from "./g13_mode.js";
+import { inLink, inLinked, outLinks, forwardWheel } from "./g13_mode.js";
 
 const NODE_ID = "ShowAnyLiteGeN13";
 const ROW = 32; // DOM margin 1 + wrap pad 3 / 3 + 24px box
@@ -331,9 +331,7 @@ app.registerExtension({
       box.append(bar, tx, tb);
       wrap.appendChild(box);
       box.addEventListener("pointerdown", (e) => e.stopPropagation());
-      box.addEventListener("wheel", (e) => {
-        if (box.classList.contains("g13sl-multi")) e.stopPropagation(); // scroll the text, not the canvas
-      });
+      forwardWheel(box); // scroll the text while it can, otherwise zoom the canvas
 
       // the backend's "content" is forceInput (no auto widget): drop its slot, the box sends it
       const ci = node.inputs?.findIndex((s) => s.name === "content") ?? -1;

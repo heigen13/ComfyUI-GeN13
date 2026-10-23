@@ -59,7 +59,11 @@ class RemoteString:
     DESCRIPTION = "Remote text: nodes with the same channel name are clones; editing the text or bypass on one updates them all."
 
     def out(self, channel, value="", **kw):
-        return ("" if value is None else str(value),)
+        text = "" if value is None else str(value)
+        # report the text to the history (outputs.g13_prompt) so a history viewer can show it as a prompt source
+        if text.strip():
+            return {"ui": {"g13_prompt": [{"channel": str(channel), "text": text.strip()}]}, "result": (text,)}
+        return (text,)
 
 
 class RemoteBoolean:

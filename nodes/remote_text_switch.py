@@ -33,7 +33,7 @@ class RemoteTextSwitch:
         }
 
     RETURN_TYPES = ("INT",)
-    RETURN_NAMES = ("INT",)
+    RETURN_NAMES = ("select_num",)
     OUTPUT_TOOLTIPS = ("Box number: connect to select_num of Text Switch (GeN13); can pass through Set / Get.",)
     FUNCTION = "out"
     CATEGORY = "GeN13/text"

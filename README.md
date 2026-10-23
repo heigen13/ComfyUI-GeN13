@@ -12,7 +12,7 @@ Every node's display name ends with **(GeN13)**: double-click the canvas and typ
 
 ### Monitor: your whole machine, at a glance
 
-A live strip beside the Run button. RUN shows the node that is running, its elapsed time, sampler steps and how many prompts are waiting, including prompts queued from a phone page, the API or another browser tab; click it to jump to that node. CPU, RAM, GPU, VRAM and power each get a value, a trend line and a usage bar, and turn red before trouble: RAM and VRAM at 95%, the GPU at 83 °C. It is not a node, so nothing goes on the canvas. Show or hide each cell and set the refresh rate in Settings → GeN13 → Monitor.
+A live strip beside the Run button. RUN shows the running node, the elapsed time, the overall progress of the whole prompt and how many prompts are waiting, including prompts queued from a phone page, the API or another browser tab. Progress is estimated from earlier runs of the same workflow, so the bar moves steadily instead of jumping node by node, and the last bar stays after the run; click it to jump to a node run from this tab. CPU, RAM, GPU, VRAM and power each get a value, a trend line and a usage bar, and turn red before trouble: RAM and VRAM at 95%, the GPU at 83 °C. It is not a node, so nothing goes on the canvas. Show or hide each cell and set the refresh rate in Settings → GeN13 → Monitor.
 
 <p align="center"><img src="docs/monitor.gif" alt="Monitor during a run" width="100%"></p>
 
@@ -37,7 +37,7 @@ Put a Remote Int / Float / String / Boolean next to every place that needs the s
 
 ### Text Switch: switch prompts, chain without limits
 
-Type prompts straight into named boxes and output the one you pick. Chain nodes side by side for as many boxes as you need; numbering continues across the chain and the first node, or a Remote Text Switch anywhere on the canvas, picks the box. `auto next` steps to the next filled box on every queue, and only the selected box's upstream runs.
+Type prompts straight into named boxes and output the one you pick. Chain nodes side by side for as many boxes as you need; numbering continues across the chain and the first node, or a Remote Text Switch anywhere on the canvas, picks the box. `auto next` steps to the next filled box on every queue, and only the selected box's upstream runs. The first node has a pick row, ‹ #07 title ›, so the selected box stays in view even in a long chain; ‹ › skip empty boxes. Click a selected #NN again to fold it, EXPAND ALL / COLLAPSE ALL act on the whole chain, right-click → Clear all boxes empties one node, and dragging the chain output onto empty canvas adds the next node already linked.
 
 <p align="center"><img src="docs/textswitch.gif" alt="Text Switch demo" width="80%"></p>
 
@@ -53,15 +53,19 @@ Load, Save and Preview Image Private cover the node preview with a mosaic, frost
 
 ### Color Match Temporal: stop image-to-video color drift
 
-Generated video often turns bluer or warmer as it plays. Color Match Temporal pulls every frame back to the first-frame image, smoothed over time so nothing flickers. The default `white balance` method fixes color cast only and keeps the video's own brightness. It measures drift on background pixels that did not move, so a big white shirt or a close-up cannot fool it, and after a scene cut each shot is matched to its own start.
+Generated video often turns bluer or warmer as it plays. Color Match Temporal pulls every frame back to the first-frame image, smoothed over time so nothing flickers. The default `white balance` method fixes color cast only and keeps the video's own brightness. It measures drift on background pixels that did not move, so a big white shirt or a close-up cannot fool it, and after a scene cut each shot is matched to its own start. `skin_anchor` then shifts each frame so the skin matches the reference skin, which fixes skin redrawn redder after a cut to a close-up.
 
 <p align="center"><img src="docs/colormatch.jpg" alt="Simulated color drift corrected by Color Match Temporal" width="100%"></p>
 
 ### Degrease: clean skin, untouched features
 
-Removes the greasy, over-detailed look of generated portraits and video. Five effects, each from 0 (off) to 100 (full): deblemish, smooth, deshine, even tone and decontour. Eyes, lashes, brows and lips are protected, and only skin is touched.
+Removes the greasy, over-detailed look of generated portraits and video. Six effects, each from 0 (off) to 100 (full): deblemish, smooth, deshine, even tone, decontour and cool fair, which moves skin toward a lighter, cooler tone and keeps the lips' color. Eyes, lashes, brows and lips are protected, and only skin is touched.
 
 <p align="center"><img src="docs/degrease.jpg" alt="Degrease effects from 0 to 100" width="100%"></p>
+
+### Faster wiring
+
+Drop a link on empty canvas and the GeN13 nodes that fit that slot are listed first, in both the search box and the link menu, and the link lands on the input it is meant for (Trigger → Counter `reset`, Remote Text Switch → Text Switch `select_num`). Right-click a built-in Load / Save / Preview Image or a Primitive to convert it in place to the Private or Remote version, settings and links kept. Both can be turned off in Settings → GeN13 → Links.
 
 ## Install
 
@@ -86,8 +90,8 @@ Optional: the `nvidia_rtx_vsr` upscale method in **Resize** needs the `nvidia-vf
 
 | Node | What it does |
 |---|---|
-| **Color Match Temporal** | Matches generated video frames to a reference image (usually the first frame), smoothed over time. `white balance` fixes color cast only; `mkl` and `reinhard` also match brightness. Detects scene cuts. Can export a `.cube` LUT. |
-| **Degrease** | Portrait retouch for images and video: deblemish, smooth, deshine, even tone and decontour, each 0 = off. Facial features are protected and only skin is touched. |
+| **Color Match Temporal** | Matches generated video frames to a reference image (usually the first frame), smoothed over time. `white balance` fixes color cast only; `mkl` and `reinhard` also match brightness. Detects scene cuts. `skin_anchor` pulls skin back to the reference skin tone. Can export a `.cube` LUT. |
+| **Degrease** | Portrait retouch for images and video: deblemish, smooth, deshine, even tone, decontour and cool fair, each 0 = off. Facial features are protected and only skin is touched. |
 | **Remote Video** | Scales the first frame to an aspect ratio and megapixels, outputs width, height, seconds, FPS and a valid frame count for MiniMax H3, Wan 2.1 / 2.2 or LTX. Clones with the same channel stay in sync. |
 
 ### Image
@@ -111,7 +115,7 @@ Optional: the `nvidia_rtx_vsr` upscale method in **Resize** needs the `nvidia-vf
 
 | Node | What it does |
 |---|---|
-| **Text Switch** | Up to 25 named, collapsible prompt boxes per node; chain nodes for more. `auto next` and `select_num` (INT input) drive the selection. |
+| **Text Switch** | Up to 25 named, collapsible prompt boxes per node; chain nodes for more. A pick row ‹ › on the first node, `auto next` and `select_num` (INT input) drive the selection. Right-click → Clear all boxes. |
 | **Text Concatenate** | Type text in boxes and join them; per-box on/off and solo, empty boxes skipped. |
 | **Prompt Cache** | Saves upstream text (for example an LLM-written script) to a file and replays it later without loading the upstream model. One rolling backup plus any number of favorites. |
 | **Show Any** / **Show Any Lite** | Accept any type, display it and pass it through. Cut / copy / paste buttons; text is saved with the workflow. |
@@ -121,7 +125,7 @@ Optional: the `nvidia_rtx_vsr` upscale method in **Resize** needs the `nvidia-vf
 | Node | What it does |
 |---|---|
 | **Remote Int / Float / String / Boolean** | Clones that share a `channel` name stay in sync (value, step, bypass), even inside subgraphs. Wire any one clone and that input drives the whole group. |
-| **Remote Text Switch** | Remote for Text Switch: shows the selected box's number and title; ◀ ▶ skip empty boxes. |
+| **Remote Text Switch** | Remote for Text Switch: shows the selected box's number and title; ‹ › skip empty boxes. Its `select_num` output goes to Text Switch's `select_num`; `auto next` is the same OFF / NEXT switch as on Text Switch. |
 | **Counter** | Counts up or down per queue with ranges, hold (repeat each value N times), reset button, reset input and auto reset every hour or day. Freezes while bypassed. |
 | **Trigger** | A button or an upstream change produces a new value; connect it to Counter's reset. |
 | **Number** | One number out as INT, FLOAT and STRING, with a choice of rounding. |
@@ -138,6 +142,10 @@ Optional: the `nvidia_rtx_vsr` upscale method in **Resize** needs the `nvidia-vf
 GeN13 is free. If these nodes save you time, you can buy me a coffee on Ko-fi.
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/gen13)
+
+## Disclaimer
+
+GeN13 is provided as is, without warranty of any kind (see sections 15 and 16 of the GPL-3.0). You are responsible for how you use it and for following the laws where you live. Do not use it to create or edit content that is illegal, infringes copyright or likeness rights, or depicts real people without their consent. The privacy cover only hides the on-screen preview; it does not encrypt or protect the image files.
 
 ## License
 

@@ -24,7 +24,7 @@
 
 import { app } from "../../scripts/app.js";
 import { T, setTip, countText, convertLabel } from "./g13_i18n.js";
-import { inLink, inLinked, outLinks } from "./g13_mode.js";
+import { inLink, inLinked, outLinks, forwardWheel } from "./g13_mode.js";
 
 const NODE_ID = "ShowAnyGeN13";
 const LINE = 18; // 12px font, line-height 1.5
@@ -436,6 +436,7 @@ app.registerExtension({
       const wrap = document.createElement("div");
       wrap.className = "g13st-wrap";
       wrap.appendChild(bar);
+      forwardWheel(wrap);
       const bw = node.addDOMWidget("g13_bar", "g13st", wrap, {
         serialize: false,
         hideOnZoom: true,
@@ -450,6 +451,7 @@ app.registerExtension({
       const ewrap = document.createElement("div");
       ewrap.className = "g13st-wrap";
       ewrap.appendChild(ed.row);
+      forwardWheel(ewrap);
       const ew = node.addDOMWidget("g13_edit", "g13st", ewrap, {
         serialize: false,
         hideOnZoom: true,

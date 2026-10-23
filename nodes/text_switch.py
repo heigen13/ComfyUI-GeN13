@@ -163,7 +163,12 @@ class TextSwitch:
         for i in range(1, MAX_BOXES + 1):
             t = kw.get("text_%02d" % i)
             boxes.append("" if t is None else str(t).strip())
-        return (out, text) + tuple(boxes)
+        result = (out, text) + tuple(boxes)
+        # the node that owns the picked box reports it to the history (outputs.g13_prompt), so a
+        # history viewer can show the prompt with its box number instead of parsing the graph
+        if local and text:
+            return {"ui": {"g13_prompt": [{"sel": gsel, "box": local, "text": text}]}, "result": result}
+        return result
 
 
 NODE_CLASS_MAPPINGS = {"TextSwitchGeN13": TextSwitch}

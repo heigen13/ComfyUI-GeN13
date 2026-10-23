@@ -34,6 +34,16 @@ Color Match Temporal
   stop when new shot       : 第一刀之後的影格與首幀無關,保留原色不校正(換場景的多鏡頭素材)
   偵測換鏡頭時,時間平滑都不跨過切點。
 
+膚色對準(skin_anchor,2026-10-23):white balance / mkl / reinhard 做完之後的最後一步。
+  整張統計對整張的方法會被構圖帶偏——同場景切近景時,特寫整張是臉,拿去對「衣服＋沙發」占大半的首幀,
+  膚色就偏;另外模型切鏡後常把皮膚重繪得更紅,鏡頭內的漂移校正修不到這種鏡頭之間的差。
+  做法:只量皮膚。皮膚遮罩取自「校正後」的那一格——量哪一格就在哪一格找皮膚(2026-10-24 修正:原本取校正前的原格,
+  整段慢慢偏藍、沒切鏡頭時,原格的皮膚早已偏出膚色帶,偏藍 15% 以上覆蓋率掉到 1% 以下,剩下的像素偏暗偏暖,
+  整格被推亮 +8、推藍 6%;改取聯集又會把暖色罩染成膚色的頭髮、背景撈進來,所以只認校正後)。
+  量參考圖的皮膚平均 a*、b* 與每格校正後的皮膚平均 a*、b*,差多少整格平移多少;L* 不動(2026-10-24 定案:
+  亮度交給各方法自己——white balance 亮度照原片,mkl / reinhard 由 tone_curve 對齊;膚色對準只管色相彩度),
+  沿時間平滑、不跨過切點;皮膚占畫面不到 2% 的格不補。只修平均,不改每個像素之間的關係。
+
 只依賴 torch,不需額外安裝套件。
 """
 
@@ -448,6 +458,102 @@ def detect_cuts(images, device):
 
 
 # ─────────────────────────────────────────────────────────────
+# 膚色對準(skin anchor)
+# ─────────────────────────────────────────────────────────────
+ANCHOR_HUE = (20.0, 28.0, 54.0, 62.0)    # 皮膚帶 Lab 色相(度):實測臉 24–54°,米色燈具、沙發、木櫃 61–93°
+ANCHOR_CHROMA = (8.0, 12.0, 28.0, 34.0)  # 皮膚帶彩度:實測臉 11–24,唇 30–42
+ANCHOR_L = (35.0, 45.0, 85.0, 93.0)      # 皮膚帶明度:太暗色相不可靠,太亮是高光
+ANCHOR_DENSITY = 3.0                     # 皮膚密度的尺度(短邊 %):零星符合膚色的像素(背景雜點)不算皮膚
+ANCHOR_DENSITY_LO, ANCHOR_DENSITY_HI = 0.35, 0.70
+ANCHOR_MIN_COVER = 0.02                  # 皮膚占畫面比例低於此值的格不補(全身遠景、無人畫面)
+ANCHOR_MAX_AB = 12.0                     # 單格 a*/b* 平移上限(安全閥;正常情況鏡頭間的差在 2–6)
+ANCHOR_SMOOTH = 4                        # 平移量沿時間平滑的半徑(格),不跨過切點
+
+_LAB_M = ((0.4124564, 0.3575761, 0.1804375), (0.2126729, 0.7151522, 0.0721750), (0.0193339, 0.1191920, 0.9503041))
+_LAB_WHITE = (0.95047, 1.0, 1.08883)
+
+
+def _smoothstep(x, lo, hi):
+    t = ((x - lo) / max(hi - lo, 1e-6)).clamp(0.0, 1.0)
+    return t * t * (3.0 - 2.0 * t)
+
+
+def _rgb_to_lab(x):
+    """sRGB 0..1 [...,3] -> (L* 0..100, a*, b*)"""
+    lin = torch.where(x <= 0.04045, x / 12.92, ((x + 0.055) / 1.055) ** 2.4)
+    m = torch.tensor(_LAB_M, dtype=x.dtype, device=x.device)
+    xyz = lin @ m.T / torch.tensor(_LAB_WHITE, dtype=x.dtype, device=x.device)
+    f = torch.where(xyz > 0.008856, xyz.clamp(min=1e-8) ** (1.0 / 3.0), 7.787 * xyz + 16.0 / 116.0)
+    return 116.0 * f[..., 1] - 16.0, 500.0 * (f[..., 0] - f[..., 1]), 200.0 * (f[..., 1] - f[..., 2])
+
+
+def _lab_to_rgb(L, a, b):
+    fy = (L + 16.0) / 116.0
+    f = torch.stack([fy + a / 500.0, fy, fy - b / 200.0], dim=-1)
+    xyz = torch.where(f > 0.206893, f ** 3, (f - 16.0 / 116.0) / 7.787) * torch.tensor(_LAB_WHITE, dtype=L.dtype, device=L.device)
+    m = torch.tensor(_LAB_M, dtype=L.dtype, device=L.device)
+    lin = (xyz @ torch.linalg.inv(m).T).clamp(min=0.0)
+    return torch.where(lin <= 0.0031308, lin * 12.92, 1.055 * lin.clamp(min=1e-8) ** (1.0 / 2.4) - 0.055)
+
+
+def _skin_mask(x):
+    """x: [B,H,W,3] 0..1 -> 皮膚權重 [B,H,W] 0..1(膚色帶 × 周圍密度)"""
+    L, a, b = _rgb_to_lab(x)
+    hue = torch.rad2deg(torch.atan2(b, a))
+    c = torch.hypot(a, b)
+    h0, h1, h2, h3 = ANCHOR_HUE
+    c0, c1, c2, c3 = ANCHOR_CHROMA
+    l0, l1, l2, l3 = ANCHOR_L
+    band = _smoothstep(hue, h0, h1) * (1.0 - _smoothstep(hue, h2, h3)) \
+        * _smoothstep(c, c0, c1) * (1.0 - _smoothstep(c, c2, c3)) \
+        * _smoothstep(L, l0, l1) * (1.0 - _smoothstep(L, l2, l3))
+    r = max(1, int(round(min(x.shape[1], x.shape[2]) * ANCHOR_DENSITY / 100.0)))
+    dens = F.avg_pool2d(F.pad(band.unsqueeze(1), (r, r, r, r), mode="replicate"), 2 * r + 1, stride=1).squeeze(1)
+    return band * _smoothstep(dens, ANCHOR_DENSITY_LO, ANCHOR_DENSITY_HI)
+
+
+def _skin_lab_mean(x, w):
+    """x: [B,H,W,3],w: [B,H,W] -> 皮膚加權平均 (L,a,b) [B,3]、覆蓋率 [B]"""
+    L, a, b = _rgb_to_lab(x)
+    s = w.sum(dim=(1, 2)).clamp(min=1e-6)
+    mean = torch.stack([(L * w).sum(dim=(1, 2)) / s, (a * w).sum(dim=(1, 2)) / s, (b * w).sum(dim=(1, 2)) / s], dim=-1)
+    return mean, w.mean(dim=(1, 2))
+
+
+def skin_anchor(ref, img, out, strength, device):
+    """最後一步:把每格校正後(out)的皮膚平均 a*、b* 平移到參考圖(ref)的皮膚平均;遮罩取自校正後的同一格;L* 不動。
+    img 只用來偵測切點。out 為 CPU float32 [n,H,W,3],原地改寫。回傳 (參考膚色 [3], 平移量 [n,3],L 欄恆為 0, 有補的格數)。"""
+    n = img.shape[0]
+    rw = _skin_mask(ref.to(device, torch.float32))
+    rmean, rcov = _skin_lab_mean(ref.to(device, torch.float32), rw)
+    if float(rcov.mean()) < ANCHOR_MIN_COVER:
+        print("[Color Match Temporal] skin anchor: reference has no skin (%.1f%%), skipped" % (float(rcov.mean()) * 100))
+        return None, None, 0
+    rmean = rmean.mean(dim=0).cpu().double()                    # 多張參考圖合併
+    means, covs = [], []
+    for i in range(0, n, CHUNK):
+        o = out[i:i + CHUNK].to(device, torch.float32)
+        m, cov = _skin_lab_mean(o, _skin_mask(o))
+        means.append(m.cpu().double()); covs.append(cov.cpu().double())
+    fmean, cov = torch.cat(means), torch.cat(covs)
+    gate = _smoothstep(cov, ANCHOR_MIN_COVER * 0.5, ANCHOR_MIN_COVER)      # 皮膚太少的格不補
+    d = (rmean.unsqueeze(0) - fmean) * gate.unsqueeze(1) * strength
+    d[:, 0] = 0.0                                               # L* 不動,亮度交給各方法自己
+    seg, _ = detect_cuts(img, device)                            # 平滑不跨過切點
+    d = smooth(d, ANCHOR_SMOOTH, "temporal", None, seg)
+    d[:, 1:] = d[:, 1:].clamp(-ANCHOR_MAX_AB, ANCHOR_MAX_AB)
+    for i in range(0, n, CHUNK):
+        x = out[i:i + CHUNK].to(device, torch.float32)
+        L, a, b = _rgb_to_lab(x)
+        dd = d[i:i + CHUNK].to(device, torch.float32)
+        y = _lab_to_rgb(L, a + dd[:, 1, None, None], b + dd[:, 2, None, None]).clamp(0.0, 1.0)
+        out[i:i + CHUNK] = y.cpu()
+        if mm is not None:
+            mm.throw_exception_if_processing_interrupted()
+    return rmean, d, int((gate > 1e-3).sum())
+
+
+# ─────────────────────────────────────────────────────────────
 # .cube
 # ─────────────────────────────────────────────────────────────
 def lut_dir():
@@ -592,15 +698,26 @@ def _white_balance(ref, img, mode, smooth_frames, strength, cube_name, device, a
     return out, cube_path
 
 
+def _run_skin_anchor(ref, img, out, strength, device):
+    rmean, d, cnt = skin_anchor(ref, img, out, strength, device)
+    if d is not None:
+        print("[Color Match Temporal] skin anchor: reference skin a %.1f b %.1f, %d/%d frames shifted, max shift a %+.1f b %+.1f"
+              % (float(rmean[1]), float(rmean[2]), cnt, d.shape[0],
+                 float(d[:, 1].abs().max()) * (1 if float(d[:, 1].max()) >= -float(d[:, 1].min()) else -1),
+                 float(d[:, 2].abs().max()) * (1 if float(d[:, 2].max()) >= -float(d[:, 2].min()) else -1)))
+
+
 def color_match_temporal(reference, images, method="mkl", mode="temporal",
                          smooth_frames=8, strength=1.0, cube_name="", device=None,
-                         after_cut="match new shot start", tone="gamma"):
+                         after_cut="match new shot start", tone="gamma", anchor=True):
     if device is None:
         device = mm.get_torch_device() if mm else torch.device("cpu")
     ref = reference[..., :3]
     img = images[..., :3]
     if method == "white balance":
         out, cube_path = _white_balance(ref, img, mode, smooth_frames, strength, cube_name, device, after_cut)
+        if anchor:
+            _run_skin_anchor(ref, img, out, strength, device)
         if images.shape[-1] == 4:                            # 保留 alpha
             out = torch.cat([out, images[..., 3:].cpu().float()], dim=-1)
         return out, cube_path
@@ -655,6 +772,8 @@ def color_match_temporal(reference, images, method="mkl", mode="temporal",
     if gammas is not None:
         print("[Color Match Temporal] tone gamma: first %.3f, last %.3f, min %.3f, max %.3f"
               % (float(gammas[0]), float(gammas[-1]), float(gammas.min()), float(gammas.max())))
+    if anchor:
+        _run_skin_anchor(ref, img, out, strength, device)
 
     if images.shape[-1] == 4:                                # 保留 alpha
         out = torch.cat([out, images[..., 3:].cpu().float()], dim=-1)
@@ -706,6 +825,9 @@ class ColorMatchTemporal:
                 "after_cut": (["match new shot start", "always match first frame", "stop when new shot"], {
                     "default": "match new shot start",
                     "tooltip": "After a cut: match each new shot to its own start (recommended), match every shot to the first frame, or stop correcting."}),
+                "skin_anchor": ("BOOLEAN", {
+                    "default": True, "label_on": "ACTIVE", "label_off": "BYPASS",
+                    "tooltip": "Skin anchor: after matching, shifts each frame so its skin tone equals the reference skin; fixes redder skin after a cut to a close-up."}),
             }
         }
 
@@ -713,15 +835,15 @@ class ColorMatchTemporal:
     RETURN_NAMES = ("images",)
     FUNCTION = "run"
     CATEGORY = "GeN13/color"
-    DESCRIPTION = "Matches video color to a reference image frame by frame, smoothed over time, to remove the gradual color drift of image-to-video without flicker. Default white balance corrects color cast only and keeps brightness. After a cut, each shot is matched to its own start."
+    DESCRIPTION = "Matches video color to a reference image frame by frame, smoothed over time, to remove the gradual color drift of image-to-video without flicker. Default white balance corrects color cast only and keeps brightness. After a cut, each shot is matched to its own start, then the skin tone of every frame is anchored to the reference skin."
 
     def run(self, images, reference, enabled, method, mode, smooth_frames, strength, cube_name,
-            tone_curve="gamma", after_cut="match new shot start"):
+            tone_curve="gamma", after_cut="match new shot start", skin_anchor=True):
         if not enabled:                                      # BYPASS:原樣傳下去(經 API 送出的工作流也能用這個欄位停用)
             return (images,)
         out, _ = color_match_temporal(reference, images, method, mode,
                                       smooth_frames, strength, cube_name,
-                                      after_cut=after_cut, tone=tone_curve)
+                                      after_cut=after_cut, tone=tone_curve, anchor=skin_anchor)
         return (out,)
 
 

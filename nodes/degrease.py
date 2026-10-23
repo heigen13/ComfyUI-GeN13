@@ -12,6 +12,8 @@ Degrease
   deblemish : 祛斑祛痘。抹掉皮膚上「各方向都很小」的暗點(痣、斑、痘、雀斑),用周圍的膚色補上。
               以十六個方向的線段閉運算取最小值判定:暗點在每個方向都短,會被補平;
               髮絲、睫毛、皺紋在自己的走向上夠長,不會被當成暗點。
+              另抹紅點(2026-10-23):比周圍紅、但不一定比較暗的痘痘與小突起,判定尺度較大(近景時臉在畫面裡大,
+              痘痘也大),只認「綠藍掉得比紅多」的點,所以唇、腮紅這種大片或長條的紅不會被當成紅點。
   deshine   : 去油光。只把膚色區域內「比周圍亮」的部分往下收(鼻樑、額頭、臉頰的反光),不是整體壓暗。
               區域以色相判定後取區域平均,所以反光本身(偏白、飽和度低)也算在皮膚內;白牆、白衣不受影響。
   even_tone : 勻膚。紅橘色相帶(HSV 色相中心 25°,兩側軟衰減)的色度朝全臉平均膚色收斂:
@@ -19,6 +21,14 @@ Degrease
   decontour : 減立體。壓平中低頻的明暗起伏(過重的立體感)。底層用保邊的 guided filter 取得,
               輪廓不會像高斯模糊那樣發光起霧;最細一層紋理(約 1 px)原樣保留;只改明度不改色彩;
               只作用在皮膚區域(背景、頭髮、衣服不動)。
+  cool_fair : 冷白皮(2026-10-23 重寫)。先量整批(影片整段)皮膚的平均 Lab,算出平均要乘多少(a*、b*)、
+              加多少(L*)才到冷白皮目標(亮 70、紅 9、黃 7,偏粉),再把同一組比例與位移套到每個皮膚像素:
+              平均落在目標、兩頰與陰影的相對起伏保留,不會整張臉變成同一個顏色。
+              比例最多 1、位移最少 0:本來就比目標白、冷的皮膚不動;比例最少 0.5、提亮最多 +14:
+              深膚色、暖皮開到 100 是「冷一點、亮一點、粉一點的同一個人」,不是硬拉成白皮。
+              影片整段只算一組數值,不閃爍。提亮整片等量(L* 88 以上漸減),明暗與毛孔紋理保留。
+              皮膚以 Lab 膚色帶(含暖皮色相 54–70°)× 周圍密度判定;牆、燈罩、床單(彩度低)、木櫃(暗)、
+              木地板與金屬燈座(色相 70° 以上)不作用。唇(色相偏洋紅「且」彩度高)不作用。0 為關閉(預設)。
 
 五官保護:smooth、deblemish、decontour 都避開「小而暗、但不是暗點」的特徵(眼睛、睫毛、眉毛、鼻孔、髮絲)
   及其周圍一圈。偵測用形態學黑帽(閉運算減原圖),先把暗點補平再偵測,所以痣不會被當成五官保護起來。
@@ -61,6 +71,24 @@ BLEMISH_RADIUS = 0.5       # 暗點的最大半徑(短邊 %);各方向都比這�
 BLEMISH_DIRS = 16          # 判定方向數(每 11.25° 一個);方向越多,斜向的細線越不會被誤認成暗點
 BLEMISH_LO, BLEMISH_HI = 0.012, 0.035  # 比周圍暗不到 LO 不算暗點(一般膚質起伏),超過 HI 完全抹除
 BLEMISH_MAX_LO, BLEMISH_MAX_HI = 0.24, 0.34   # 比周圍暗超過這個範圍的不抹:那種深度是瞳孔、鼻孔,不是痣(遠景時的保險)
+RED_RADIUS = 2.0           # 紅點的最大半徑(短邊 %):比暗點大,近景的痘痘才抓得到
+RED_LO, RED_HI = 1.0, 4.0              # 比周圍紅出的 a* 量:不到 LO 不算紅點(一般血色起伏),超過 HI 完全抹除
+RED_FEAT_LO, RED_FEAT_HI = 0.16, 0.30  # 紅點用的五官門檻:比周圍暗這麼多才算五官(痘痘只略暗,眼、眉、鼻孔遠超過)
+
+FAIR_TARGET_L = 70.0       # 冷白皮目標:皮膚平均 L*(實測亞洲白皮臉 62–66、暖皮手部陰影 52)
+FAIR_TARGET_A = 9.0        # 冷白皮目標:皮膚平均 a*(紅)(實測 14–20)
+FAIR_TARGET_B = 7.0        # 冷白皮目標:皮膚平均 b*(黃)(實測 15–22);黃收得比紅多 = 偏粉的冷白
+FAIR_MIN_SCALE = 0.5       # a*、b* 比例的下限:彩度最多收一半,深膚色、暖皮不會被收成灰
+FAIR_MAX_LIFT = 14.0       # L* 提亮上限(整片等量,L* 88 以上漸減到 0 避免高光爆掉)
+FAIR_SKIN_HUE = (20.0, 28.0, 64.0, 72.0)   # Lab 膚色帶:色相 20–28 起、64–72 止(實測臉 36–45°、腰與大腿內側 52–69°、
+                                           # 木地板 70°、金屬燈座 83°)
+FAIR_SKIN_CHROMA = (8.0, 12.0, 32.0, 40.0)  # 彩度 8–12 起、32–40 止(牆、燈罩、床單、窗簾 < 10;唇 30–42 另由唇色判定排除)
+FAIR_SKIN_L = (35.0, 45.0, 85.0, 93.0)      # 明度 35–45 起、85–93 止(木櫃 L 10–30)
+FAIR_DENSITY = 3.0         # 周圍密度的尺度(短邊 %):膚色像素在周圍占 REGION_LO–HI 才算皮膚,零星同色的木紋、布料不算
+FAIR_FEATHER = 0.5         # 皮膚遮罩邊緣的羽化(短邊 %),避免遮罩邊界出現一塊白一塊黃
+FAIR_LIP_HUE = (14.0, 24.0)           # 唇色判定(一):Lab 色相低於上限開始算、低於下限完全算(實測唇 16–22°、皮膚 24–54°)
+FAIR_LIP_CHROMA = (26.0, 36.0)        # 唇色判定(二):彩度高於下限開始算、高於上限完全算(實測唇 30–42、皮膚 11–24);
+                                      # 兩個條件相乘,只有「偏洋紅且高彩度」才是唇;臉上低彩度的紅斑不算,會一起收
 
 SHINE_RADIUS = 3.0         # 去油光的周圍尺度(短邊 %);膚色區域也用這個尺度取平均
 SHINE_EPS = 0.02           # 高光底層的保邊門檻:比 decontour 寬鬆,反光視為可壓的起伏
@@ -209,7 +237,7 @@ def feature_protect(feat, r_grow):
     return 1.0 - _box(_dilate(feat, 2 * r_grow), r_grow).squeeze(1)
 
 
-def _retouch(x, smooth, deblemish, deshine, decontour, r, r_smooth, r_shine, r_feat, r_grow, r_grow_spot, r_spot):
+def _retouch(x, smooth, deblemish, deshine, decontour, r, r_smooth, r_shine, r_feat, r_grow, r_grow_spot, r_spot, r_red):
     """x: [B,H,W,3] 0..1;四個量皆 0..1。先祛斑(動到色彩),其餘三項只改明度、合併成一次明度替換。"""
     region = skin_region(x, r_shine) if (smooth > 0 or deblemish > 0 or deshine > 0 or decontour > 0) else None
     protect = None
@@ -225,6 +253,16 @@ def _retouch(x, smooth, deblemish, deshine, decontour, r, r_smooth, r_shine, r_f
             gate = _smoothstep(depth, BLEMISH_LO, BLEMISH_HI) * (1.0 - _smoothstep(deepest, BLEMISH_MAX_LO, BLEMISH_MAX_HI))
             gate = gate * feature_protect(feat, r_grow_spot)             # 眼睛、眉毛內部的小暗點(瞳孔、睫毛尖)不算痣
             x = x + (deblemish * region * gate).unsqueeze(-1) * (filled - x)
+            # 紅點:在 Lab 的 a*(紅)上做同樣的線段補平,尺度較大;只把「比周圍紅的小點」的紅收回周圍的值,
+            # 偏暗的也順便補亮。長條的唇線、大片腮紅在某個方向夠長,補不平,所以不會被當成紅點
+            L, a, b = _to_lab(x.clamp(0.0, 1.0))
+            a_fill = -fill_spots(-a.unsqueeze(1), r_red).squeeze(1)
+            L_fill = fill_spots(L.unsqueeze(1), r_red).squeeze(1)
+            # 五官保護改用「夠暗」的五官(眼、眉、鼻孔):紅色痘痘本身也略暗,用一般門檻會被當成五官保護起來
+            yf = y_filled.unsqueeze(1)
+            strong = _smoothstep(_closing(yf, r_feat) - yf, RED_FEAT_LO, RED_FEAT_HI)
+            gate_r = deblemish * region * _smoothstep(a - a_fill, RED_LO, RED_HI) * feature_protect(strong, r_grow_spot)
+            x = _from_lab(L + gate_r * (L_fill - L), a - gate_r * (a - a_fill), b)
 
     y = _luma(x)
     i = y.unsqueeze(1)
@@ -261,14 +299,84 @@ def _even_tone(x, amount):
     return y + c + k * (target - c)
 
 
+_M_RGB2XYZ = ((0.4124564, 0.3575761, 0.1804375), (0.2126729, 0.7151522, 0.0721750), (0.0193339, 0.1191920, 0.9503041))
+_WHITE = (0.95047, 1.0, 1.08883)
+
+
+def _to_lab(x):
+    """sRGB 0..1 [B,H,W,3] -> L*(0..100)、a*、b*"""
+    lin = torch.where(x <= 0.04045, x / 12.92, ((x + 0.055) / 1.055) ** 2.4)
+    m = torch.tensor(_M_RGB2XYZ, dtype=x.dtype, device=x.device)
+    xyz = lin @ m.T / torch.tensor(_WHITE, dtype=x.dtype, device=x.device)
+    f = torch.where(xyz > 0.008856, xyz.clamp(min=1e-8) ** (1.0 / 3.0), 7.787 * xyz + 16.0 / 116.0)
+    return 116.0 * f[..., 1] - 16.0, 500.0 * (f[..., 0] - f[..., 1]), 200.0 * (f[..., 1] - f[..., 2])
+
+
+def _from_lab(L, a, b):
+    fy = (L + 16.0) / 116.0
+    f = torch.stack([fy + a / 500.0, fy, fy - b / 200.0], dim=-1)
+    xyz = torch.where(f > 0.206893, f ** 3, (f - 16.0 / 116.0) / 7.787) * torch.tensor(_WHITE, dtype=L.dtype, device=L.device)
+    m = torch.tensor(_M_RGB2XYZ, dtype=L.dtype, device=L.device)
+    lin = (xyz @ torch.linalg.inv(m).T).clamp(min=0.0)
+    return torch.where(lin <= 0.0031308, lin * 12.92, 1.055 * lin.clamp(min=1e-8) ** (1.0 / 2.4) - 0.055)
+
+
+def _fair_weight(x, r_density, r_feather):
+    """冷白皮作用權重 0..1 與 Lab。x: [B,H,W,3] 0..1 -> (k [B,H,W], L, a, b)
+    Lab 膚色帶 × 周圍密度,羽化後扣掉唇。"""
+    L, a, b = _to_lab(x)
+    hue = torch.rad2deg(torch.atan2(b, a))
+    chroma = torch.hypot(a, b)
+    h0, h1, h2, h3 = FAIR_SKIN_HUE
+    c0, c1, c2, c3 = FAIR_SKIN_CHROMA
+    l0, l1, l2, l3 = FAIR_SKIN_L
+    w = (_smoothstep(hue, h0, h1) * (1.0 - _smoothstep(hue, h2, h3)) *
+         _smoothstep(chroma, c0, c1) * (1.0 - _smoothstep(chroma, c2, c3)) *
+         _smoothstep(L, l0, l1) * (1.0 - _smoothstep(L, l2, l3)))
+    w = w.unsqueeze(1)
+    w = w * _smoothstep(_box(w, r_density), REGION_LO, REGION_HI)
+    w = _box(_box(w, r_feather), r_feather).squeeze(1)      # 兩次方框 ≈ 三角羽化
+    lip = (1.0 - _smoothstep(hue, *FAIR_LIP_HUE)) * _smoothstep(chroma, *FAIR_LIP_CHROMA)
+    return w * (1.0 - lip), L, a, b
+
+
+def _fair_stats(x, r_density, r_feather):
+    """皮膚權重總和與 L*、a*、b* 的加權總和(供整批算一組比例)。-> tensor [4](float64)"""
+    k, L, a, b = _fair_weight(x, r_density, r_feather)
+    return torch.stack([k.sum(), (k * L).sum(), (k * a).sum(), (k * b).sum()]).double()
+
+
+def _fair_params(stats, amount):
+    """stats: _fair_stats 的累加;amount 0..1 -> (a* 比例, b* 比例, L* 位移)。皮膚太少時不作用。"""
+    wsum = float(stats[0])
+    if wsum < 1.0:
+        return 1.0, 1.0, 0.0
+    mL, ma, mb = (float(v) / wsum for v in stats[1:])
+    def scale(mean, target):
+        full = min(1.0, max(FAIR_MIN_SCALE, target / mean)) if mean > 1e-3 else 1.0
+        return 1.0 - amount * (1.0 - full)
+    lift = amount * min(FAIR_MAX_LIFT, max(0.0, FAIR_TARGET_L - mL))
+    return scale(ma, FAIR_TARGET_A), scale(mb, FAIR_TARGET_B), lift
+
+
+def _cool_fair(x, params, r_density, r_feather):
+    """x: [B,H,W,3] 0..1;params: _fair_params 的結果。同一組比例與位移套到每個皮膚像素,相對起伏保留。"""
+    sa, sb, lift = params
+    k, L, a, b = _fair_weight(x, r_density, r_feather)
+    a2 = a * (1.0 + (sa - 1.0) * k)
+    b2 = b * (1.0 + (sb - 1.0) * k)
+    L2 = L + k * lift * (1.0 - _smoothstep(L, 88.0, 100.0))
+    return _from_lab(L2, a2, b2)
+
+
 def radius_px(h, w, radius):
     return max(1, int(round(min(h, w) * radius / 100.0)))
 
 
-def degrease(images, smooth=30.0, deblemish=80.0, deshine=15.0, even_tone=10.0, decontour=10.0, device=None):
-    """images: [B,H,W,C] 0..1 -> [B,H,W,3] float32(CPU);五個量皆 0..100"""
+def degrease(images, smooth=30.0, deblemish=80.0, deshine=15.0, even_tone=10.0, decontour=10.0, cool_fair=0.0, device=None):
+    """images: [B,H,W,C] 0..1 -> [B,H,W,3] float32(CPU);六個量皆 0..100"""
     img = images[..., :3]
-    if smooth <= 0 and deblemish <= 0 and deshine <= 0 and even_tone <= 0 and decontour <= 0:
+    if smooth <= 0 and deblemish <= 0 and deshine <= 0 and even_tone <= 0 and decontour <= 0 and cool_fair <= 0:
         return img.cpu().float()                           # 與正常路徑一致(CPU float32),run() 接回 alpha 時才不會 device 不一致
     if device is None:
         device = mm.get_torch_device() if mm else torch.device("cpu")
@@ -278,8 +386,19 @@ def degrease(images, smooth=30.0, deblemish=80.0, deshine=15.0, even_tone=10.0, 
     r_feat, r_grow = radius_px(h, w, FEAT_RADIUS), radius_px(h, w, FEAT_GROW)
     r_grow_spot = radius_px(h, w, FEAT_GROW_SPOT)
     r_spot = radius_px(h, w, BLEMISH_RADIUS)
+    r_red = radius_px(h, w, RED_RADIUS)
+    r_fair, r_feather = radius_px(h, w, FAIR_DENSITY), radius_px(h, w, FAIR_FEATHER)
     chunk = max(1, min(CHUNK_MAX, CHUNK_PIXELS // max(1, h * w)))
     pbar = comfy_utils.ProgressBar(n) if comfy_utils else None
+
+    fair = None
+    if cool_fair > 0:                                      # 先量整批皮膚平均,整段影片只算一組比例(不閃爍)
+        stats = torch.zeros(4, dtype=torch.float64)
+        for s in range(0, n, chunk):
+            if mm:
+                mm.throw_exception_if_processing_interrupted()
+            stats += _fair_stats(img[s:s + chunk].to(device, torch.float32).clamp(0.0, 1.0), r_fair, r_feather).cpu()
+        fair = _fair_params(stats, cool_fair / 100.0)
 
     out = torch.empty((n, h, w, 3), dtype=torch.float32, device="cpu")
     for s in range(0, n, chunk):
@@ -288,9 +407,11 @@ def degrease(images, smooth=30.0, deblemish=80.0, deshine=15.0, even_tone=10.0, 
         x = img[s:s + chunk].to(device, torch.float32).clamp(0.0, 1.0)   # 可能與輸入共用記憶體,不可原地改寫
         if smooth > 0 or deblemish > 0 or deshine > 0 or decontour > 0:
             x = _retouch(x, smooth / 100.0, deblemish / 100.0, deshine / 100.0, decontour / 100.0,
-                         r, r_smooth, r_shine, r_feat, r_grow, r_grow_spot, r_spot)
+                         r, r_smooth, r_shine, r_feat, r_grow, r_grow_spot, r_spot, r_red)
         if even_tone > 0:
             x = _even_tone(x, even_tone / 100.0)
+        if fair is not None:
+            x = _cool_fair(x.clamp(0.0, 1.0), fair, r_fair, r_feather)
         out[s:s + chunk] = x.clamp(0.0, 1.0).cpu()
         if pbar:
             pbar.update(x.shape[0])
@@ -312,7 +433,7 @@ class Degrease:
                     "tooltip": "Skin smoothing: higher values soften pores, fine lines and smile lines more."}),
                 "deblemish": ("FLOAT", {
                     "default": 80.0, "min": 0.0, "max": 100.0, "step": 1.0,
-                    "tooltip": "Blemish removal: higher values fade moles, spots and acne more."}),
+                    "tooltip": "Blemish removal: higher values fade moles, spots, acne and red bumps more."}),
                 "deshine": ("FLOAT", {
                     "default": 15.0, "min": 0.0, "max": 100.0, "step": 1.0,
                     "tooltip": "Shine removal: higher values reduce oily highlights on skin more."}),
@@ -322,19 +443,25 @@ class Degrease:
                 "decontour": ("FLOAT", {
                     "default": 10.0, "min": 0.0, "max": 100.0, "step": 1.0,
                     "tooltip": "Contour flattening: higher values soften light and shadow across the face more."}),
-            }
+            },
+            # 選填:舊工作流與 API 範本沒有這個欄位時照 0(關閉)跑,不用重匯也不會驗證失敗
+            "optional": {
+                "cool_fair": ("FLOAT", {
+                    "default": 0.0, "min": 0.0, "max": 100.0, "step": 1.0,
+                    "tooltip": "Cool fair skin: higher values move skin toward a lighter, cooler tone; lips keep their color."}),
+            },
         }
 
     RETURN_TYPES = ("IMAGE",)
     RETURN_NAMES = ("images",)
     FUNCTION = "run"
     CATEGORY = "GeN13/color"
-    DESCRIPTION = "Portrait retouching that removes the greasy look: skin smoothing, blemish removal, shine removal, tone evening and contour flattening, with eyes and other features protected. 0 turns each effect off; higher values are stronger."
+    DESCRIPTION = "Portrait retouching that removes the greasy look: skin smoothing, blemish removal, shine removal, tone evening, contour flattening and cool fair skin, with eyes and other features protected. 0 turns each effect off; higher values are stronger."
 
-    def run(self, images, enabled, smooth, deblemish, deshine, even_tone, decontour):
+    def run(self, images, enabled, smooth, deblemish, deshine, even_tone, decontour, cool_fair=0.0):
         if not enabled:                                    # BYPASS:原樣傳下去(經 API 送出的工作流也能用這個欄位停用)
             return (images,)
-        out = degrease(images, smooth, deblemish, deshine, even_tone, decontour)
+        out = degrease(images, smooth, deblemish, deshine, even_tone, decontour, cool_fair)
         if images.shape[-1] == 4:                          # 保留 alpha:ACTIVE 與 BYPASS 輸出的通道數一致
             out = torch.cat([out, images[..., 3:].cpu().float()], dim=-1)
         return (out,)

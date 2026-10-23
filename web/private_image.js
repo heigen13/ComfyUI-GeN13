@@ -15,7 +15,7 @@
 import { app } from "../../scripts/app.js";
 import { api } from "../../scripts/api.js";
 import { T, setTip, setWidgetTip, setWidgetLabel } from "./g13_i18n.js";
-import { isLight } from "./g13_mode.js";
+import { isLight, forwardWheel } from "./g13_mode.js";
 
 const LOAD_ID = "LoadImagePrivateGeN13";
 const SAVE_ID = "SaveImagePrivateGeN13";
@@ -47,6 +47,7 @@ const P_SOLID = "g13_solid_color";
 const P_FROST = "g13_frost_blur";
 const P_GLASS = "g13_glass";
 const P_BRIGHT = "g13_brightness";
+const P_LAST = "g13_last_image"; // Save / Preview: last output file (type, filename, subfolder)
 const GLASSES = ["plain", "reeded", "hammered"];
 const DEFAULTS = {
   [P_PREVIEW]: true,
@@ -586,6 +587,8 @@ function addPreviewPanel(node) {
     Promise.resolve(node.onDragDrop(e)).catch((err) => console.warn("[GeN13] drop failed:", err));
   });
 
+  forwardWheel(el); // wheel over the preview zooms the canvas like everywhere else
+
   // hold the preview to reveal, release anywhere to cover again
   cv.addEventListener("pointerdown", (e) => {
     const r = node._pvRect;
@@ -924,7 +927,19 @@ app.registerExtension({
         onExecuted?.apply(this, arguments);
         this.imgs = undefined;
         const im = output?.images?.[0];
-        if (im) loadThumb(this, im.type || "output", im.filename, im.subfolder || "");
+        if (!im) return;
+        // remember the last result so switching workflow tabs (the node is rebuilt) shows it again
+        setProp(this, P_LAST, { type: im.type || "output", filename: im.filename, subfolder: im.subfolder || "" });
+        loadThumb(this, im.type || "output", im.filename, im.subfolder || "");
+      };
+      const onConfigure = nodeType.prototype.onConfigure;
+      nodeType.prototype.onConfigure = function () {
+        const r = onConfigure?.apply(this, arguments);
+        const last = this.properties?.[P_LAST];
+        if (last?.filename) setTimeout(() => {
+          if (!this._pvImg) loadThumb(this, last.type || "output", last.filename, last.subfolder || "");
+        }, 300);
+        return r;
       };
     }
   },

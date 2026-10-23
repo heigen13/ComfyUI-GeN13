@@ -24,5 +24,13 @@
   },
   "GeN13_Monitor_ShowPower": {
     "name": "顯示 POWER"
+  },
+  "GeN13_Links_PreferGeN13": {
+    "name": "拉線搜尋優先列出 GeN13 節點",
+    "tooltip": "拉線搜尋:連線放到空白處時,符合接點的 GeN13 節點排在搜尋框與選單最前面。"
+  },
+  "GeN13_Links_BuiltinConvert": {
+    "name": "右鍵選單可將內建節點轉換成 GeN13",
+    "tooltip": "右鍵轉換:Load / Save / Preview Image 轉成 Private 版,Primitive 轉成對應的 Remote。"
   }
 }

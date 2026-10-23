@@ -24,5 +24,13 @@
   },
   "GeN13_Monitor_ShowPower": {
     "name": "显示 POWER"
+  },
+  "GeN13_Links_PreferGeN13": {
+    "name": "拉线搜索优先列出 GeN13 节点",
+    "tooltip": "拉线搜索:连线放到空白处时,符合接点的 GeN13 节点排在搜索框与菜单最前面。"
+  },
+  "GeN13_Links_BuiltinConvert": {
+    "name": "右键菜单可将内置节点转换成 GeN13",
+    "tooltip": "右键转换:Load / Save / Preview Image 转成 Private 版,Primitive 转成对应的 Remote。"
   }
 }

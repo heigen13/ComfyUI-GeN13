@@ -10,10 +10,15 @@ Resource Monitor (GeN13) - back end
   "caps" tells the front end which cells have a source, so a missing one is hidden, not shown empty.
   It also reports the prompt running now, whoever queued it (a phone page, the API, another tab):
   the front end only gets "executing" / "progress" events for prompts it queued itself.
+  Overall progress: each finished run records how long every node took (per workflow, in
+  user/GeN13/monitor_times.json); the next run of the same workflow is weighted by those times, so the
+  bar follows the whole prompt instead of one sampler's steps. The front end eases the shown value.
   The loop only reads while a page keeps it alive: the front end posts to /gen13/monitor every few
   seconds, and 15 s without a post pauses it. Not a node: NODE_CLASS_MAPPINGS stays empty.
 """
 import glob
+import hashlib
+import json
 import logging
 import os
 import sys
@@ -25,10 +30,17 @@ import torch
 from aiohttp import web
 from server import PromptServer
 
+try:
+    import folder_paths
+except Exception:
+    folder_paths = None
+
 log = logging.getLogger("GeN13.monitor")
 
 RATE_MIN, RATE_MAX, RATE_DEFAULT = 0.25, 5.0, 1.0
 ALIVE = 15.0  # seconds a page post keeps the loop reading
+TRACK_DT = 0.2  # seconds between progress readings while a prompt runs
+KEEP = 64  # workflows whose node times are kept
 
 
 def _torch_index():
@@ -371,6 +383,248 @@ class _Gpu:
         return out
 
 
+# ---- overall progress ---------------------------------------------------------------------------
+def _state(e):
+    st = e.get("state")
+    return getattr(st, "value", st)
+
+
+def _sig(prompt):
+    """A workflow's key: its node ids and types (values such as seeds, sizes or models do not count)."""
+    parts = sorted("%s:%s" % (k, v.get("class_type", "")) for k, v in prompt.items() if isinstance(v, dict))
+    return hashlib.sha1("|".join(parts).encode("utf-8")).hexdigest()[:16]
+
+
+def _steps_in(prompt, nid):
+    n = prompt.get(nid)
+    s = n.get("inputs", {}).get("steps") if isinstance(n, dict) else None
+    return s if isinstance(s, int) and s > 1 else 0
+
+
+class _Times:
+    """Node times of finished runs, per workflow; blended with the earlier runs so one odd run
+    (a model reload, a cold start) moves the estimate only part of the way."""
+
+    def __init__(self):
+        self.path = None
+        self.data = None
+        self.lock = threading.Lock()
+
+    def _file(self):
+        if self.path is None:
+            try:
+                base = folder_paths.get_user_directory()
+            except Exception:
+                base = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "user")
+            self.path = os.path.join(base, "GeN13", "monitor_times.json")
+        return self.path
+
+    def _load(self):
+        if self.data is None:
+            try:
+                with open(self._file(), "r", encoding="utf-8") as f:
+                    d = json.load(f)
+                self.data = d if isinstance(d, dict) else {}
+            except Exception:
+                self.data = {}
+        return self.data
+
+    def get(self, sig):
+        with self.lock:
+            w = self._load().get(sig)
+            return dict(w.get("nodes", {})) if isinstance(w, dict) else {}
+
+    def put(self, sig, ran, cached):
+        with self.lock:
+            d = self._load()
+            old = d.get(sig, {}).get("nodes", {}) if isinstance(d.get(sig), dict) else {}
+            nodes = {nid: old[nid] for nid in cached if nid in old}  # a cached node keeps its last time
+            for nid, m in ran.items():
+                o = old.get(nid)
+                if isinstance(o, dict) and o.get("max", 0) == m.get("max", 0):
+                    b = {}
+                    for k, v in m.items():
+                        ov = o.get(k)
+                        if k == "max" or not isinstance(ov, (int, float)):
+                            b[k] = v
+                        else:
+                            v = min(max(v, ov / 3.0), ov * 3.0)
+                            b[k] = round(0.6 * ov + 0.4 * v, 3)
+                    m = b
+                nodes[nid] = m
+            d[sig] = {"nodes": nodes, "used": time.time()}
+            if len(d) > KEEP:
+                for k in sorted(d, key=lambda k: d[k].get("used", 0) if isinstance(d[k], dict) else 0)[: len(d) - KEEP]:
+                    del d[k]
+            try:
+                path = self._file()
+                os.makedirs(os.path.dirname(path), exist_ok=True)
+                tmp = path + ".tmp"
+                with open(tmp, "w", encoding="utf-8") as f:
+                    json.dump(d, f, separators=(",", ":"))
+                os.replace(tmp, path)
+            except Exception as e:
+                log.warning("[GeN13] monitor: could not save node times: %s", e)
+
+
+class _Tracker:
+    """Follows the running prompt through the progress registry (read only): when each node starts,
+    each sampler step, when it finishes. Its model() is what the front end turns into a percentage."""
+
+    def __init__(self):
+        self.times = _Times()
+        self.lock = threading.Lock()
+        self.pid = None
+        self.last = None  # {"id", "ok"} of the prompt that finished last
+        self._clear()
+
+    def _clear(self):
+        self.prompt, self.sig, self.hist = {}, None, {}
+        self.nodes, self.cached = {}, set()
+
+    def tick(self, pid, prompt):
+        now = time.monotonic()
+        with self.lock:
+            if pid != self.pid:
+                if self.pid is not None:
+                    self._end(now)
+                self.pid = pid
+                self._clear()
+                if pid is None:
+                    return
+                self.prompt = prompt if isinstance(prompt, dict) else {}
+                self.sig = _sig(self.prompt)
+                self.hist = self.times.get(self.sig)
+            self._scan(now)
+
+    def _scan(self, now):
+        try:
+            from comfy_execution.progress import get_progress_state
+            reg = get_progress_state()
+        except Exception:
+            return
+        if getattr(reg, "prompt_id", None) != self.pid:
+            return
+        for nid, e in list(reg.nodes.items()):
+            st = _state(e)
+            n = self.nodes.get(nid)
+            if st == "running":
+                if n is None:
+                    n = self.nodes[nid] = {"t0": now, "t1": None, "steps": [], "max": 0}
+                mx, v = int(e.get("max") or 0), int(e.get("value") or 0)
+                if mx > 1:
+                    if mx != n["max"]:
+                        n["max"], n["steps"] = mx, n["steps"][:mx]
+                    while len(n["steps"]) < min(v, mx):
+                        n["steps"].append(now)
+            elif st == "finished":
+                if n is None:
+                    # finished without being seen running: an output from the cache, or a node quicker
+                    # than one reading; one that took 1 s or more last time can only be the cache
+                    h = self.hist.get(nid)
+                    if isinstance(h, dict) and h.get("t", 0) >= 1.0:
+                        self.cached.add(nid)
+                    else:
+                        self.nodes[nid] = {"t0": now, "t1": now, "steps": [], "max": 0}
+                elif n["t1"] is None:
+                    n["t1"] = now
+                    while n["max"] > 1 and len(n["steps"]) < n["max"]:
+                        n["steps"].append(now)
+
+    def _end(self, now):
+        ok = False
+        try:
+            h = PromptServer.instance.prompt_queue.get_history(prompt_id=self.pid, map_function=lambda p: p.get("status"))
+            st = h.get(self.pid) or {}
+            ok = bool(st.get("completed")) and st.get("status_str", "success") == "success"
+        except Exception:
+            pass
+        if ok:
+            self._scan(now)  # the last node, if the registry still holds this prompt
+        self.last = {"id": self.pid, "ok": ok}
+        if not ok or not self.nodes or self.sig is None:
+            return
+        ran = {}
+        for nid, n in self.nodes.items():
+            t1 = n["t1"] if n["t1"] is not None else now
+            m = {"t": round(max(0.0, t1 - n["t0"]), 3)}
+            st = n["steps"]
+            if n["max"] > 1 and st:
+                m["max"] = n["max"]
+                m["first"] = round(st[0] - n["t0"], 3)
+                m["per"] = round((st[-1] - st[0]) / (len(st) - 1), 3) if len(st) > 1 else m["first"]
+                m["tail"] = round(max(0.0, t1 - st[-1]), 3)
+            ran[nid] = m
+        try:
+            self.times.put(self.sig, ran, self.cached)
+        except Exception as e:
+            log.warning("[GeN13] monitor: %s", e)
+
+    def _exp(self, nid):
+        """Expected seconds of a node in this run, and its learned record (or None)."""
+        h = self.hist.get(nid)
+        if not isinstance(h, dict):
+            return (0.5 if self.hist else 1.0), None
+        steps = (self.nodes.get(nid) or {}).get("max", 0) or _steps_in(self.prompt, nid)
+        if h.get("max", 0) > 1 and steps > 1 and steps != h["max"]:
+            h = dict(h, max=steps)
+            h["t"] = h["first"] + h["per"] * (steps - 1) + h.get("tail", 0.0)
+        return float(h.get("t", 0.0)), h
+
+    def model(self):
+        """{total, done, base, segw, seg, se, learned}: overall = (done + base + segw * ease(se / seg)) / total,
+        seconds of expectation (node counts on a workflow's first run); se is read now and the
+        front end keeps it running between readings."""
+        with self.lock:
+            if self.pid is None:
+                return None
+            now = time.monotonic()
+            learned = bool(self.hist)
+            ids = set(self.hist) if learned else set(self.prompt)
+            ids |= set(self.nodes)
+            ids -= self.cached
+            total = done = 0.0
+            cur, cur_t0 = None, -1.0
+            for nid in ids:
+                e, h = self._exp(nid)
+                total += e
+                n = self.nodes.get(nid)
+                if n is None:
+                    continue
+                if n["t1"] is not None:
+                    done += e
+                elif n["t0"] > cur_t0:
+                    cur, cur_t0 = (nid, e, h, n), n["t0"]
+            m = {"total": round(max(total, 1e-6), 3), "done": round(done, 3), "base": 0.0, "segw": 0.0,
+                 "seg": 1.0, "se": 0.0, "learned": learned}
+            if cur is None:
+                return m
+            nid, e, h, n = cur
+            el = now - n["t0"]
+            st, mx = n["steps"], n["max"]
+            if mx > 1:
+                c = len(st)
+                if h is not None and h.get("max", 0) > 1:
+                    first, per, tail = h["first"], h["per"], h.get("tail", 0.0)
+                    w = (1.0, 1.0)
+                else:  # first run: the node's weight shared out by step, step time as measured so far
+                    per = (st[-1] - st[0]) / (len(st) - 1) if len(st) > 1 else (st[0] - n["t0"] if st else max(el, 5.0))
+                    first, tail = (st[0] - n["t0"] if st else max(el, 5.0)), per * 0.3
+                    w = (e / mx / max(first, 1e-3), e / mx / max(per, 1e-3))
+                if c == 0:
+                    base, seg, se, segw = 0.0, first, el, first * w[0]
+                elif c < mx:
+                    base = first * w[0] + per * (c - 1) * w[1]
+                    seg, se, segw = per, now - st[-1], per * w[1]
+                else:
+                    base = first * w[0] + per * (mx - 1) * w[1]
+                    seg, se, segw = max(tail, 0.3), now - st[-1], max(e - base, 0.0)
+                m.update(base=round(base, 3), segw=round(max(segw, 0.0), 3), seg=round(max(seg, 0.05), 3), se=round(se, 3))
+            else:
+                m.update(segw=round(e, 3), seg=round(max(e, 0.05), 3), se=round(el, 3))
+            return m
+
+
 class _Monitor:
     def __init__(self):
         self.rate = RATE_DEFAULT
@@ -381,6 +635,8 @@ class _Monitor:
         self.guard = threading.Lock()
         self.job_id = None
         self.job_t0 = 0.0
+        self.track = _Tracker()
+        self.tthread = None
 
     def ping(self, rate):
         old = self.rate
@@ -395,6 +651,9 @@ class _Monitor:
             if self.thread is None or not self.thread.is_alive():
                 self.thread = threading.Thread(target=self._loop, name="GeN13 monitor", daemon=True)
                 self.thread.start()
+            if self.tthread is None or not self.tthread.is_alive():
+                self.tthread = threading.Thread(target=self._track_loop, name="GeN13 progress", daemon=True)
+                self.tthread.start()
         # wake only a sleeping loop or a new interval: an extra reading would break the line's spacing
         # and give cpu_percent a window of a few ms
         if asleep or self.rate != old:
@@ -430,7 +689,7 @@ class _Monitor:
             return None
         if not running:
             self.job_id = None
-            return {"queue": remaining}
+            return {"queue": remaining, "last": self.track.last}
         item = running[0]
         pid = item[1] if len(item) > 1 else None
         prompt = item[2] if len(item) > 2 and isinstance(item[2], dict) else {}
@@ -457,9 +716,30 @@ class _Monitor:
                         step, smax = e.get("value") or 0, e.get("max") or 0
         except Exception:
             pass
+        prog = self.track.model() if self.track.pid == pid else None
         return {"id": pid, "client": extra.get("client_id"), "node": node, "title": title,
                 "step": int(step), "max": int(smax), "elapsed": time.monotonic() - self.job_t0,
-                "queue": remaining}
+                "queue": remaining, "prog": prog, "last": self.track.last}
+
+    # follows the running prompt every TRACK_DT, page open or not, so node times are learned from
+    # every run; one reading a second while the queue is empty
+    def _track_loop(self):
+        srv = PromptServer.instance
+        while True:
+            pid = prompt = None
+            try:
+                running = srv.prompt_queue.get_current_queue_volatile()[0]
+                if running:
+                    item = running[0]
+                    pid = item[1] if len(item) > 1 else None
+                    prompt = item[2] if len(item) > 2 and isinstance(item[2], dict) else {}
+            except Exception:
+                pass
+            try:
+                self.track.tick(pid, prompt)
+            except Exception as e:
+                log.warning("[GeN13] monitor progress: %s", e)
+            time.sleep(TRACK_DT if pid is not None else 1.0)
 
     def _loop(self):
         if self.gpu is None:

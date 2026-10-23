@@ -20,7 +20,7 @@
 
 import { app } from "../../scripts/app.js";
 import { T, setTip, setWidgetTip, pick, countText, cloneText } from "./g13_i18n.js";
-import { onModeChange, inLinked } from "./g13_mode.js";
+import { onModeChange, inLinked, forwardWheel } from "./g13_mode.js";
 import { applyWireLock, wireSuffix } from "./remote_link.js";
 
 function w(node, name) {
@@ -296,7 +296,7 @@ export function registerRemote({ nodeId, extName, synced = ["value"], stepPicker
     box.append(bar, ta);
     wrap.appendChild(box);
     box.addEventListener("pointerdown", (ev) => ev.stopPropagation());
-    box.addEventListener("wheel", (ev) => ev.stopPropagation()); // scroll the text, not the canvas
+    forwardWheel(box); // scroll the text while it can, otherwise zoom the canvas
 
     // the text lives in node.properties.g13_text: the front end strips a forceInput widget's slot from
     // widgets_values on load, so the saved value would otherwise be lost on reload / paste
